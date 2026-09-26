@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>40K 데이터시트 번역 도우미</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">ARMY REFERENCE</p><h1>데이터시트 번역 도우미</h1></div>
+    <div class="edition">판본<strong>11판 · 자동 데이터 연결</strong></div>
+  </header>
+  <main>
+    <section class="input-panel">
+      <div class="section-heading"><div><p class="eyebrow">1 · 입력</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
+      <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
+      <div class="actions"><button id="parse" class="primary">편성표 분석</button></div>
+      <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. JSON 파일은 필요하지 않습니다.</p>
+    </section>
+    <div id="data-status" class="data-status" role="status">BSData 공개 저장소에 자동 연결 중…</div>
+    <nav class="view-tabs" aria-label="도구 페이지">
+      <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
+      <button type="button" class="view-tab" data-view="assistant">전투 보조</button>
+    </nav>
+    <section id="summary" class="summary" hidden></section>
+    <section id="results" class="results" aria-live="polite"></section>
+    <section id="assistant-page" class="assistant-page" hidden aria-live="polite"></section>
+    <aside id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true"><strong id="toast-title"></strong><p id="toast-description"></p></aside>
+  </main>
+  <footer>원문 데이터와 번역은 분리해 관리합니다. <a href="https://github.com/BSData/wh40k-11e" target="_blank" rel="noreferrer">BSData 카탈로그</a> · <a href="https://github.com/pguetschow/warhammer-40k-stratagem-card-generator" target="_blank" rel="noreferrer">스트라타젬 데이터 출처</a> · 판본을 확인한 뒤 사용하세요.</footer>
+  <script src="app.js"></script>
+</body>
+</html>
