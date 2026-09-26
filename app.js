@@ -106,6 +106,8 @@ function readStoredCP(){try{return localStorage.getItem("40k-cp")||"0";}catch{re
 let activeCatalogueKey="";let coreStratagems=[];let factionStratagemCount=0;let stratEdition="11";let stratEditionManual=false;let stratContextKey="";let cpValue=Math.max(0,Math.min(20,Number(readStoredCP())||0));
 const sourceRuleDescriptions=new Map();
 const sourceRuleDescriptionsById=new Map();
+const v2LabelTranslations=new Map(),v2RuleTranslations=new Map();
+const v2TranslationFeed=new URLSearchParams(location.search).get("translationFeed")||"";
 let currentRosterMeta={};
 const $ = (id) => document.getElementById(id);
 const norm = (s) => s.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
@@ -144,17 +146,19 @@ function findDataUnit(rosterName) {
 }
 function commonScore(a,b){let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i/Math.max(a.length,b.length,1)}
 function escapeHtml(s=""){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function tr(s=""){if(translations.has(s))return translations.get(s);if(abilityTranslations.has(s))return `${abilityTranslations.get(s)} (${s})`;if(profileTypeTranslations.has(s))return `${profileTypeTranslations.get(s)} (${s})`;return translateTerms(s);}
+function tr(s=""){if(v2LabelTranslations.has(textKey(s)))return v2LabelTranslations.get(textKey(s));if(translations.has(s))return translations.get(s);if(abilityTranslations.has(s))return `${abilityTranslations.get(s)} (${s})`;if(profileTypeTranslations.has(s))return `${profileTypeTranslations.get(s)} (${s})`;return translateTerms(s);}
 function textKey(s=""){return s.replace(/\u00a0/g," ").replace(/\s+/g," ").trim().toLowerCase();}
+function ruleFeedKey(name,source){const clean=s=>String(s||"").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim();return `${textKey(clean(name))}|${textKey(clean(source))}`;}
 function translateTerms(s=""){
   let out=s.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");
-  const pairs=[...new Map([...translations,...abilityTranslations,...termTranslations]).entries()].sort((a,b)=>b[0].length-a[0].length);
+  const pairs=[...new Map([...translations,...abilityTranslations,...termTranslations,...v2LabelTranslations]).entries()].sort((a,b)=>b[0].length-a[0].length);
   for(const [en,ko] of pairs)out=out.replace(new RegExp(en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi"),ko);
   return out;
 }
 function bilingualLabel(s=""){const ko=translateTerms(s);return ko!==s?`${ko} (${s})`:s;}
 function translateRulesText(profileName,text=""){
   const key=textKey(profileName);
+  const approvedV2=v2RuleTranslations.get(ruleFeedKey(profileName,text));if(approvedV2)return approvedV2;
   if(key==="leader"&&text.includes("VICTRIX HONOUR GUARD"))return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 헬블래스터 분대, 인페르누스 분대, 인터세서 분대, 스턴가드 베테랑 분대, 뱅가드 베테랑 분대, 빅트릭스 의장대, 울트라마르의 수호자.";
   if(key==="support")return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 크루세이더 분대, 데스워치 베테랑, 데키무스 킬팀, 포르티스 킬팀, 헬블래스터 분대, 인페르누스 분대, 이너 서클 컴패니언, 인터세서 분대, 스턴가드 베테랑 분대, 소드 브레스런 분대, 택티컬 분대, 뱅가드 베테랑 분대.";
   const exact=abilityTextTranslations.get(key);if(exact)return exact;
@@ -176,7 +180,7 @@ function keywordInfo(raw=""){
   const rule=abilityTextTranslations.get(key);
   if(rule){const original=[...abilityTranslations.keys()].find(x=>textKey(x)===key)||clean;return {key:original,ko:abilityTranslations.get(original)||translateTerms(original),en:original,description:rule};}
   const sourceDescription=sourceDescriptionFor(clean);
-  if(sourceDescription)return {key:clean,ko:translations.get(clean)||abilityTranslations.get(clean)||clean,en:clean,description:`공개 데이터 설명 (영문 원문): ${sourceDescription}`};
+  if(sourceDescription)return {key:clean,ko:v2LabelTranslations.get(textKey(clean))||translations.get(clean)||abilityTranslations.get(clean)||clean,en:clean,description:v2RuleTranslations.get(ruleFeedKey(clean,sourceDescription))||`공개 데이터 설명 (영문 원문): ${sourceDescription}`};
   return null;
 }
 function renderKeywordButton(raw){
@@ -251,6 +255,7 @@ function weaponName(name=""){
 }
 function profileDisplayName(p){
   const type=(p.typeName||"").toLowerCase();
+  const v2Name=v2LabelTranslations.get(textKey(p.name||""));if(v2Name)return `${v2Name} (${p.name})`;
   if(type.includes("weapon"))return weaponName(p.name||"");
   const ability=abilityTranslations.get(p.name);if(ability)return `${ability} (${p.name})`;
   if(translations.has(p.name))return `${translations.get(p.name)} (${p.name})`;
@@ -290,6 +295,7 @@ async function loadRulesData(meta=parseRoster($("roster").value).meta){
 }
 function canonicalStratFaction(meta){const f=norm(meta.faction||"");if(/ultramarines|bloodangels|darkangels|blacktemplars|spacewolves|deathwatch|imperialfists|ironhands|ravenguard|salamanders|whitescars|adeptusastartes|spacemarines/.test(f))return "Space Marines";if(/craftworlds|asuryani|aeldari/.test(f))return "Aeldari";if(/chaosdaemons|daemons/.test(f))return "Chaos Daemons";if(/agentsoftheimperium/.test(f))return "Imperial Agents";return (meta.faction||"").split(" - ").filter(Boolean).at(-1)||"";}
 async function loadCoreStratagems(edition=stratEdition){stratEdition=edition;coreStratagems=[];factionStratagemCount=0;try{const r=await fetch(`${STRATAGEM_DATA_URL}${edition}/cards.json`);if(!r.ok)throw new Error(String(r.status));const data=await r.json(),all=[];for(const [key,value] of Object.entries(data.factions||{}))if(norm(key)==="core"||norm(value.name||"").includes("core rules"))for(const items of Object.values(value.detachments||{}))all.push(...(items||[]));const canonical=norm(canonicalStratFaction(currentRosterMeta)),rawDet=currentRosterMeta.detachment||"",det=norm(rawDet.match(/\(([^)]+)\)/)?.[1]||rawDet),detNames=det.includes("extremislevelthreat")?["extremislevelthreat","firstcompanytaskforce"]:[det];for(const [factionKey,factionData] of Object.entries(data.factions||{})){if(norm(factionKey)==="core"||norm(factionData.name||"").includes("core rules"))continue;const factionNorm=norm(factionData.name||factionKey),factionMatch=canonical&&(factionNorm.includes(canonical)||canonical.includes(factionNorm));if(!factionMatch)continue;for(const [detachment,items] of Object.entries(factionData.detachments||{})){const detKey=norm(detachment);if(detKey==="none"||detNames.some(name=>name&&(name.includes(detKey)||detKey.includes(name)))){factionStratagemCount+=(items||[]).length;all.push(...(items||[]));}}}coreStratagems=Array.from(new Map(all.filter(x=>!x.noCp&&x.name).map(x=>[`${norm(x.name)}|${x.cp}`,x])).values());if($("assistant-page"))render();}catch{coreStratagems=[];factionStratagemCount=0;if($("assistant-page"))render();}}
+function loadV2TranslationFeed(){if(!v2TranslationFeed)return;const callback=`v2Translation_${Date.now()}_${Math.floor(Math.random()*1e6)}`,script=document.createElement("script"),url=new URL(v2TranslationFeed);url.searchParams.set("callback",callback);window[callback]=payload=>{for(const item of payload.translations||[]){if(item.kind==="label")v2LabelTranslations.set(textKey(item.name),item.translation);else if(item.name&&item.source)v2RuleTranslations.set(ruleFeedKey(item.name,item.source),item.translation);}delete window[callback];script.remove();const status=$("data-status");if(status){status.textContent=`Google Sheets V2 · 검수 번역 ${(payload.translations||[]).length}개 연결`;status.className="data-status ready";}render();};script.onerror=()=>{delete window[callback];script.remove();const status=$("data-status");if(status){status.textContent="Google Sheets V2 번역 피드를 불러오지 못했습니다. 배포 URL과 웹앱 공개 설정을 확인하세요.";status.className="data-status error";}};script.src=url.toString();document.head.appendChild(script);}
 function renderProfiles(profiles){
   if(!profiles?.length)return "<p class=\"meta\">이 항목에 표시할 프로필이 없습니다.</p>";
   return `<div class="profile-list">${profiles.map(p=>{const chars=p.characteristics||[],description=chars.find(x=>x.name==="Description")?.value;const isAbility=(p.typeName||"").toLowerCase().includes("abilit")||Boolean(description);if(isAbility)return `<section class="ability-block"><h4 class="profile-title">${escapeHtml(profileDisplayName(p))}</h4><p class="ability-text">${richText(translateRulesText(p.name,description||""))}</p></section>`;return `<section class="profile-block"><h4 class="profile-title">${escapeHtml(profileDisplayName(p))}${p.typeName&&p.typeName!==p.name?` <span class="original">· ${escapeHtml(tr(p.typeName))}</span>`:""}</h4>${chars.length?`<table class="profile-table"><thead><tr><th>항목</th>${chars.map(x=>`<th>${escapeHtml(statTranslations.get(x.name)||tr(x.name))}</th>`).join("")}</tr></thead><tbody><tr><td>${escapeHtml(profileDisplayName(p))}</td>${chars.map(x=>x.name==="Keywords"?`<td>${x.value.split(/,\s*/).filter(Boolean).map(renderKeywordButton).join(" ")}</td>`:`<td>${escapeHtml(translateTerms(x.value))}</td>`).join("")}</tr></tbody></table>`:"<p class=\"meta\">상세 프로필이 없습니다.</p>"}</section>`}).join("")}</div>`;
@@ -331,5 +337,6 @@ $("roster").addEventListener("input",resizeRoster);
 $("parse").addEventListener("click",render);
 $("results").addEventListener("click",e=>{const wound=e.target.closest("[data-wound-action]");if(wound){e.preventDefault();e.stopPropagation();const key=wound.dataset.woundKey,max=Number(wound.dataset.woundMax)||0;if(!max)return;let value=currentWounds(key,max);value=Math.max(0,Math.min(max,value+(wound.dataset.woundAction==="plus"?1:-1)));woundState.set(key,value);const output=document.querySelector(`[data-wound-value="${CSS.escape(key)}"]`);if(output)output.textContent=`${value}/${max}`;return;}const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 $("assistant-page").addEventListener("click",e=>{const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
+loadV2TranslationFeed();
 $("roster").value=example;resizeRoster();render();
 loadRulesData(parseRoster(example).meta);
