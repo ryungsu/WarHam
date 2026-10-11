@@ -114,6 +114,9 @@ function readStoredCP(){try{return localStorage.getItem("40k-cp")||"0";}catch{re
 let activeCatalogueKey="";let catalogueLoadToken=0;let coreStratagems=[];let factionStratagemCount=0;let stratEdition="11";let stratEditionManual=false;let stratContextKey="";let stratLoadToken=0;let cpValue=Math.max(0,Math.min(20,Number(readStoredCP())||0));
 const sourceRuleDescriptions=new Map();
 const sourceRuleDescriptionsById=new Map();
+// Conservative fallback imported from the user-provided 40K issue workbook.
+// Existing app glossary entries and approved feed translations take precedence.
+const workbook40kTranslations=new Map((window.WH40K_WORKBOOK_GLOSSARY||[]).map(([source,translation])=>[source,translation]));
 const v2LabelTranslations=new Map(),v2RuleTranslations=new Map();
 const DEFAULT_TRANSLATION_FEED="https://script.google.com/macros/s/AKfycbyrM4W4xGOYMgp1MLeiotCNcM4f8HQ2EO0_dx54Y3M8W2G5RRjiX9-XjmKQTa8O45admA/exec";
 let v2TranslationFeed=new URLSearchParams(location.search).get("translationFeed")||DEFAULT_TRANSLATION_FEED;
@@ -167,7 +170,9 @@ function textKey(s=""){return s.replace(/\u00a0/g," ").replace(/\s+/g," ").trim(
 function ruleFeedKey(name,source){const clean=s=>String(s||"").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim();return `${textKey(clean(name))}|${textKey(clean(source))}`;}
 function translateTerms(s=""){
   let out=s.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");
-  const pairs=[...new Map([...translations,...abilityTranslations,...termTranslations,...v2LabelTranslations]).entries()].sort((a,b)=>b[0].length-a[0].length);
+  const curatedKeys=new Set([...translations,...abilityTranslations,...termTranslations].map(([en])=>textKey(en)));
+  const reviewedWorkbookTerms=[...workbook40kTranslations].filter(([en])=>!curatedKeys.has(textKey(en)));
+  const pairs=[...new Map([...reviewedWorkbookTerms,...translations,...abilityTranslations,...termTranslations,...v2LabelTranslations]).entries()].sort((a,b)=>b[0].length-a[0].length);
   for(const [en,ko] of pairs)out=out.replace(new RegExp(en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi"),ko);
   return out;
 }
