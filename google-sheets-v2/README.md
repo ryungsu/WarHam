@@ -6,12 +6,12 @@ V1 stays on `master` at commit `5632063`. This branch adds a Google Apps Script 
 
 1. Create a Google Sheet, open **Extensions → Apps Script**, and paste `Code.gs` into the script editor. The checked-in `appsscript.json` sets the project timezone to Seoul.
 2. In Apps Script **Project Settings → Script Properties**, add `GEMINI_API_KEY`. `GEMINI_MODEL` is optional; its default is `gemini-3.6-flash`.
-3. Run `setupSheets()` once and approve the requested Google Sheets, Drive, and external request permissions.
+3. Run `setupSheets()` once and approve the requested Google Sheets, Drive, and external request permissions. It creates the complete public 11e catalogue list and appends any missing catalogue rows to an existing `Sources` sheet without resetting its enabled flags or sync history.
 4. Reload the spreadsheet. The **40K 번역 V2** menu now provides sync, review, export, and schedule actions. Run **BSData 동기화 + AI 번역** once to start.
 5. In `Translations`, review the `AI_DRAFT` rows. Correct `Translation KO` as needed, then select the reviewed rows and choose **선택 행 검수 완료**; this sets their status to `APPROVED`.
-6. Select **매일 자동 실행 켜기** when the first manual run looks right. Each daily run checks up to 8 source files and requests translations in batches of up to 40 records. It rotates through the enabled files, and only adds new or changed source text.
+6. Select **대기 번역 자동 처리 (15분마다)** to drain a large initial backlog, or **매일 자동 실행 켜기** for normal daily updates. Each pipeline run checks up to 8 source files and requests translations in batches of up to 40 records. It rotates through the enabled files, and only adds new or changed source text. The 15-minute trigger processes at most 40 pending records per run; throughput still depends on Gemini quota and service availability.
 
-`Sources` starts with the public 11e faction catalogues. You can disable files by changing `Enabled` to FALSE. `Translations` keeps old source versions as `SUPERSEDED`; unchanged source hashes are skipped. Translation prompts explicitly preserve numeric values, phases, exceptions, and game terms.
+`Sources` covers the public 11e faction catalogues, including shared and chapter libraries. Leave every row enabled to build coverage for all supported factions; the 15-minute trigger rotates through the full list in small batches. You can disable files by changing `Enabled` to FALSE. `Translations` keeps old source versions as `SUPERSEDED`; unchanged source hashes are skipped, so repeat syncs no longer create duplicate rows. Translation prompts explicitly preserve numeric values, phases, exceptions, and game terms.
 
 ## Connect reviewed translations to the V2 app
 
@@ -28,7 +28,7 @@ V1 stays on `master` at commit `5632063`. This branch adds a Google Apps Script 
 ## Prototype boundaries
 
 - The importer and translator are ready to try after you create the Sheet and provide your Gemini API key. Those account-specific steps cannot be performed from this local workspace.
-- The initial catalog source is the 11e BSData branch. The roster input parser and catalog selection otherwise remain the V1 implementation.
+- The catalog source is the public 11e BSData branch. The app chooses a faction catalogue from the roster; an approved translation feed is shared across factions. A faction can load before its translation rows have been generated and reviewed, in which case untranslated text remains in English or uses the local glossary.
 - AI output is a draft. It is not exposed to the app until a person approves it. The public feed contains approved Korean translations paired with their original text.
-- Apps Script time triggers execute under the account that created them and are subject to Google's changing quotas. The importer deliberately works in small, resumable batches; check `Run log` if a source request or AI batch fails.
+- Apps Script time triggers execute under the account that created them and are subject to Google's changing quotas. The importer deliberately works in small, resumable batches. Gemini 408/429/5xx errors are retried with exponential backoff up to three times; if a batch still fails, its rows remain `PENDING` for a later run and subsequent batches wait, avoiding repeated calls during an outage. Check `Run log` for source/API errors.
 - Published app feeds expose approved translations to anyone who can access the deployed web app. Keep `GEMINI_API_KEY` only in Script Properties.

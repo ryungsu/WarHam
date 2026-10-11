@@ -30,6 +30,7 @@ function onOpen() {
     .addItem("검수 완료 JSON 내보내기", "exportApprovedJson")
     .addSeparator()
     .addItem("매일 자동 실행 켜기", "installDailyTrigger")
+    .addItem("대기 번역 자동 처리 (15분마다)", "installFrequentTrigger")
     .addItem("자동 실행 끄기", "removeDailyTrigger")
     .addToUi();
 }
@@ -50,6 +51,10 @@ function ensureSheet_(ss, name, headers, seedRows) {
     if (seedRows.length) sheet.getRange(2, 1, seedRows.length, headers.length).setValues(seedRows);
     sheet.setFrozenRows(1);
     sheet.autoResizeColumns(1, headers.length);
+  } else if (name === V2.sourceSheet && seedRows.length) {
+    const existingFiles = new Set((sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat() : []).filter(Boolean).map(String));
+    const missingRows = seedRows.filter(row => !existingFiles.has(String(row[0])));
+    if (missingRows.length) sheet.getRange(sheet.getLastRow() + 1, 1, missingRows.length, headers.length).setValues(missingRows);
   }
   return sheet;
 }
@@ -72,21 +77,33 @@ function runV2Pipeline() {
 function syncSourceBatch_() {
   const ss = getSpreadsheet_(), sourceSheet = ss.getSheetByName(V2.sourceSheet), transSheet = ss.getSheetByName(V2.translationSheet);
   if (!sourceSheet || !transSheet) throw new Error("먼저 메뉴에서 시트 준비를 실행하세요.");
-  const sourceRows = sourceSheet.getDataRange().getValues().slice(1).filter(r => r[0] && r[1] !== false);
+  const sourceRows = sourceSheet.getDataRange().getValues().slice(1).map((values, index) => ({ values, rowNumber: index + 2 })).filter(row => row.values[0] && row.values[1] !== false);
   if (!sourceRows.length) return { files: 0, added: 0 };
   const props = PropertiesService.getScriptProperties();
   const start = Number(props.getProperty("V2_SOURCE_CURSOR") || 0) % sourceRows.length;
   const batch = Array.from({ length: Math.min(V2.maxSourcesPerRun, sourceRows.length) }, (_, i) => sourceRows[(start + i) % sourceRows.length]);
   props.setProperty("V2_SOURCE_CURSOR", String((start + batch.length) % sourceRows.length));
-  const requests = batch.map(r => ({ url: V2.repo + encodeURIComponent(r[0]), muteHttpExceptions: true, followRedirects: true }));
+  const requests = batch.map(r => ({ url: V2.repo + encodeURIComponent(r.values[0]), muteHttpExceptions: true, followRedirects: true }));
   const responses = UrlFetchApp.fetchAll(requests), existing = transSheet.getDataRange().getValues(), header = existing.shift();
   const keyIndex = header.indexOf("Key"), hashIndex = header.indexOf("Source hash"), statusIndex = header.indexOf("Status");
-  const current = new Map();
-  existing.forEach((r, i) => { if (r[keyIndex] && r[statusIndex] !== "SUPERSEDED") current.set(String(r[keyIndex]), { row: r, index: i + 2 }); });
+  const editionIndex = header.indexOf("Edition"), fileIndex = header.indexOf("Source file"), sourceIdIndex = header.indexOf("Source ID"), kindIndex = header.indexOf("Kind");
+  const current = new Map(), batchFiles = new Set(batch.map(row => String(row.values[0]))), duplicates = [];
+  existing.forEach((r, i) => {
+    if (!r[keyIndex] || r[statusIndex] === "SUPERSEDED") return;
+    const sourceKey = [r[editionIndex], r[fileIndex], r[sourceIdIndex], r[kindIndex]].join("|"), candidate = { row: r, index: i + 2 };
+    const prior = current.get(sourceKey);
+    if (!prior) { current.set(sourceKey, candidate); return; }
+    if (batchFiles.has(String(r[fileIndex]))) {
+      const rank = status => status === "APPROVED" ? 3 : status === "AI_DRAFT" ? 2 : 1;
+      const keepPrior = rank(prior.row[statusIndex]) > rank(r[statusIndex]);
+      duplicates.push(keepPrior ? candidate.index : prior.index);
+      if (!keepPrior) current.set(sourceKey, candidate);
+    } else current.set(sourceKey, candidate);
+  });
   const append = [], supersede = [], now = new Date();
   let okFiles = 0;
   responses.forEach((response, i) => {
-    const configRow = batch[i], file = String(configRow[0]);
+    const configRow = batch[i], file = String(configRow.values[0]);
     try {
       if (response.getResponseCode() !== 200) throw new Error(`HTTP ${response.getResponseCode()}`);
       const data = JSON.parse(response.getContentText()), root = data.catalogue || data, revision = String(root.revision || "unknown");
@@ -98,15 +115,15 @@ function syncSourceBatch_() {
         if (prior) supersede.push(prior.index);
         append.push([key + "|" + sourceHash.slice(0, 12), V2.edition, faction, file, record.id, record.kind, record.name, record.source, sourceHash, "", "PENDING", "", now, prior ? "원문이 바뀌어 재번역 대기" : ""]);
       }
-      sourceSheet.getRange(sourceRows.indexOf(configRow) + 2, 3, 1, 3).setValues([[revision, now, ""]]);
+      sourceSheet.getRange(configRow.rowNumber, 3, 1, 3).setValues([[revision, now, ""]]);
       okFiles++;
     } catch (err) {
-      const sourceIndex = sourceRows.indexOf(configRow) + 2;
+      const sourceIndex = configRow.rowNumber;
       sourceSheet.getRange(sourceIndex, 5).setValue(String(err.message || err));
       log_("sync", "파일 오류", `${file}: ${err.message || err}`);
     }
   });
-  supersede.forEach(rowNum => transSheet.getRange(rowNum, statusIndex + 1).setValue("SUPERSEDED"));
+  writeStatusRows_(transSheet, [...duplicates, ...supersede], statusIndex + 1, "SUPERSEDED");
   if (append.length) transSheet.getRange(transSheet.getLastRow() + 1, 1, append.length, V2.translationHeaders.length).setValues(append);
   return { files: okFiles, added: append.length };
 }
@@ -153,14 +170,14 @@ function translatePendingBatch_() {
   for (let offset = 0; offset < pending.length; offset += V2.rowsPerAiBatch) {
     const batch = pending.slice(offset, offset + V2.rowsPerAiBatch);
     try {
-      const outputs = callGemini_(batch, apiKey), byIndex = new Map(outputs.map(x => [Number(x.i), x.ko]));
+      const outputs = callGeminiWithRetry_(batch, apiKey), byIndex = new Map(outputs.map(x => [Number(x.i), x.ko]));
       batch.forEach((item, i) => {
         const ko = String(byIndex.get(i) || "").trim();
         if (!ko) return;
         sheet.getRange(item.row, col("Translation KO") + 1, 1, 5).setValues([[ko, "AI_DRAFT", PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.6-flash", new Date(), "검수 후 APPROVED로 변경"]]);
         done++;
       });
-    } catch (err) { log_("translate", "배치 오류", String(err.message || err)); }
+    } catch (err) { log_("translate", "배치 오류 · 대기 유지", String(err.message || err)); break; }
   }
   return done;
 }
@@ -177,6 +194,21 @@ function callGemini_(batch, apiKey) {
   if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) throw new Error(`Gemini HTTP ${response.getResponseCode()}: ${response.getContentText().slice(0, 400)}`);
   const body = JSON.parse(response.getContentText()), text = body.candidates[0].content.parts.map(p => p.text || "").join("");
   return JSON.parse(text);
+}
+
+function callGeminiWithRetry_(batch, apiKey) {
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try { return callGemini_(batch, apiKey); }
+    catch (err) {
+      const message = String(err && err.message || err);
+      const retryable = /Gemini HTTP (408|429|500|502|503|504)\b/.test(message);
+      if (!retryable || attempt === maxAttempts) throw err;
+      const delayMs = Math.min(8000, 1000 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 500);
+      Utilities.sleep(delayMs);
+    }
+  }
+  throw new Error("Gemini 재시도 횟수를 초과했습니다.");
 }
 
 function approveSelectedRows() {
@@ -215,11 +247,26 @@ function installDailyTrigger() {
   SpreadsheetApp.getUi().alert("매일 자동 동기화와 번역을 설정했습니다. 실행 시간은 계정 시간대의 오전 4시 전후입니다.");
 }
 
+function installFrequentTrigger() {
+  removeDailyTrigger();
+  ScriptApp.newTrigger("runV2Pipeline").timeBased().everyMinutes(15).create();
+  SpreadsheetApp.getUi().alert("대기 중인 번역을 15분마다 최대 40개씩 처리하도록 설정했습니다. Gemini 사용량/한도에 따라 속도가 달라질 수 있으며, 메뉴에서 자동 실행을 끌 수 있습니다.");
+}
+
 function removeDailyTrigger() {
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === "runV2Pipeline").forEach(t => ScriptApp.deleteTrigger(t));
 }
 
 function factionForFile_(file) { return file.replace(/\.json$/i, "").split(" - ").slice(0, -1).join(" - ") || file.replace(/\.json$/i, ""); }
+function writeStatusRows_(sheet, rowNumbers, column, value) {
+  const sorted = [...new Set(rowNumbers)].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length;) {
+    let end = i + 1;
+    while (end < sorted.length && sorted[end] === sorted[end - 1] + 1) end++;
+    sheet.getRange(sorted[i], column, end - i, 1).setValues(Array.from({ length: end - i }, () => [value]));
+    i = end;
+  }
+}
 function cleanText_(value) { return String(value || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim(); }
 function sha256_(text) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(text), Utilities.Charset.UTF_8).map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, "0")).join(""); }
 function getSpreadsheet_() { const props = PropertiesService.getScriptProperties(), id = props.getProperty("V2_SPREADSHEET_ID"); return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet(); }

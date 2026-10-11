@@ -19,6 +19,11 @@
       <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. JSON 파일은 필요하지 않습니다.</p>
     </section>
     <div id="data-status" class="data-status" role="status">BSData 공개 저장소에 자동 연결 중…</div>
+    <section class="translation-feed-panel" aria-label="번역 피드 연결">
+      <label for="translation-feed-url">Google Sheets 번역 피드 주소</label>
+      <input id="translation-feed-url" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url">
+      <button id="load-translations" class="primary" type="button">번역 불러오기 · 적용</button>
+    </section>
     <nav class="view-tabs" aria-label="도구 페이지">
       <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
       <button type="button" class="view-tab" data-view="assistant">전투 보조</button>
