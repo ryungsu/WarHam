@@ -11,7 +11,25 @@ const V2 = {
   rowsPerAiBatch: 8,
   sourceSheet: "Sources",
   translationSheet: "Translations",
+  glossarySheet: "Glossary",
   logSheet: "Run log",
+  glossaryHeaders: ["English", "Korean", "Status", "Note"],
+  glossarySeedRows: [
+    ["Command phase", "지휘 페이즈", "APPROVED", "게임 단계"], ["Movement phase", "이동 페이즈", "APPROVED", "게임 단계"],
+    ["Shooting phase", "사격 페이즈", "APPROVED", "게임 단계"], ["Charge phase", "돌격 페이즈", "APPROVED", "게임 단계"],
+    ["Fight phase", "타격 페이즈", "APPROVED", "게임 단계"], ["Battle-shocked", "전투 충격 상태", "APPROVED", "상태"],
+    ["wound", "운드", "APPROVED", "게임 용어"], ["hit roll", "명중 굴림", "APPROVED", "게임 용어"],
+    ["wound roll", "운드 굴림", "APPROVED", "게임 용어"], ["saving throw", "방어 굴림", "APPROVED", "게임 용어"],
+    ["Objective Control", "목표 장악", "APPROVED", "능력치"], ["Sustained Hits", "지속 명중", "APPROVED", "무기 능력"],
+    ["Feel No Pain", "고통 경감", "APPROVED", "규칙"], ["Lethal Hits", "치명타 명중", "APPROVED", "무기 능력"],
+    ["Devastating Wounds", "치명적인 상처", "APPROVED", "무기 능력"], ["Precision", "정밀 타격", "APPROVED", "무기 능력"],
+    ["Torrent", "분사", "APPROVED", "무기 능력"], ["Ignores Cover", "엄폐 무시", "APPROVED", "무기 능력"],
+    ["Assault", "강습", "APPROVED", "무기 능력"], ["Heavy", "중화기", "APPROVED", "무기 능력"],
+    ["Pistol", "권총", "APPROVED", "무기 능력"], ["Twin-linked", "쌍연결", "APPROVED", "무기 능력"],
+    ["Blast", "폭발", "APPROVED", "무기 능력"], ["Rapid Fire", "속사", "APPROVED", "무기 능력"],
+    ["Melta", "멜타", "APPROVED", "무기 능력"], ["Infantry", "인팬트리", "APPROVED", "키워드"],
+    ["Vehicle", "비히클", "APPROVED", "키워드"], ["Monster", "몬스터", "APPROVED", "키워드"]
+  ],
   translationHeaders: ["Key", "Edition", "Faction", "Source file", "Source ID", "Kind", "Name EN", "Source EN", "Source hash", "Translation KO", "Status", "AI model", "Updated at", "Review note"],
   sourceHeaders: ["File", "Enabled", "Last revision", "Last synced", "Last error"],
   files: [
@@ -39,6 +57,7 @@ function setupSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureSheet_(ss, V2.sourceSheet, V2.sourceHeaders, V2.files.map(file => [file, true, "", "", ""]));
   ensureSheet_(ss, V2.translationSheet, V2.translationHeaders, []);
+  ensureSheet_(ss, V2.glossarySheet, V2.glossaryHeaders, V2.glossarySeedRows);
   ensureSheet_(ss, V2.logSheet, ["Timestamp", "Action", "Result", "Details"], []);
   PropertiesService.getScriptProperties().setProperty("V2_SPREADSHEET_ID", ss.getId());
   SpreadsheetApp.getUi().alert("시트 준비 완료. Script Properties에 GEMINI_API_KEY를 입력한 다음 ‘BSData 동기화 + AI 번역’을 실행하세요.");
@@ -54,6 +73,11 @@ function ensureSheet_(ss, name, headers, seedRows) {
   } else if (name === V2.sourceSheet && seedRows.length) {
     const existingFiles = new Set((sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat() : []).filter(Boolean).map(String));
     const missingRows = seedRows.filter(row => !existingFiles.has(String(row[0])));
+    if (missingRows.length) sheet.getRange(sheet.getLastRow() + 1, 1, missingRows.length, headers.length).setValues(missingRows);
+  } else if (name === V2.glossarySheet && seedRows.length) {
+    const englishColumn = headers.indexOf("English") + 1;
+    const existingTerms = new Set((sheet.getLastRow() > 1 ? sheet.getRange(2, englishColumn, sheet.getLastRow() - 1, 1).getValues().flat() : []).filter(Boolean).map(value => String(value).trim().toLowerCase()));
+    const missingRows = seedRows.filter(row => !existingTerms.has(String(row[0]).trim().toLowerCase()));
     if (missingRows.length) sheet.getRange(sheet.getLastRow() + 1, 1, missingRows.length, headers.length).setValues(missingRows);
   }
   return sheet;
@@ -165,7 +189,7 @@ function translatePendingBatch_() {
   const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet), values = sheet.getDataRange().getValues();
   if (values.length < 2) return 0;
   const headers = values[0], col = name => headers.indexOf(name), pending = [];
-  for (let i = 1; i < values.length && pending.length < V2.aiBatchesPerRun * V2.rowsPerAiBatch; i++) if (values[i][col("Status")] === "PENDING") pending.push({ row: i + 1, id: values[i][col("Key")], name: values[i][col("Name EN")], source: values[i][col("Source EN")] });
+  for (let i = 1; i < values.length && pending.length < V2.aiBatchesPerRun * V2.rowsPerAiBatch; i++) if (values[i][col("Status")] === "PENDING") pending.push({ row: i + 1, id: values[i][col("Key")], faction: values[i][col("Faction")], kind: values[i][col("Kind")], name: values[i][col("Name EN")], source: values[i][col("Source EN")] });
   let done = 0;
   for (let offset = 0; offset < pending.length; offset += V2.rowsPerAiBatch) {
     const batch = pending.slice(offset, offset + V2.rowsPerAiBatch);
@@ -174,7 +198,7 @@ function translatePendingBatch_() {
       batch.forEach((item, i) => {
         const ko = String(byIndex.get(i) || "").trim();
         if (!ko) return;
-        sheet.getRange(item.row, col("Translation KO") + 1, 1, 5).setValues([[ko, "AI_DRAFT", PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.6-flash", new Date(), "검수 후 APPROVED로 변경"]]);
+        sheet.getRange(item.row, col("Translation KO") + 1, 1, 5).setValues([[ko, "AI_DRAFT", PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.8-flash", new Date(), "검수 후 APPROVED로 변경"]]);
         done++;
       });
     } catch (err) { log_("translate", "배치 오류 · 대기 유지", String(err.message || err)); break; }
@@ -183,17 +207,48 @@ function translatePendingBatch_() {
 }
 
 function callGemini_(batch, apiKey) {
-  const model = PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.6-flash";
-  const items = batch.map((x, i) => ({ i, name: x.name, text: x.source }));
-  const prompt = "Translate Warhammer 40,000 rules text into concise Korean. Return ONLY a JSON array of objects with i (input index) and ko (Korean translation). Preserve every number, dice value, range, phase, condition, exception, and game term; do not add rules or omit clauses. Keep official English names in parentheses only when translating a name. If uncertain, translate literally. Glossary: Command phase=지휘 페이즈, Movement phase=이동 페이즈, Shooting phase=사격 페이즈, Charge phase=돌격 페이즈, Fight phase=타격 페이즈, Battle-shocked=전투 충격 상태, wound=운드, hit roll=명중 굴림, wound roll=운드 굴림, saving throw=방어 굴림, Objective Control=목표 장악. Inputs: " + JSON.stringify(items);
+  const model = PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.8-flash";
+  const glossary = approvedGlossary_();
+  const items = batch.map((x, i) => ({ i, edition: V2.edition, faction: x.faction, kind: x.kind, name: x.name, text: x.source }));
+  const corpus = items.map(item => item.name + " " + item.text).join(" ").toLowerCase();
+  const relevantGlossary = glossary.filter(entry => corpus.includes(entry.en.toLowerCase()));
+  const prompt = "You are a specialist Korean localizer for Warhammer 40,000 rules. Translate these 11th-edition BSData catalogue records from English to Korean. Treat the English as authoritative rules text. Translate every sentence and clause; never summarize, omit, add advice, or invent rules. Preserve all numbers, dice expressions, ranges, measurements, named phases, conditions, exceptions, and cause/effect relationships exactly. Use the APPROVED glossary mappings verbatim and consistently; do not translate proper names or game terms differently from the glossary. For rules/ability records, write clear Korean rules text while retaining the exact mechanics. For labels/names, return only a concise Korean rendering; the app presents English alongside it. Keep weapon and datasheet names transliterated consistently. Return exactly one result for every input index, no duplicates or missing indexes, and Korean text in every ko field. Return only JSON matching the required schema. Relevant approved glossary: " + JSON.stringify(relevantGlossary) + ". Inputs: " + JSON.stringify(items);
   const response = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: "post", contentType: "application/json", muteHttpExceptions: true,
     headers: { "x-goog-api-key": apiKey },
-    payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.1 } })
+    payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: { i: { type: "INTEGER" }, ko: { type: "STRING" } }, required: ["i", "ko"] } } } })
   });
   if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) throw new Error(`Gemini HTTP ${response.getResponseCode()}: ${response.getContentText().slice(0, 400)}`);
   const body = JSON.parse(response.getContentText()), text = body.candidates[0].content.parts.map(p => p.text || "").join("");
-  return JSON.parse(text);
+  const outputs = JSON.parse(text);
+  if (!Array.isArray(outputs) || outputs.length !== batch.length) throw new Error("Gemini 응답의 번역 항목 수가 입력과 다릅니다.");
+  const indexes = new Set();
+  for (const output of outputs) {
+    if (!Number.isInteger(output.i) || output.i < 0 || output.i >= batch.length || indexes.has(output.i) || typeof output.ko !== "string" || !output.ko.trim()) throw new Error("Gemini 응답의 인덱스 또는 번역문을 검증하지 못했습니다.");
+    indexes.add(output.i);
+  }
+  if (indexes.size !== batch.length) throw new Error("Gemini 응답에 누락된 번역 항목이 있습니다.");
+  return outputs;
+}
+
+function approvedGlossary_() {
+  const entries = new Map(), ss = getSpreadsheet_(), glossarySheet = ss.getSheetByName(V2.glossarySheet);
+  if (glossarySheet && glossarySheet.getLastRow() > 1) {
+    const rows = glossarySheet.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
+    rows.filter(row => String(row[ix("Status")]).trim().toUpperCase() === "APPROVED" && row[ix("English")] && row[ix("Korean")])
+      .forEach(row => entries.set(String(row[ix("English")]).trim().toLowerCase(), { en: String(row[ix("English")]).trim(), ko: String(row[ix("Korean")]).trim(), context: String(row[ix("Note")]||"").trim() }));
+  }
+  // Reuse already-reviewed catalogue labels as a growing cross-faction term bank.
+  const translations = ss.getSheetByName(V2.translationSheet);
+  if (translations && translations.getLastRow() > 1) {
+    const rows = translations.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
+    rows.filter(row => row[ix("Status")] === "APPROVED" && row[ix("Kind")] === "label" && row[ix("Name EN")] && row[ix("Translation KO")])
+      .slice(-2000).forEach(row => {
+        const en = String(row[ix("Name EN")]).trim(), key = en.toLowerCase();
+        if (!entries.has(key)) entries.set(key, { en, ko: String(row[ix("Translation KO")]).trim(), context: "검수 완료 데이터시트 용어" });
+      });
+  }
+  return [...entries.values()];
 }
 
 function callGeminiWithRetry_(batch, apiKey) {

@@ -15,8 +15,17 @@
     <section class="input-panel">
       <div class="section-heading"><div><p class="eyebrow">1 · 입력</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
       <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
+      <div class="roster-presets" aria-label="편성표 프리셋">
+        <label for="roster-preset-select">최근 편성표 / 내 프리셋</label>
+        <select id="roster-preset-select"><option value="">불러올 편성표 선택…</option></select>
+        <input id="roster-preset-name" type="text" maxlength="48" placeholder="저장할 이름 입력 (예: 소로리타스 1000점)">
+        <button id="save-roster-preset" class="quiet" type="button">이름 붙여 저장</button>
+        <button id="load-roster-preset" class="quiet" type="button">불러오기</button>
+        <button id="delete-roster-preset" class="quiet" type="button" disabled>삭제</button>
+      </div>
       <div class="actions"><button id="clear-roster" class="quiet" type="button">입력 초기화</button><button id="parse" class="primary">편성표 분석</button></div>
-      <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. JSON 파일은 필요하지 않습니다.</p>
+      <p id="roster-preset-status" class="hint" role="status"></p>
+      <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. 최근 분석한 편성표 6개는 자동 보관되고, 이름을 붙인 프리셋은 이 브라우저에 저장됩니다.</p>
     </section>
     <div id="data-status" class="data-status" role="status">BSData 공개 저장소에 자동 연결 중…</div>
     <section class="match-map-tools" aria-label="매칭 사전 관리"><div><strong>매칭 사전</strong><small>직접 연결한 데이터시트 이름을 다른 브라우저에서도 재사용합니다.</small><p id="match-map-status" role="status"></p></div><div><button id="export-unit-maps" class="quiet" type="button">사전 내보내기</button><label class="quiet import-map-label" for="import-unit-maps">사전 가져오기</label><input id="import-unit-maps" type="file" accept="application/json,.json" hidden></div></section>
