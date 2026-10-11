@@ -127,9 +127,12 @@ function indexRuleDescriptions(root){const stack=[root],seen=new WeakSet();while
 function sourceDescriptionFor(name){const key=textKey(name);if(sourceRuleDescriptions.has(key))return sourceRuleDescriptions.get(key);const compact=norm(name);for(const [ruleKey,description] of sourceRuleDescriptions)if(norm(ruleKey)===compact)return description;return "";}
 function parseRoster(text) {
   const lines = text.replace(/\u00a0/g," ").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-  const units = [], meta = {};let currentUnit=null;
+  const units = [], meta = {};let currentUnit=null,attachedGroup="";
   const headerRules = [[/FACTION KEYWORD:\s*(.+)/i,"faction"],[/DETACHMENT:\s*(.+)/i,"detachment"],[/FORCE DISPOSITION:\s*(.+)/i,"disposition"],[/TOTAL ARMY POINTS:\s*(\d+)/i,"points"],[/NUMBER OF UNITS:\s*(\d+)/i,"unitCount"],[/WARLORD:\s*(.+)/i,"warlord"]];
   for (const line of lines) {
+    const attachedGroupLine=line.match(/^(?:Attached Unit|합류 유닛|부착 유닛|부착 편성)\s*(\d+)$/i);if(attachedGroupLine){attachedGroup=attachedGroupLine[1];currentUnit=null;continue;}
+    if(/^(?:CHARACTERS|BATTLELINE|OTHER DATASHEETS|DEDICATED TRANSPORTS|CHARACTER|전열|기타 데이터시트|전속 수송|캐릭터)$/i.test(line))attachedGroup="";
+    const attachedToLine=line.match(/^Attached to\s+(.+)$/i);if(attachedToLine&&currentUnit){currentUnit.attachedTo=attachedToLine[1].trim();continue;}
     for (const [re,key] of headerRules) { const m=line.match(re); if(m) meta[key]=m[1].trim(); }
     const detachmentLine=line.match(/^(.+?)\s*\(\s*\d+\s*(?:디태치먼트\s*포인트|detachment\s*points?)\s*\)$/i);if(detachmentLine&&!meta.detachment)meta.detachment=detachmentLine[1].trim();
     const totalLine=line.match(/^\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)$/i);if(totalLine&&!meta.points)meta.points=totalLine[1];
@@ -140,9 +143,9 @@ function parseRoster(text) {
     const armyTitleLine=/^\d+\s*(?:포전|포|points?|pts?)?\s*\(\s*\d+\s*(?:포인트|points?|pts?)\s*\)$/i.test(unitLine);
     if (!armyTitleLine&&/^(?:\d+x\s+)?[^•+\-].*\(\s*\d+\s*(?:포인트|points?|pts?)\s*\)/i.test(unitLine)&&!/^(?:급습|대규모|incursion|strike\s*force|onslaught)\s*\(/i.test(unitLine)&&!/\((?:사본|copy)\)/i.test(unitLine)) {
       const m=unitLine.match(/^(?:(\d+)x\s+)?(.+?)\s*\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)\s*(?::\s*(.*))?$/i);
-      if (m) {currentUnit={count:Number(m[1]||0),rosterName:m[2].trim(),points:Number(m[3]),equipment:m[4]||"",equipmentLines:[],modelCounts:[],sourceLine:line};units.push(currentUnit);}
+      if (m) {currentUnit={count:Number(m[1]||0),rosterName:m[2].trim(),points:Number(m[3]),equipment:m[4]||"",equipmentLines:[],modelCounts:[],sourceLine:line,attachedGroup,attachedAs:"",attachedTo:""};units.push(currentUnit);}
     } else if(currentUnit&&/^[•●▪*-]\s*/.test(line)) {
-      const item=line.replace(/^[•●▪*-]\s*/,"");currentUnit.equipmentLines.push(item);const model=item.match(/^(\d+)x\s+(.+)$/i);if(model&&!/\b(?:claws?|talons?|bonesword|lash whip|weapon|launcher|cannon|salvo|limbs?|ovipositor|barbed|chitin|fists?|blade|sword|rending|stinger|venom|spear|flamer|pistol|rifle|bolter|grenade)\b|볼터|볼트|권총|체인소드|체인블레이드|명장제조|라스캐논|미사일|런처|피스트|블레이드|소드|플라즈마|라이플|소총|파이어블래스터|볼트건|근접무기/i.test(model[2]))currentUnit.modelCounts.push(Number(model[1]));
+      const item=line.replace(/^[•●▪*-]\s*/,""),role=item.match(/^(?:Attached as|합류 방식)\s*:\s*(Leader|Bodyguard|Support|리더|경호원|지원)(?:\s|\(|$)/i);if(role){currentUnit.attachedAs=role[1];continue;}currentUnit.equipmentLines.push(item);const model=item.match(/^(\d+)x\s+(.+)$/i);if(model&&!/\b(?:claws?|talons?|bonesword|lash whip|weapon|launcher|cannon|salvo|limbs?|ovipositor|barbed|chitin|fists?|blade|sword|rending|stinger|venom|spear|flamer|pistol|rifle|bolter|grenade)\b|볼터|볼트|권총|체인소드|체인블레이드|명장제조|라스캐논|미사일|런처|피스트|블레이드|소드|플라즈마|라이플|소총|파이어블래스터|볼트건|근접무기/i.test(model[2]))currentUnit.modelCounts.push(Number(model[1]));
     }
   }
   for(const unit of units){if(!unit.count){const inferred=unit.modelCounts.reduce((sum,n)=>sum+n,0),fallback=Math.max(0,...unit.equipmentLines.map(x=>Number(x.match(/^(\d+)x\s+/i)?.[1]||0)));unit.count=inferred||fallback||1;}delete unit.modelCounts;}
@@ -363,8 +366,9 @@ function renderProfiles(profiles,modelCount=1){
 }
 function updateUnitQuickNav(parsed){
   const nav=$("unit-quick-nav"),list=$("unit-quick-nav-list");list.replaceChildren();
-  if(parsed.units.length<2){nav.hidden=true;return;}
-  parsed.units.forEach((unit,index)=>{const found=findDataUnit(unit.rosterName),name=found&&!found.candidates?(found.unit.nameKo||tr(found.unit.name)):unit.rosterName,button=document.createElement("button");button.type="button";button.className="unit-quick-nav-item";button.dataset.unitJump=String(index);button.textContent=`${index+1}. ${name} · ${unit.count}개체`;button.title=unit.rosterName;list.append(button);});
+  if(!parsed.units.length){nav.hidden=true;return;}
+  parsed.units.forEach((unit,index)=>{const found=findDataUnit(unit.rosterName),name=found&&!found.candidates?(found.unit.nameKo||tr(found.unit.name)):unit.rosterName,button=document.createElement("button"),roleLabels={Leader:"리더",Bodyguard:"경호원",Support:"지원",리더:"리더",경호원:"경호원",지원:"지원"},group=unit.attachedGroup?`합류 ${unit.attachedGroup}${unit.attachedAs?` · ${roleLabels[unit.attachedAs]||unit.attachedAs}`:""} · `:unit.attachedTo?`${unit.attachedTo}에 합류 · `:"";button.type="button";button.className="unit-quick-nav-item";button.dataset.unitJump=String(index);button.textContent=`${index+1}. ${group}${name} · ${unit.count}개체`;button.title=unit.attachedTo?`${unit.rosterName} → ${unit.attachedTo}`:unit.rosterName;list.append(button);});
+  const assistantButton=document.createElement("button");assistantButton.type="button";assistantButton.className="unit-quick-nav-item assistant-quick-link";assistantButton.dataset.assistantJump="true";assistantButton.textContent=`${parsed.units.length+1}. 전투 보조 체크리스트`;list.append(assistantButton);
   nav.hidden=false;
 }
 function renderRosterEquipment(unit){
@@ -432,7 +436,7 @@ $("load-example").addEventListener("click",()=>{$("roster").value=example;resize
 $("parse").addEventListener("click",()=>{rememberRecentRoster();render();});
 $("results").addEventListener("click",e=>{const wound=e.target.closest("[data-wound-action]");if(wound){e.preventDefault();e.stopPropagation();const key=wound.dataset.woundKey,max=Number(wound.dataset.woundMax)||0;if(!max)return;let value=currentWounds(key,max);value=Math.max(0,Math.min(max,value+(wound.dataset.woundAction==="plus"?1:-1)));woundState.set(key,value);const output=document.querySelector(`[data-wound-value="${CSS.escape(key)}"]`);if(output)output.textContent=`${value}/${max}`;return;}const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 $("results").addEventListener("change",e=>{const select=e.target.closest("[data-unit-match]");if(!select?.value)return;try{localStorage.setItem(unitMatchKey(select.dataset.unitMatch),select.value);}catch{}render();});
-$("unit-quick-nav").addEventListener("click",e=>{const toggle=e.target.closest("#unit-quick-nav-toggle");if(toggle){const list=$("unit-quick-nav-list"),open=list.hidden;list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));return;}const item=e.target.closest("[data-unit-jump]");if(!item)return;const card=document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`);if(!card)return;const head=card.querySelector(".card-head"),body=head?.nextElementSibling;if(body?.hidden){body.hidden=false;head.setAttribute("aria-expanded","true");}card.scrollIntoView({behavior:"smooth",block:"start"});$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");});
+$("unit-quick-nav").addEventListener("click",e=>{const toggle=e.target.closest("#unit-quick-nav-toggle");if(toggle){const list=$("unit-quick-nav-list"),open=list.hidden;list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));return;}const closeList=()=>{$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");};if(e.target.closest("[data-assistant-jump]")){document.querySelector('[data-view="assistant"]').click();closeList();requestAnimationFrame(()=>$("assistant-page").scrollIntoView({behavior:"smooth",block:"start"}));return;}const item=e.target.closest("[data-unit-jump]");if(!item)return;if(document.body.classList.contains("assistant-mode"))document.querySelector('[data-view="datasheets"]').click();const card=document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`);if(!card)return;const head=card.querySelector(".card-head"),body=head?.nextElementSibling;if(body?.hidden){body.hidden=false;head.setAttribute("aria-expanded","true");}card.scrollIntoView({behavior:"smooth",block:"start"});closeList();});
 $("assistant-page").addEventListener("click",e=>{const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 const savedTranslationFeed=(()=>{try{return localStorage.getItem("40k-translation-feed")||"";}catch{return "";}})();
 $("translation-feed-url").value=v2TranslationFeed||savedTranslationFeed;
