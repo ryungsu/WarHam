@@ -147,12 +147,15 @@ function parseRoster(text) {
 function findDataUnit(rosterName) {
   if (!db?.units) return null;
   const needle=norm(rosterName);
-  let exact=db.units.find(u=>[u.name,...(u.aliases||[])].some(n=>norm(n)===needle));
-  if(exact) return {unit:exact,confidence:"일치"};
-  const candidates=db.units.map(u=>({unit:u,score:[u.name,...(u.aliases||[])].reduce((s,n)=>Math.max(s,commonScore(needle,norm(n))),0)})).filter(x=>x.score>=.76).sort((a,b)=>b.score-a.score);
-  return candidates.length===1?{unit:candidates[0].unit,confidence:"유사 이름"}:candidates.length?{candidates:candidates.slice(0,4)}:null;
+  const namesFor=u=>Array.from(new Set([u.name,...(u.aliases||[]),u.nameKo,tr(u.name||""),translateTerms(u.name||"")].filter(Boolean)));
+  let exact=db.units.find(u=>namesFor(u).some(n=>norm(n)===needle));
+  if(exact)return {unit:exact,confidence:norm(exact.name)===needle?"일치":"한글 이름 일치"};
+  const candidates=db.units.map(u=>({unit:u,score:namesFor(u).reduce((s,n)=>Math.max(s,commonScore(needle,norm(n)),similarityScore(needle,norm(n))),0)})).filter(x=>x.score>=.82).sort((a,b)=>b.score-a.score);
+  if(candidates.length===1||(candidates.length&&candidates[0].score-candidates[1].score>=.08))return {unit:candidates[0].unit,confidence:"이름 유사"};
+  return candidates.length?{candidates:candidates.slice(0,4)}:null;
 }
 function commonScore(a,b){let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i/Math.max(a.length,b.length,1)}
+function similarityScore(a,b){if(!a||!b)return 0;let prev=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const row=[i];for(let j=1;j<=b.length;j++)row[j]=Math.min(row[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=row;}return 1-prev[b.length]/Math.max(a.length,b.length,1);}
 function escapeHtml(s=""){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function tr(s=""){if(v2LabelTranslations.has(textKey(s)))return v2LabelTranslations.get(textKey(s));if(translations.has(s))return translations.get(s);if(abilityTranslations.has(s))return `${abilityTranslations.get(s)} (${s})`;if(profileTypeTranslations.has(s))return `${profileTypeTranslations.get(s)} (${s})`;return translateTerms(s);}
 function textKey(s=""){return s.replace(/\u00a0/g," ").replace(/\s+/g," ").trim().toLowerCase();}
