@@ -15,14 +15,16 @@
     <section class="input-panel">
       <div class="section-heading"><div><p class="eyebrow">1 · 입력</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
       <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
-      <div class="actions"><button id="parse" class="primary">편성표 분석</button></div>
+      <div class="actions"><button id="clear-roster" class="quiet" type="button">입력 초기화</button><button id="parse" class="primary">편성표 분석</button></div>
       <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. JSON 파일은 필요하지 않습니다.</p>
     </section>
     <div id="data-status" class="data-status" role="status">BSData 공개 저장소에 자동 연결 중…</div>
+    <section class="match-map-tools" aria-label="매칭 사전 관리"><div><strong>매칭 사전</strong><small>직접 연결한 데이터시트 이름을 다른 브라우저에서도 재사용합니다.</small><p id="match-map-status" role="status"></p></div><div><button id="export-unit-maps" class="quiet" type="button">사전 내보내기</button><label class="quiet import-map-label" for="import-unit-maps">사전 가져오기</label><input id="import-unit-maps" type="file" accept="application/json,.json" hidden></div></section>
     <section class="translation-feed-panel" aria-label="번역 피드 연결">
-      <label for="translation-feed-url">Google Sheets 번역 피드 주소</label>
+      <label for="translation-feed-url">Google Sheets 번역 피드 주소 · 설정된 주소는 자동으로 적용됩니다</label>
       <input id="translation-feed-url" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url">
       <button id="load-translations" class="primary" type="button">번역 불러오기 · 적용</button>
+      <p id="translation-feed-status" class="translation-feed-status" role="status">기본 번역 피드 연결을 확인하는 중입니다.</p>
     </section>
     <nav class="view-tabs" aria-label="도구 페이지">
       <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
