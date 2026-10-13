@@ -251,7 +251,7 @@ function classifyAssistantRule(name,description,typeName=""){
   if(type.includes("rangedweapon")||type.includes("rangedweapons"))return "전투 > 사격";
   if(type.includes("meleeweapon")||type.includes("meleeweapons"))return "전투 > 타격";
   if(n.includes("battle-shock")||n.includes("battleshock")||t.includes("battleshockphase")||t.includes("battleshocktest"))return "전투 > 전투 충격";
-  if(n.includes("feel no pain")||n.includes("invulnerable")||t.includes("destroyed")||t.includes("losesawound")||t.includes("woundisallocated")||t.includes("savingthrow"))return "전투 > 피격·운드 처리";
+  if(n.includes("feel no pain")||n.includes("invulnerable")||/feelnopain|invulnerablesave|mortalwound|psychicattack|destroyed|loses(?:any|awound)|wound(?:is)?allocated|attackisallocated|savingthrow|damageisallocated|suffersdamage|attackismadeagainst|selectedasa(?:the)?target|targetofattack|attack.{0,24}(?:target|allocated)|target.{0,24}attack/.test(t))return "전투 > 피격·운드 처리";
   if(t.includes("fightphase")||t.includes("fightfirst")||t.includes("fightlast"))return "전투 > 타격";
   if(t.includes("shootingphase")||t.includes("makesashootingattack"))return "전투 > 사격";
   if(n.includes("objective")||t.includes("endofyourturn"))return "전투 > 목표·종료";
@@ -385,7 +385,7 @@ function renderUnitImageSection(unit,index){
   return `<section class="unit-image" data-unit-image="${encodedKey}" data-unit-index="${index}"><div class="unit-image-heading"><h4>유닛 대표 이미지</h4></div><div data-image-content>${content}</div></section>`;
 }
 function unitRuleEffects(unit){
-  const sources=[...(unit.profiles||[]).map(p=>({name:p.name||"",description:(p.characteristics||[]).find(c=>c.name==="Description")?.value||""})),...(unit.abilities||[]).map(a=>({name:a.name||a.baseName||"",description:a.description||sourceDescriptionFor(a.name||a.baseName||"")}))],effects=new Map();
+  const sources=[...(unit.profiles||[]).map(p=>({name:p.name||"",description:(p.characteristics||[]).find(c=>c.name==="Description")?.value||""})),...(unit.abilities||[]).map(a=>({name:a.name||a.baseName||"",description:a.description||sourceDescriptionFor(a.name||a.baseName||"")})),...(unit.keywords||[]).map(name=>({name,description:""}))],effects=new Map();
   for(const {name,description} of sources){const text=String(description||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim(),fnp=text.match(/Feel\s+No\s+Pain\s+(\d+)\s*\+?(?:\s+against\s+([^.;]+))?/i)||name.match(/Feel\s+No\s+Pain\s*\(?\s*(\d+)\s*\+?\s*\)?/i);if(fnp){const value=fnp[1],scope=(fnp[2]||"").replace(/\s+and\s+/gi," 또는 ").replace(/psychic attacks?/gi,"사이킥 공격").replace(/mortal wounds?/gi,"모탈 운드").replace(/\s+/g," ").trim(),title=`고통 경감 ${value}+ (Feel No Pain ${value}+)`,detail=`${scope?`${scope}로 `:""}운드를 잃을 때마다 D6을 굴립니다. ${value}+가 나오면 해당 운드를 무시합니다.`;effects.set(title,{title,detail,source:text||name});}}
   return [...effects.values()];
 }
