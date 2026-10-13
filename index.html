@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261013-9">
+  <link rel="stylesheet" href="styles.css?v=20261013-11">
 </head>
 <body>
   <header class="topbar">
@@ -32,6 +32,9 @@
       <label for="translation-feed-url">Google Sheets 번역 피드 주소 · 설정된 주소는 자동으로 적용됩니다</label>
       <input id="translation-feed-url" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url">
       <button id="load-translations" class="primary" type="button">번역 불러오기 · 적용</button>
+      <label for="translation-write-token">번역 저장 키 · 내 브라우저에만 저장됩니다</label>
+      <input id="translation-write-token" type="password" autocomplete="off" placeholder="Google Sheet 메뉴에서 표시/생성한 키">
+      <span class="translation-feed-hint">키는 번역 초안을 시트에 저장할 때만 사용합니다.</span>
       <p id="translation-feed-status" class="translation-feed-status" role="status">기본 번역 피드 연결을 확인하는 중입니다.</p>
     </section>
     <nav class="view-tabs" aria-label="도구 페이지">
@@ -51,6 +54,6 @@
   </main>
   <footer>원문 데이터와 번역은 분리해 관리합니다. <a href="https://github.com/BSData/wh40k-11e" target="_blank" rel="noreferrer">11판 BSData</a> · <a href="https://github.com/pguetschow/warhammer-40k-stratagem-card-generator" target="_blank" rel="noreferrer">스트라타젬 데이터 출처</a> · 판본을 확인한 뒤 사용하세요.</footer>
   <script src="workbook-glossary.js"></script>
-  <script src="app.js?v=20261013-10"></script>
+  <script src="app.js?v=20261013-11"></script>
 </body>
 </html>

@@ -46,11 +46,22 @@ function onOpen() {
     .addItem("BSData 동기화 + AI 번역", "runV2Pipeline")
     .addItem("선택 행 검수 완료", "approveSelectedRows")
     .addItem("검수 완료 JSON 내보내기", "exportApprovedJson")
+    .addItem("웹 앱 번역 저장 키 표시/생성", "showWebWriteToken")
     .addSeparator()
     .addItem("매일 자동 실행 켜기", "installDailyTrigger")
     .addItem("대기 번역 자동 처리 (15분마다)", "installFrequentTrigger")
     .addItem("자동 실행 끄기", "removeDailyTrigger")
     .addToUi();
+}
+
+function showWebWriteToken() {
+  const props = PropertiesService.getScriptProperties();
+  let token = props.getProperty("V2_WEB_WRITE_TOKEN");
+  if (!token) {
+    token = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+    props.setProperty("V2_WEB_WRITE_TOKEN", token);
+  }
+  SpreadsheetApp.getUi().alert("WarHam 웹 앱 번역 저장 키", "이 키를 앱의 ‘번역 저장 키’ 칸에 입력하세요. 이 키는 공개 저장소에 올리지 말고, 다른 사람에게 공유하지 마세요.\n\n" + token, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function setupSheets() {
@@ -286,14 +297,81 @@ function exportApprovedJson() {
 }
 
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action === "translateDraft") {
+    return jsonpOutput_(translateDraftFromApp_(e.parameter), e.parameter.callback);
+  }
   const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet), rows = sheet.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
   const payload = { schemaVersion: 1, edition: V2.edition, translations: rows.filter(r => r[ix("Status")] === "APPROVED" && r[ix("Translation KO")]).map(r => ({ id: r[ix("Source ID")], kind: r[ix("Kind")], name: r[ix("Name EN")], source: r[ix("Source EN")], translation: r[ix("Translation KO")] })) };
-  const callback = e && e.parameter && e.parameter.callback;
+  return jsonpOutput_(payload, e && e.parameter && e.parameter.callback);
+}
+
+// The public GitHub Pages app can request one bounded translation at a time.
+// Writes require a random key kept only in Apps Script properties and the user's browser.
+function translateDraftFromApp_(params) {
+  try {
+    const props = PropertiesService.getScriptProperties(), expected = props.getProperty("V2_WEB_WRITE_TOKEN");
+    if (!expected || !params.token || !constantTimeEqual_(String(params.token), expected)) throw new Error("번역 저장 키가 올바르지 않습니다. Google Sheet 메뉴에서 키를 표시/생성하세요.");
+    if (!props.getProperty("GEMINI_API_KEY")) throw new Error("Apps Script Script Properties에 GEMINI_API_KEY가 없습니다.");
+    if (!params.item || String(params.item).length > 12000) throw new Error("번역 요청이 비어 있거나 너무 깁니다.");
+    const item = JSON.parse(params.item);
+    const name = String(item.name || "").trim(), source = cleanText_(item.source), file = String(item.file || "").trim(), id = String(item.id || "").trim();
+    if (!name || !source || !/[A-Za-z]/.test(source) || source.length > 8000 || !/^[\w .'-]{1,180}\.json$/i.test(file) || !id || id.length > 200) throw new Error("번역 원문 정보가 올바르지 않습니다.");
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) throw new Error("다른 번역 저장 작업이 진행 중입니다. 잠시 후 다시 시도하세요.");
+    try {
+      const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+      if (!sheet) throw new Error("Translations 시트가 없습니다. 먼저 시트 준비를 실행하세요.");
+      const values = sheet.getDataRange().getValues(), headers = values[0], col = key => headers.indexOf(key);
+      const hash = sha256_([name, source].join("\n")), stableKey = [V2.edition, file, id, "ability"].join("|");
+      let rowNumber = -1;
+      for (let i = values.length - 1; i > 0; i--) if (String(values[i][col("Key")]).startsWith(stableKey + "|")) { rowNumber = i + 1; break; }
+      let row;
+      if (rowNumber > 0) {
+        row = values[rowNumber - 1];
+        if (String(row[col("Source hash")]) !== hash) rowNumber = -1;
+      }
+      if (rowNumber > 0 && row[col("Translation KO")] && ["APPROVED", "AI_DRAFT"].includes(String(row[col("Status")]))) {
+        return { ok: true, translation: String(row[col("Translation KO")]), status: String(row[col("Status")]), reused: true };
+      }
+      const faction = String(item.faction || "").slice(0, 160), now = new Date();
+      if (rowNumber < 0) {
+        const key = stableKey + "|" + hash.slice(0, 12);
+        sheet.appendRow([key, V2.edition, faction, file, id, "ability", name, source, hash, "", "PENDING", "", now, "앱 요청 · AI 번역 후 검수 필요"]);
+        rowNumber = sheet.getLastRow();
+      } else {
+        row = values[rowNumber - 1];
+        if (String(row[col("Status")]) === "PENDING") {
+          // Keep the existing row and translate its current source.
+        } else {
+          sheet.getRange(rowNumber, col("Source EN") + 1, 1, 4).setValues([[source, hash, "", "PENDING"]]);
+        }
+      }
+      const translationItem = { row: rowNumber, id: stableKey + "|" + hash.slice(0, 12), faction, kind: "ability", name, source };
+      const ko = String(callGeminiWithRetry_([translationItem], props.getProperty("GEMINI_API_KEY"))[0].ko || "").trim();
+      if (!ko) throw new Error("AI가 빈 번역을 반환했습니다.");
+      const model = props.getProperty("GEMINI_MODEL") || "gemini-3.8-flash";
+      sheet.getRange(rowNumber, col("Translation KO") + 1, 1, 5).setValues([[ko, "AI_DRAFT", model, now, "앱에서 생성 · 확인 후 APPROVED로 변경"]]);
+      log_("app-translate", "AI_DRAFT 저장", `${file} · ${name}`);
+      return { ok: true, translation: ko, status: "AI_DRAFT", reused: false };
+    } finally { lock.releaseLock(); }
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  }
+}
+
+function jsonpOutput_(payload, callback) {
   if (callback) {
     if (!/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(callback)) throw new Error("Invalid JSONP callback.");
     return ContentService.createTextOutput(`${callback}(${JSON.stringify(payload).replace(/</g, "\\u003c")});`).setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
   return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function constantTimeEqual_(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 function installDailyTrigger() {

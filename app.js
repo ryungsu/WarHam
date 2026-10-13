@@ -117,7 +117,7 @@ let coreRulesLoadPromise=null;
 // Conservative fallback imported from the user-provided 40K issue workbook.
 // Existing app glossary entries and approved feed translations take precedence.
 const workbook40kTranslations=new Map((window.WH40K_WORKBOOK_GLOSSARY||[]).map(([source,translation])=>[source,translation]));
-const v2LabelTranslations=new Map(),v2RuleTranslations=new Map();
+const v2LabelTranslations=new Map(),v2RuleTranslations=new Map(),v2DraftRuleTranslations=new Map();
 const DEFAULT_TRANSLATION_FEED="https://script.google.com/macros/s/AKfycbyrM4W4xGOYMgp1MLeiotCNcM4f8HQ2EO0_dx54Y3M8W2G5RRjiX9-XjmKQTa8O45admA/exec";
 let v2TranslationFeed=new URLSearchParams(location.search).get("translationFeed")||DEFAULT_TRANSLATION_FEED;
 let currentRosterMeta={};
@@ -209,6 +209,7 @@ function bilingualLabel(s=""){const ko=translateTerms(s);return ko!==s?`${ko} ($
 function translateRulesText(profileName,text=""){
   const key=textKey(profileName);
   const approvedV2=v2RuleTranslations.get(ruleFeedKey(profileName,text));if(approvedV2)return approvedV2;
+  const savedDraft=v2DraftRuleTranslations.get(ruleFeedKey(profileName,text));if(savedDraft)return savedDraft;
   if(key==="leader"&&text.includes("VICTRIX HONOUR GUARD"))return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 헬블래스터 분대, 인페르누스 분대, 인터세서 분대, 스턴가드 베테랑 분대, 뱅가드 베테랑 분대, 빅트릭스 의장대, 울트라마르의 수호자.";
   if(key==="support")return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 크루세이더 분대, 데스워치 베테랑, 데키무스 킬팀, 포르티스 킬팀, 헬블래스터 분대, 인페르누스 분대, 이너 서클 컴패니언, 인터세서 분대, 스턴가드 베테랑 분대, 소드 브레스런 분대, 택티컬 분대, 뱅가드 베테랑 분대.";
   const exact=abilityTextTranslations.get(key);if(exact)return exact;
@@ -441,17 +442,41 @@ function residualEnglishPhrases(text=""){
   return [...new Set(matches.map(x=>x.trim()).filter(x=>x.split(/\s+/).some(word=>signals.has(word.toLowerCase()))))];
 }
 function renderTranslationReview(parsed){
-  const candidates=[];
+  const candidates=[],seen=new Set();
   parsed.units.forEach(unit=>{
     const found=findDataUnit(unit.rosterName);if(!found||found.candidates)return;
     for(const profile of found.unit.profiles||[]){
       const source=(profile.characteristics||[]).find(c=>textKey(c.name)==="description")?.value||"";if(!source)continue;
-      const translated=translateRulesText(profile.name,source),residual=residualEnglishPhrases(translated);if(!residual.length)continue;
-      candidates.push({unit:found.unit.nameKo||tr(found.unit.name),profile:profile.name,source,translated,residual});
+      const key=ruleFeedKey(profile.name,source);if(seen.has(key))continue;seen.add(key);
+      const translated=translateRulesText(profile.name,source),residual=residualEnglishPhrases(translated),draft=v2DraftRuleTranslations.has(key);if(!residual.length&&!draft)continue;
+      candidates.push({key,unit:found.unit.nameKo||tr(found.unit.name),profile:profile.name,source,translated,residual,file:found.unit.sourceFile||"",id:profile.id||profile.name,faction:currentRosterMeta.faction||"",draft});
     }
   });
   if(!candidates.length)return "";
-  return `<details class="translation-review"><summary>규칙 설명 번역 검토 후보 ${candidates.length}건 <span>남은 영문 문구를 확인하세요</span></summary><div class="translation-review-list">${candidates.slice(0,40).map(item=>`<details class="translation-review-item"><summary><b>${escapeHtml(item.unit)} › ${escapeHtml(item.profile)}</b><span>${escapeHtml(item.residual.slice(0,3).join(" · "))}</span></summary><p><b>BSData 원문</b>${escapeHtml(metadataText(item.source))}</p><p><b>현재 표시</b>${escapeHtml(metadataText(item.translated))}</p></details>`).join("")}</div>${candidates.length>40?`<p class="translation-review-more">그 밖의 후보 ${candidates.length-40}건은 유닛 상세에서 확인하세요.</p>`:""}<p class="translation-review-note">영문 고유명사나 게임 용어가 포함될 수 있으므로 후보를 검토한 뒤 번역 사전 또는 승인 번역에 추가하세요.</p></details>`;
+  activeTranslationCandidates=candidates.slice(0,40);
+  return `<details class="translation-review"><summary>규칙 설명 번역 ${candidates.length}건 <span>AI 번역은 시트에 초안으로 저장됩니다</span></summary><div class="translation-review-tools"><button type="button" class="primary" data-translate-all ${translationReviewBusy?"disabled":""}>표시된 후보 번역 및 DB 저장</button><span data-translation-progress role="status">${translationReviewBusy?"번역 중…":""}</span></div><div class="translation-review-list">${activeTranslationCandidates.map((item,index)=>`<details class="translation-review-item"><summary><b>${escapeHtml(item.unit)} › ${escapeHtml(item.profile)}</b><span>${item.draft?"AI 번역 초안 · 검수 대기":escapeHtml(item.residual.slice(0,3).join(" · "))}</span></summary><p><b>BSData 원문</b>${escapeHtml(metadataText(item.source))}</p><p><b>한국어 번역</b>${escapeHtml(metadataText(item.translated))}</p>${!item.draft?`<button type="button" class="quiet" data-translate-candidate="${index}" ${translationReviewBusy?"disabled":""}>번역하고 저장</button>`:`<small class="draft-note">번역 초안이 번역 시트에 저장되어 있습니다.</small>`}</details>`).join("")}</div>${candidates.length>40?`<p class="translation-review-more">화면에는 먼저 40건을 표시합니다.</p>`:""}<p class="translation-review-note">초안은 즉시 화면에 적용되고 Google Sheets Translations 탭에 AI_DRAFT로 보관됩니다. 정확성을 확인한 행을 승인하면 모든 사용자의 피드에 배포됩니다.</p></details>`;
+}
+let activeTranslationCandidates=[],translationReviewBusy=false;
+function requestRuleDraft(candidate){
+  return new Promise((resolve,reject)=>{
+    const token=$("translation-write-token").value.trim();if(!token){reject(new Error("번역 저장 키를 입력하세요. Google Sheet 메뉴에서 키를 표시/생성할 수 있습니다."));return;}
+    let endpoint;try{endpoint=new URL(v2TranslationFeed);if(endpoint.protocol!=="https:")throw new Error("HTTPS 번역 피드 주소를 확인하세요.");}catch(error){reject(error);return;}
+    const callback=`v2Draft_${Date.now()}_${Math.floor(Math.random()*1e6)}`,script=document.createElement("script");
+    endpoint.searchParams.set("action","translateDraft");endpoint.searchParams.set("callback",callback);endpoint.searchParams.set("token",token);
+    endpoint.searchParams.set("item",JSON.stringify({name:candidate.profile,source:candidate.source,file:candidate.file,id:candidate.id,faction:candidate.faction}));
+    const cleanup=()=>{delete window[callback];script.remove();clearTimeout(timer);};
+    const timer=setTimeout(()=>{cleanup();reject(new Error("Apps Script 응답 시간이 초과됐습니다."));},45000);
+    window[callback]=payload=>{cleanup();if(!payload?.ok){reject(new Error(payload?.error||"번역 저장에 실패했습니다."));return;}v2DraftRuleTranslations.set(candidate.key,payload.translation);resolve(payload);};
+    script.onerror=()=>{cleanup();reject(new Error("Apps Script 요청에 실패했습니다. 웹 앱을 새 버전으로 배포했는지 확인하세요."));};script.src=endpoint.toString();document.head.appendChild(script);
+  });
+}
+async function runTranslationReview(indices){
+  if(translationReviewBusy)return;
+  const candidates=indices.map(index=>activeTranslationCandidates[index]).filter(item=>item&&!item.draft);if(!candidates.length)return;
+  translationReviewBusy=true;const button=$("results").querySelector("[data-translate-all]");if(button)button.disabled=true;
+  const progress=()=>$("results").querySelector("[data-translation-progress]");let done=0,errors=[];
+  for(const candidate of candidates){try{await requestRuleDraft(candidate);done++;}catch(error){errors.push(error.message);break;}const label=progress();if(label)label.textContent=`${done}/${candidates.length}건 번역해 시트에 저장했습니다.`;}
+  translationReviewBusy=false;render();const review=$("results").querySelector(".translation-review");if(review)review.open=true;const label=$("results").querySelector("[data-translation-progress]");if(label)label.textContent=errors.length?`저장 ${done}건 · 중단: ${errors[0]}`:`완료 · ${done}건 번역 초안을 DB에 저장했습니다.`;
 }
 let toastTimer;
 function showKeywordToast(raw){
@@ -507,14 +532,17 @@ $("roster").addEventListener("paste",()=>setTimeout(rememberRecentRoster,0));
 $("clear-roster").addEventListener("click",()=>{$("roster").value="";resizeRoster();render();$("roster").focus();});
 $("load-example").addEventListener("click",()=>{$("roster").value=example;resizeRoster();render()});
 $("parse").addEventListener("click",()=>{rememberRecentRoster();render();});
-$("results").addEventListener("click",e=>{const wound=e.target.closest("[data-wound-action]");if(wound){e.preventDefault();e.stopPropagation();const key=wound.dataset.woundKey,max=Number(wound.dataset.woundMax)||0;if(!max)return;let value=currentWounds(key,max);value=Math.max(0,Math.min(max,value+(wound.dataset.woundAction==="plus"?1:-1)));woundState.set(key,value);const output=document.querySelector(`[data-wound-value="${CSS.escape(key)}"]`);if(output)output.textContent=`${value}/${max}`;return;}const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
+$("results").addEventListener("click",e=>{const all=e.target.closest("[data-translate-all]");if(all){e.preventDefault();runTranslationReview(activeTranslationCandidates.map((_,i)=>i));return;}const one=e.target.closest("[data-translate-candidate]");if(one){e.preventDefault();runTranslationReview([Number(one.dataset.translateCandidate)]);return;}const wound=e.target.closest("[data-wound-action]");if(wound){e.preventDefault();e.stopPropagation();const key=wound.dataset.woundKey,max=Number(wound.dataset.woundMax)||0;if(!max)return;let value=currentWounds(key,max);value=Math.max(0,Math.min(max,value+(wound.dataset.woundAction==="plus"?1:-1)));woundState.set(key,value);const output=document.querySelector(`[data-wound-value="${CSS.escape(key)}"]`);if(output)output.textContent=`${value}/${max}`;return;}const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 $("results").addEventListener("change",e=>{const select=e.target.closest("[data-unit-match]");if(!select)return;const key=unitMatchKey(select.dataset.unitMatch);if(select.value)sessionUnitMatches.set(key,select.value);else sessionUnitMatches.delete(key);render();});
 $("unit-quick-nav").addEventListener("click",e=>{const toggle=e.target.closest("#unit-quick-nav-toggle");if(toggle){const list=$("unit-quick-nav-list"),open=list.hidden;list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));return;}const closeList=()=>{$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");};if(e.target.closest("[data-assistant-jump]")){document.querySelector('[data-view="assistant"]').click();closeList();requestAnimationFrame(()=>$("assistant-page").scrollIntoView({behavior:"smooth",block:"start"}));return;}const item=e.target.closest("[data-unit-jump]");if(!item)return;if(document.body.classList.contains("assistant-mode")||document.body.classList.contains("game-mode"))document.querySelector('[data-view="datasheets"]').click();const card=document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`);if(!card)return;const head=card.querySelector(".card-head"),body=head?.nextElementSibling;if(body?.hidden){body.hidden=false;head.setAttribute("aria-expanded","true");const imageSection=body.querySelector("[data-unit-image]");if(imageSection)loadUnitImage(imageSection);}card.scrollIntoView({behavior:"smooth",block:"start"});closeList();});
 $("assistant-page").addEventListener("click",e=>{const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 const savedTranslationFeed=(()=>{try{return localStorage.getItem("40k-translation-feed")||"";}catch{return "";}})();
+const savedTranslationWriteToken=(()=>{try{return localStorage.getItem("40k-translation-write-token")||"";}catch{return "";}})();
 $("translation-feed-url").value=v2TranslationFeed||savedTranslationFeed;
+$("translation-write-token").value=savedTranslationWriteToken;
 if(!v2TranslationFeed)v2TranslationFeed=savedTranslationFeed;
 $("load-translations").addEventListener("click",()=>{v2TranslationFeed=$("translation-feed-url").value.trim();try{if(v2TranslationFeed)localStorage.setItem("40k-translation-feed",v2TranslationFeed);}catch{}loadV2TranslationFeed();});
+$("translation-write-token").addEventListener("change",()=>{try{const token=$("translation-write-token").value.trim();if(token)localStorage.setItem("40k-translation-write-token",token);else localStorage.removeItem("40k-translation-write-token");}catch{}});
 if(v2TranslationFeed)loadV2TranslationFeed();
 $("roster").value=example;resizeRoster();render();
 loadRulesData(parseRoster(example).meta);
