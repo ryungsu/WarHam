@@ -1,0 +1,8 @@
+{
+  "edition": "Kill Team 2024",
+  "file": "kt24_v4.json",
+  "downloaded": "2026-10-14",
+  "sha256": "2dd5eb768bf3eb796c8f33ff91a837fde1b31ec98fcbaea8aec4483ab3a65c5c",
+  "source": "https://github.com/vjosset/killteamjson",
+  "note": "Community snapshot, not a claim of latest official balance parity."
+}

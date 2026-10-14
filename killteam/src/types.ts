@@ -1,0 +1,10 @@
+export type Profile={wepprofileId:string;profileName:string;ATK:string;HIT:string;DMG:string;WR:string};
+export type Weapon={wepId:string;wepName:string;wepType:string;profiles:Profile[]};
+export type Ability={abilityId:string;abilityName:string;AP:number|null;description:string;isFactionRule:boolean};
+export type Option={optionId:string;optionName:string;description:string;effects:string};
+export type Operative={opTypeId:string;opTypeName:string;MOVE:string;APL:number;SAVE:string;WOUNDS:number;keywords:string;basesize:number;weapons:Weapon[];abilities:Ability[];options:Option[]};
+export type Equipment={eqId:string;eqName:string;description:string;effects:string};
+export type Ploy={ployId:string;ployName:string;ployType:string;description:string};
+export type Team={killteamId:string;killteamName:string;composition:string;description:string;opTypes:Operative[];equipments:Equipment[];ploys:Ploy[]};
+export type Member={id:string;type:string;loadout:string[];veteranTactic?:string};
+export type Roster={id:string;name:string;team:string;members:Member[];equipment:string[];tactics:string[];updated:string};

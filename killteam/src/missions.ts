@@ -1,0 +1,14 @@
+export type MissionCard={id:string;title:string;ko:string;kind:'crit'|'tac'|'kill';archetype:string|null;status:'official-text'|'catalog-only';english:string;source:string;note:string};
+export type MissionPack={id:string;title:string;checked:string;officialUpdated:string;sourceCommit:string;officialSource:string;companion:string;cards:MissionCard[]};
+export const missionKo:Record<string,string>={
+'crit-05':'**선택:** 첫 터닝 포인트 이후 각 전략 단계 Gambit 시작에 선제권 플레이어부터 각자 목표 마커 1개와 이번 터닝 포인트의 주장 1개를 선택합니다. 주장은 “종료 시 아군이 그 마커를 통제한다” 또는 “종료 시 적이 그 마커를 contest하지 않는다”입니다. 각 마커는 전투당 한 번만 선택합니다.\n\n**득점:** 첫 터닝 포인트 이후 종료 시, 적보다 더 많은 목표 마커를 통제하면 1VP. 선택한 주장이 참이면 1VP.',
+'crit-06':'**마커 회수:** 목표 마커에 Pick Up Marker 행동을 수행할 수 있습니다. TP2에는 추가 2AP, TP3에는 추가 1AP를 지불하며 이 행동은 무료가 될 수 없고 AP 비용을 줄일 수 없습니다. TP4에는 정상 비용으로 수행합니다. 목표 마커를 들고 있으면 제거 후 6인치 초과 떨어진 곳에 재배치할 수 없습니다.\n\n**득점:** 첫 TP 이후 각 TP 종료 시 적보다 더 많은 목표 마커를 통제하면 1VP. 전투 종료 시 아군이 운반하는 목표 마커마다 1VP.',
+'tac-recon-01':'**공개:** 전략 책략(STRATEGIC GAMBIT)으로 공개합니다.\n\n**조건:** 각 플레이어 전장 가장자리의 중앙을 잇는 가상의 선으로 전장을 좌·우 측면으로 나눕니다. 모델이 한 측면과 적 영역에 모두 완전히 들어가 있으면 그 측면을 contest합니다. contest하는 아군의 총 APL이 적보다 높으면 아군이 통제합니다.\n\n**득점:** 공개 후 첫 TP를 제외한 각 TP 종료 시, 통제한 측면마다 1VP. **TP4에 그 측면을 TP3 종료에도 통제했다면 대신 2VP.** 이 Tac Op은 TP당 최대 2VP입니다.',
+'tac-recon-03':'**공개:** 이 Tac Op에서 처음 VP를 얻을 때.\n\n**회수 · 1AP:** 아군이 아직 수색하지 않은 목표 마커를 통제하면 Retrieval 마커를 운반하고 그 목표는 수색한 것으로 표시합니다. 아군은 Retrieval 마커에 Pick Up Marker를 수행할 수 있습니다. TP1, 적 통제 범위 안, 이미 마커를 운반 중이면 이 행동을 할 수 없습니다.\n\n**득점:** 각 목표를 아군이 처음 수색할 때 1VP. 전투 종료 시 운반 중인 Retrieval 마커마다 1VP.',
+'tac-sec-02':'**공개:** 목표를 contest하던 아군이 처음 전투불능이 될 때.\n\n**토큰:** 그 목표에 Martyr 토큰을 놓습니다. 해당 오퍼레이티브가 처음 전투불능이 된 경우만 해당하며 부활 후 다시 전투불능이 되어도 두 번째 토큰을 얻지 않습니다.\n\n**득점:** 첫 TP 이후 종료 시 아군이 Martyr 토큰이 있는 목표를 contest하면 토큰을 원하는 만큼 제거할 수 있습니다. 토큰당 1VP, 해당 목표도 통제하면 대신 토큰당 2VP. TP당 최대 2VP.',
+'tac-sec-03':'**공개:** 처음 특사를 선택할 때.\n\n**선택:** 첫 TP 이후 각 TP의 전략 책략으로 다음 전략 단계 Ready까지 유지할 아군 특사 1명을 선택합니다. 이전 TP에 선택했던 모델이나 Kill Op에서 무시되는 모델은 선택할 수 없습니다.\n\n**득점:** 첫 TP 이후 종료 시 특사가 적 영역 완전히 안에 있고 적 통제 범위 밖이면 1VP. 또한 이번 TP에 운드를 하나도 잃지 않았다면 대신 2VP.',
+'tac-seek-03':'**공개:** 아군이 처음 적을 전투불능으로 만들 때.\n\n**토큰:** 적을 전투불능으로 만든 아군에게 Dominate 토큰 1개를 줍니다. 적 Wounds 능력치가 12 이상이면 **2개**를 줍니다.\n\n**득점:** TP3·TP4 종료 시 전장에 있고 전투불능이 아닌 아군의 토큰을 제거할 수 있습니다. 제거한 토큰마다 1VP. TP당 최대 3VP.',
+};
+export const allowedArchetypes=(teamId:string)=>teamId==='IMP-AOD'?['security','seek-and-destroy','seek','seek_destroy']:teamId==='IMP-SCT'?['infiltration','infil','recon']:[];
+export function eligibleTac(card:MissionCard,teamId:string){return card.kind==='tac'&&allowedArchetypes(teamId).includes(card.archetype??'')}
+export function practiceCrit(cards:MissionCard[],random=Math.random){const options=cards.filter(c=>c.kind==='crit'&&c.status==='official-text');if(!options.length)return undefined;return options[Math.min(options.length-1,Math.floor(random()*options.length))]}

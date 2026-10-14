@@ -1,0 +1,228 @@
+CORE RULES:
+UPDATE LOG
+Rules will be periodically updated to maintain fair balance and interact more smoothly with the game. Rules changes
+will be updated directly into online documents and then listed below. Any minor changes to standardise wording that
+don’t have any practical impact on the rule will be updated directly into online documents but not be listed here.
+This document has a version number; when this document is revised, the version number will be incremented and
+new updates can be found under that version’s subtitle. Where a version number has a letter, e.g. 1.1a, this means it
+has had a local amendment, only in that language, to clarify a translation issue or other minor correction.
+CORE BOOK
+ERRATA UPDATE 1.3
+This section collects amendments to the rules. Amended text
+for clarification and edits are shown in blue, while amended
+text for balance updates are shown in magenta.
+APPENDIX, WEAPON RULES, HEAVY
+Change first sentence to read:
+‘An operative cannot use this weapon in an activation or
+counteraction in which it moved, and it cannot move in an
+activation or counteraction in which it used this weapon.’
+ PREVIOUS ERRATAS
+KEY PRINCIPLES, DAMAGE
+Add following text to end of first paragraph:
+‘Some rules allow an incapacitated operative to perform a
+free action before being removed from the killzone. Such
+an operative cannot perform more than one free action
+(excluding Place Marker) in this instance, and that operative’s
+player decides the order of any of its rules that occur before
+it’s removed from the killzone (taking precedence over the
+player with initiative deciding).’
+KILLZONE: VOLKUS, CITYFIGHT RULES, CONDENSED
+STRONGHOLD
+Change relevant part to read:
+‘[…] if the target is wholly within a stronghold terrain feature
+and on the killzone floor or a fire step.’
+KILLZONE: BHETA-DECIMA, HAZARDOUS AREAS, EQUIPMENT
+Change to read:
+‘Equipment can be set up on Vantage terrain and within
+2" of Accessible terrain (this takes precedence over the
+usual restrictions).’
+KEY PRINCIPLES, DATACARDS, OPERATIVE STATS
+Change 2nd designer’s note to read:
+‘If an operative’s stats or its weapons’ stats are changed
+during an action, apply the change once the action has
+been completed. Note that changes to weapon rules are
+applied immediately.’
+FIREFIGHT PHASE, COUNTERACT
+Change relevant part of first two sentences to read:
+‘[…] you can select an expended friendly operative with an
+Engage order to perform a 1AP action (excluding Guard) for
+free. Each operative can only counteract once per turning
+point. That operative cannot move more than 2", or must be
+set up wholly within 2" if it’s removed and set up again, while
+counteracting […]’
+F
+E
+GH
+KILLZONE: VOLKUS
+STRONGHOLD A
+KILLZONE: VOLKUS
+STRONGHOLD B
+KEY PRINCIPLES, DISTANCES
+Change relevant part of last sentence of second paragraph
+to read:
+‘If an operative is carrying a mission or objective marker, that
+marker is the same distance as that operative.’
+ACTIONS, SHOOT , SELECT VALID TARGET
+Add following text:
+‘An operative cannot be in cover from and obscured by the
+same terrain feature. If it would be, the defender must select
+one of them (cover or obscured) for that sequence when their
+operative is selected as the valid target.’
+KILLZONE: GALLOWDARK, CLOSE QUARTERS, GUARD ACTION
+Add the following to the first bullet point:
+‘ • It performs any action, moves or is set up.’
+KILLZONE: VOLKUS, STRONGHOLD
+Add the following bullet points:
+‘•  E. The three barrel containers on Stronghold A are Blocking
+and Heavy terrain.
+ •  F. The small broken ramparts on the edge of the
+Vantage terrain of Stronghold A are Insignificant and
+Exposed terrain.
+ •  G. The gap on the lower Vantage terrain of Stronghold B is
+Accessible terrain.
+ •  H. You cannot have more than one friendly operative on
+the highest upper level of Stronghold B at once, and that
+operative must be placed on one side or the other of that
+level, it cannot be placed in the middle (this means an
+enemy operative cannot be prevented from moving onto
+or being set up on the other side). If an operative’s base is
+too big to be placed there, it must move (or be set up) on as
+far as possible (otherwise it cannot complete that move),
+then place it to one side instead and treat it as being there.
+Hold it as far on that level as possible when it matters for
+checking other rules (e.g. control range, visibility, distance
+to other operatives, etc.). This takes precedence over the
+rules for bases and being in a location it can be placed.’
+ PREVIOUS RULES COMMENTARIES
+This section provides clarification on ambiguous and complex
+rules interactions.
+ Q:  In the Resolve Attack Dice step of the Shoot action,
+what order are successes resolved in? How does this interact
+with my rules that reduce or ignore damage from the first
+attack dice (e.g. CORSAIR VOIDSCARRED  Warding Shield,
+HERNKYN YAEGIR  Tough Survivalists)?
+ A:  Successes resolve simultaneously. The defender can
+select one of the successes being resolved to reduce or ignore
+(as appropriate to their rule).
+ Q:  How does the Guard action interact with rules where
+the operative must perform the Shoot action with a specific
+weapon (e.g. PHOBOS STRIKE TEAM  Astartes, KOMMANDO
+Dakka Dash)?
+ A:  The operative can perform the Guard action, so long as
+the relevant weapon is selected if it performs the Shoot action
+during the interrupt.
+ Q:  If an operative’s rules allow you to place a
+marker (e.g. HERNKYN YAEGIR  Hy-Pex Mines,
+VESPID STINGWING  Neutron Bombardment), then that
+operative is removed from the killzone, is that marker
+also removed?
+ A:  No, unless specified otherwise.
+ Q:  How does the Guard action work when the operative must
+spend an additional AP to perform two Shoot actions with the
+same weapon (e.g. WARPCOVEN  Astartes)?
+ A:  The operative can perform the Guard action for 1AP
+as normal, but if it performs the Shoot action during the
+interrupt, you cannot select the relevant weapon unless it had
+the AP remaining to do so during its activation.
+ Q:  Can you explain further what it means when a rule states
+that an operative is in cover and obscured if another target was
+(e.g. Blast X weapon rule, BLOODED  Dark Favour).
+ A:  When determining cover and obscured for that operative,
+whatever was determined for the primary or original target is
+the same. For example, in the case of Blast, secondary targets
+are not in cover/obscured if the primary target was not, and
+they are if the primary target was.
+ Q:  Do rules that prevent an operative from being selected as a
+valid target (e.g. HERNKYN YAEGIR  In Position) prevent that
+operative from being a secondary target for a weapon with the
+Blast X weapon rule?
+ A:  No, as secondary targets from Blast are not selected.
+ Q:  When counteracting, if a rule has increased or decreased
+the cost of an action, does this affect what actions an operative
+can perform? For example, can the ANGEL OF DEATH  Mobile
+Chapter Tactic allow an operative to perform the Fall Back
+action while counteracting now it’s 1AP?
+ A:  Yes.
+ Q:   If a rule allows an operative to move ‘any remaining move
+distance’ from a previous action (e.g. TEMPESTUS AQUILON
+PRECURSOR Dynamic, VOID-DANCER TROUPE  Darting
+Salvo) and its Move stat is modified between those actions
+(e.g. as a result of becoming injured), is the remaining move
+distance modified?
+ A:  No.
+ Q:  Can operatives that can only perform a restricted set
+of actions (WRECKA KREW  BOMB SQUIG, ELUCIDIAN
+STARSTRIDER  CANID) perform actions that are treated as
+one of those actions, e.g. Hatchway Fight?
+ A:  Yes, if that operative is permitted to perform the action it’s
+treated as.
+ Q:  Can something be wholly within a territory while also being
+on the centreline?
+ A:  Yes, but it wouldn’t be within the other territory.
+ Q:  Can rules that ignore or reduce damage inflicted by an
+attack dice (e.g. KOMMANDO  Just a Scratch, CORSAIR
+VOIDSCARRED  Warding Shield) ignore or reduce
+additional damage inflicted by that attack dice (e.g. VESPID
+STINGWING  Vicious Venom, LEGIONARY  Blood for the
+Blood God)?
+ A:  Yes.
+ Q:  Is damage from the Devastating X weapon rule considered
+to be additional damage inflicted by an attack dice, and can
+it be ignored by rules that ignore or reduce damage from an
+attack dice (e.g. CORSAIR VOIDSCARRED  Warding Shield)
+ A:  No to both.
+ Q:  If you automatically retain a dice as a success before
+rolling it (e.g. cover save, Accurate weapon rule), can that dice
+be re-rolled and does it have a numerical result?
+ A:  No to both.
+ Q:  When retaining dice, if a rule retains a fail as a success
+instead, or a success as a critical success, does it change the
+numerical result of the dice?
+ A:  No.
+ Q:  If I attempt to resolve a rule that allows a friendly operative
+to perform an action upon incapacitation (e.g. BROOD
+BROTHER  Broodmind Devotion, DEATH KORPS  In Death,
+Atonement) but that action cannot be completed (e.g. as a
+result of HUNTER CLADE  Scrapcode Overload, NOVITIATE
+Blinding Aura), have I used any limited number of uses for that
+rule (e.g. once per turning point).
+ A:  Yes.
+ Q:  When resolving rules that relate to an operative being
+activated, what order should these be resolved in?
+ A:  Resolve rules that specify when an operative ‘would’
+be activated first. Then resolve rules that specify when an
+operative ‘is’ activated, starting with rules that inflict damage
+(e.g. PLAGUE MARINE  Poison).
+ Q:  When resolving rules that relate to an operative being
+incapacitated, what order should these be resolved in?
+ A:  Resolve rules that specify when an operative ‘would’ be
+incapacitated first. Then resolve rules that specify when an
+operative ‘is’ incapacitated (including when an operative
+incapacitates another operative). This is followed by rules that
+specify ‘before’ an operative is removed from the killzone.
+Note that in the case of the Medic! rule and similar, this rule
+would resolve first, but would then prevent any relevant ‘is’
+and ‘before’ rules being resolved (if any, as the operative
+would no longer be incapacitated).
+APPROVED OPS CARD PACK 2024
+ PREVIOUS ERRATAS
+This section collects amendments to the rules. Amended text
+for clarification and edits are shown in blue, while amended
+text for balance updates are shown in magenta.
+PLANT BEACONS RECON TAC OP , MISSION ACTION
+Add additional text to end of third bullet point:
+‘More than 6" from your other Beacon mission markers.
+In a killzone that uses the close quarters rules (e.g.
+Killzone: Gallowdark), ignore Wall terrain when measuring
+this distance.’
+ PREVIOUS RULES COMMENTARIES
+This section provides clarification on ambiguous and complex
+rules interactions.
+ Q:  For the Confirm Kill tac op, if a friendly operative meets
+the victory point requirements for two different Confirm Kill
+mission markers, can I remove them both to score 2VP?
+ A:  Yes.
+ Q:  For the Power Surge crit op, can a player choose to pass
+and not use the STRATEGIC GAMBIT to select one objective
+marker to be surged?
+ A:  No.

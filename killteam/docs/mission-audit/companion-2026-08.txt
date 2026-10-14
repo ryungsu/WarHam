@@ -1,0 +1,352 @@
+Welcome to the Approved Ops 2025 Tournament Companion. This document has been developed for Kill Team tournament
+organisers to use as a framework on how to best arrange a finely-tuned event using the Approved Ops 2025 card pack. While
+this companion is not the only way to create such an event, it can provide a valuable resource to organisers – both newer and
+experienced – looking for guidance on making sure their tournament is providing the best experience for players, and will be
+followed at most Games Workshop events using Approved Ops 2025. Tournament organisers can adapt this companion as
+necessary to best fit the individual needs of their event.
+RECOMMENDED TERRAIN LAYOUTS
+Approved Ops 2025 contains 6 terrain layouts for each killzone
+currently in the Kill Team product range, alongside maps for
+Killzone: Gallowdark and non-specific killzone maps. In addition,
+this companion contains 6 maps to be used with Killzone: Octarius.
+These are all recommended for tournament play, but they are not
+the only terrain layouts that can be used for a balanced experience.
+The maps in Approved Ops 2025 may not directly correlate to
+an exact measurement of terrain, so it’s at your discretion as an
+organiser to make decisions about these placements. To encourage
+adaptability and generalship at the table, tournament organisers
+may make their own maps using their own collections of Kill Team
+terrain using the example killzones from Approved Ops 2025 as a
+guideline. We recommend tables be preset for the day with an even
+variety of terrain layouts, and that players be rotated through the
+layouts with each pairing. Note that depending on the number of
+layouts and rounds, this means some players may repeat a layout
+over the course of the event.
+CRIT OP SELECTION
+We recommend that all players be playing the same crit op in the
+same round to create the most consistent results for win paths
+(explained on the next page) in the pairings metrics. To do this,
+tournament organisers should select crit ops for players in each
+round of the tournament, either randomly or predetermined.
+While organisers can select any crit ops randomly using the cards
+from Approved Ops 2025, we also find that some groups of crit
+ops feature similar play patterns. For a wider variety of mission
+types in each tournament, organisers can select one from each of
+these groupings for each round:
+ •  1. Secure, 2. Loot, 3. Transmission
+ •  4. Orb, 6. Energy Cells, 7. Download
+ •  5. Stake Claim, 8. Data, 9. Reboot
+APPROVED OPS 2025
+TOURNAMENT COMPANION
+PAIRINGS
+We recommend that players be randomly paired into their
+matches for the first round. When selecting pairings for players in
+the following rounds, the most important aspect of pairings would
+be to ensure that players with a similar number of wins and losses
+are playing against one another (e.g. a player with 3 wins, 1 loss
+and 0 draws should play against another player with those same
+results if possible). However, it is inevitable to have many players
+with the same win/loss record. In those cases, we recommend
+pairing players with the following criteria:
+ •  Firstly, by record (i.e. wins, losses, draws).
+ •  Secondly, by win path (i.e. the timing of the rounds in which a
+player won or lost their games).
+ •  Thirdly, randomly within players of the same ranking.
+If you have an odd number of players with an identical record, you
+can pair the player that is currently lowest ranked within players
+of a record with the highest ranked in the next record down,
+then determine the rest of the pairings, repeating this process
+as necessary.
+Win Path: A player’s win path refers not to their number of wins
+and losses, but to the timing of those wins and losses. While
+pairing by win path has an incidental tendency to pair people by
+‘strength of schedule’ (see below), its greatest impact is on the
+overall enjoyment experienced by all players, as it tends to pair
+players based upon shared experience. For example, let’s take
+two 3-1 players. One of them lost their first game; they likely
+lowered their expectations for winning the whole event after this,
+but are probably in a great mood after three consecutive victories.
+The other won their first three games then lost their fourth – a
+sharp disappointment after a 3-0 start. Should these players face
+off, their shared enjoyment may be at odds as they are in very
+different emotional places. Win path ensures players enter their
+match with recent common experiences upon which to build a
+friendship during their next game of Warhammer.
+Draws: Draws are a perfectly valid result of a game of Kill Team.
+In fact, they can be some of the most exciting and competitive
+matches. We highly discourage the use of tiebreakers to decide
+the results of an individual game, and organisers should instead
+use the Rankings criteria below to resolve ties when determining
+the results of the event. We also recommend that a draw not be
+excessively punishing on a win record, as the relatively low score
+potential within Kill Team results in a higher frequency of draws. In
+general, we recommend that the result of two draws be an equal
+record result to a win and a loss.
+
+
+
+
+
+To help resolve issues with pairings and rankings,
+and accurately record secondary stats like strength
+of schedule, organisers can use apps like Best Coast
+Pairings, which includes preset metrics for these options.
+RANKINGS
+At the end of the tournament, it is quite common for a number of
+players to have an identical record. To determine ranking players
+within your results, we recommend the following criteria:
+ •  Firstly, by overall record (i.e. wins, losses, draws).
+ •  Secondly, by their opponent’s win records (i.e. those with
+more wins against opponents with better win records would
+place higher).
+ •  Thirdly, by total VP scored in all games from the primary op
+(i.e. a player who scores an additional 3VP from their primary
+op selection would receive 3 points when determining this
+ranking criteria).
+Strength of Schedule: Our second criteria for rankings –
+opponent’s win records – is also referred to as strength of
+schedule. In a difficult match between equally skilled players,
+we expect a player’s score to be lower on average than a match
+against a less skilled opponent. Therefore, strength of schedule
+can be used to determine the difficulty of matches a player made
+it through to achieve their final result. We don’t recommend using
+overall VP as a criteria in pairings or rankings, as these results
+can be lowered even when winning a match if your opponent or
+matchup was difficult.
+RULINGS
+The high number of games in a Warhammer event means that
+players are likely to discover unusual rules interactions and edge
+cases. When encountering these interactions, try to be as fair as
+possible to players and make the best judgement you are able. To
+support this, the Warhammer Design Studio release regular Rules
+Updates on Kill Team: The App to create the most up-to-date and
+precise wordings possible. Whenever a printed rule contradicts an
+online rule, the online rule will take precedence. If you are unsure
+of an interaction, check these living documents first to ensure
+you have the best chance of successfully resolving the issue.
+Once you have made a ruling during an event, we recommend
+continuing to resolve the interaction that way for the remainder
+of the event. Small mistakes are natural, but trying to provide
+the most consistent environment for games is within your control
+as an organiser, and keeping as many games playing with the
+same rules as possible is preferable to altering course for small
+adjustments to a ruling.
+CLASSIFIED ROTATION
+The full list of Classified kill teams can be found below. Teams will be added to this list as they are released, and removed when they are
+no longer Classified.
+IMPERIAL NAVY
+BREACHERS KASRKIN
+HIEROTEK
+CIRCLE
+FELLGOR
+RAVAGERS
+HAND OF
+THE ARCHON
+EXACTION
+SQUAD
+HEARTHKYN
+SALVAGERS
+FARSTALKER
+KINBAND
+GALLOWDARK
+SEASON
+CLASSIFIED FORMAT
+When planning your tournament, you must determine if it will be using the Classified format. We recommend making your tournament
+Classified if your prizes for winning include a ticket to the World Championships of Warhammer. In all other tournament settings, you
+may allow play of all kill teams with 3rd edition rules.
+Classified teams can be played in Classified format tournaments. Teams that are not Classified will continue to receive regular Rules
+Updates – balance updates, designer’s commentaries and erratas – and will be balanced throughout the current edition of Kill Team.
+CHAOS CULT BLADES OF
+KHAINE
+SCOUT SQUAD
+BROOD
+BROTHERS
+MANDRAKESNEMESIS CLAW
+HERNKYN
+YAEGIRS
+INQUISITORIAL
+AGENTS*
+BHETA-DECIMA
+SEASON
+* Operatives from kill teams that are no longer Classified can still be used as Requisitioned operatives
+when playing the Classified format.
+CLASSIFIED ROTATION
++  FUTURE
+KILL TEAMS
+TOMB WORLD
+SEASON
+DEATHWATCH CANOPTEK
+CIRCLE
+AFTERWORD
+We hope this document has been helpful in establishing what the Warhammer Design Studio’s vision of a Kill Team Approved
+Ops event looks like. As a reminder, this is not the only way to create a rich, balanced and well-tuned event for Kill Team. Each
+tournament should look to meet the needs of its community, to develop respect between players, and to create a great space
+where we can come together in our love for Warhammer. That might differ from what is in this guide, and this companion
+should never be considered the sole ‘correct’ vision of a Kill Team Approved Ops event. We hope only to support the incredible
+community of this game with resources to make each event a success, and we hope that it improves your experience the next
+time you organise or play at a Games Workshop event, your next major tournament, or your local gaming club.
+WOLF SCOUTS XV26 STEALTH
+BATTLESUITS
+TEMPESTUS
+AQUILONS
+VOLKUS
+SEASON
+WRECKA
+KREWRATLINGS
+VESPID
+STINGWINGS
+PLAGUE
+MARINES
+ANGELS OF
+DEATH
+SANCTIFIERSGOREMONGERS BATTLECLADE
+RAVENERS
+CELESTIAN
+INSIDIANTS MURDERWING
+SPECTRE
+SQUAD
+EXODITE DRAGON
+MASTERS
+KILLZONE:
+OCTARIUS
+Killzone: Octarius has 4x ramshackle walls, 1x oil pump, 3x ramshackle barricades, and 3x scrap piles.
+ •  A  The upper level is Vantage and Ceiling terrain.
+ •   B  The door is Accessible and Heavy terrain. For
+the purposes of control range, ignore the door when
+determining visibility.
+ •   C  The gap in the wall on the lower level and all gaps in
+the upper level’s floors are Blocking terrain.
+ • The upper rampart is Light terrain.
+ •  All other parts of it are Heavy terrain.
+RAMSHACKLE WALL
+A
+C
+C
+B
+ •  This is Light terrain.
+RAMSHACKLE BARRICADE
+ •  This is Light terrain.
+SCRAP PILE
+ •  A  The upper level is Vantage and Ceiling terrain.
+ •  B  The pumpjack’s horse head is Exposed terrain.
+ •  C  The small spigot is Insignificant and Exposed terrain.
+ • All other parts of it are Heavy terrain.
+ • This is Vantage and Ceiling terrain.
+OIL PUMP
+CONNECTING WALKWAY
+ •  This is Light, Vantage, and Ceiling terrain.
+PILLARS
+A
+C
+A
+BB
+KILLZONE: OCTARIUS MAP KEY
+RAMSHACKLE WALLS
+OIL PUMP
+x2
+x2
+B
+A
+C
+RAMSHACKLE BARRICADES
+SCRAP PILES
+CONNECTING WALKWAY PILLARS
+D
+E
+F
+G
+I
+H
+J
+K
+B
+I
+UNIVERSAL MAP KEY
+PLAYER A DROP ZONE AND TERRITORY
+PLAYER A TERRITORY
+PLAYER A KILLZONE EDGE
+PLAYER B DROP ZONE AND TERRITORY
+PLAYER B TERRITORY
+PLAYER B KILLZONE EDGE
+OBJECTIVE MARKER
+CENTRELINE
+CENTRE OF KILLZONE
+NEUTRAL KILLZONE EDGE
+If a marker or a piece of a
+terrain feature is underneath
+Vantage terrain, it’s
+represented by these thin
+white dashed lines.
+The position of a door is
+represented by these thick
+white dashed lines.
+A
+ B
+C
+B
+D
+I
+G
+A
+E
+H
+A
+B
+C
+B
+D
+F
+I
+G
+A
+E
+H
+MISSION MAP 1
+MISSION MAP 2
+A
+B
+C
+B
+D
+F
+I
+ G
+E
+A
+ H
+A
+C
+B
+D
+E
+F
+H
+G
+A
+B
+MISSION MAP 3
+MISSION MAP 4
+A
+C
+B
+D
+E
+H
+G
+A
+B
+I
+A
+C
+B
+D
+E
+F
+H
+G
+A
+B
+I
+F
+MISSION MAP 5
+MISSION MAP 6

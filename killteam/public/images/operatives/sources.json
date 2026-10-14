@@ -1,0 +1,86 @@
+[
+  {
+    "id": "IMP-AOD-ASGT",
+    "page": 13,
+    "pdfImage": "Im7",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-AWAR",
+    "page": 13,
+    "pdfImage": "Im10",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-CPT",
+    "page": 13,
+    "pdfImage": "Im6",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-GNR",
+    "page": 14,
+    "pdfImage": "Im8",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-GRN",
+    "page": 13,
+    "pdfImage": "Im9",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-HGNR",
+    "page": 14,
+    "pdfImage": "Im6",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-ISGT",
+    "page": 13,
+    "pdfImage": "Im8",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-SNP",
+    "page": 14,
+    "pdfImage": "Im9",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-AOD-WAR",
+    "page": 14,
+    "pdfImage": "Im7",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-SCT-HGNR",
+    "page": 13,
+    "pdfImage": "Im4",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-SCT-HNT",
+    "page": 14,
+    "pdfImage": "Im6",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-SCT-SNP",
+    "page": 14,
+    "pdfImage": "Im7",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-SCT-TRK",
+    "page": 14,
+    "pdfImage": "Im8",
+    "source": "official Kill Team team PDF"
+  },
+  {
+    "id": "IMP-SCT-WAR",
+    "page": 14,
+    "pdfImage": "Im10",
+    "source": "official Kill Team team PDF"
+  }
+]

@@ -1,0 +1,149 @@
+{
+  "hits": [
+    {
+      "title": "Approved Ops 2025 Tournament Companion",
+      "download_languages": "english",
+      "topics": [
+        "kill-team"
+      ],
+      "locale": "en-gb",
+      "date": 1748908800,
+      "id": {
+        "title": "Approved Ops 2025 Tournament Companion",
+        "slug": "approved-ops-2024-tournament-companion",
+        "collection": "downloads",
+        "created_at": "03/06/2025",
+        "last_updated": "26/08/2026",
+        "new": true,
+        "game_system": {
+          "path": "gs-icon-light_killteam.svg",
+          "alt": null,
+          "width": "400",
+          "height": "400",
+          "focus": "50% 50%"
+        },
+        "show_game_system_icon": false,
+        "file": "eng_kt_approved_ops_2025_tournament_companion-fpsaag6ryp-uwnxgflxow.pdf",
+        "file_size": "8.15 MB",
+        "thumbnail": {
+          "path": "downloads-file-images/kt-download-image.jpg",
+          "alt": null,
+          "width": 300,
+          "height": 300,
+          "focus": "50% 50%"
+        },
+        "topics": [
+          {
+            "title": "Kill Team",
+            "slug": "kill-team"
+          }
+        ],
+        "game_systems": [
+          {
+            "title": "Kill Team",
+            "slug": "kill-team"
+          }
+        ],
+        "download_categories": [
+          {
+            "title": "Key Downloads",
+            "slug": "key-downloads"
+          }
+        ],
+        "download_languages": []
+      },
+      "download_categories": [
+        "key-downloads"
+      ],
+      "game_systems": "kill-team",
+      "objectID": "entry::ea4ef3ce-d93b-453a-86c7-fc696ee88532::english",
+      "_highlightResult": {
+        "title": {
+          "value": "<em>Approved</em> Ops 2025 Tournament Companion",
+          "matchLevel": "full",
+          "fullyHighlighted": false,
+          "matchedWords": [
+            "approved"
+          ]
+        }
+      }
+    },
+    {
+      "title": "Approved Ops: Update Log",
+      "download_languages": "english",
+      "topics": [
+        "kill-team",
+        "downloads"
+      ],
+      "locale": "en-gb",
+      "date": 1757462400,
+      "id": {
+        "title": "Approved Ops: Update Log",
+        "slug": "approved-ops-update-log",
+        "collection": "downloads",
+        "created_at": "10/09/2025",
+        "last_updated": "26/08/2026",
+        "new": true,
+        "game_system": {
+          "path": "gs-icon-light_killteam.svg",
+          "alt": null,
+          "width": "400",
+          "height": "400",
+          "focus": "50% 50%"
+        },
+        "show_game_system_icon": false,
+        "file": "eng_kt_approved_ops_update_log-c46bfdlsms-senqgrexsi.pdf",
+        "file_size": "1.35 MB",
+        "thumbnail": {
+          "path": "downloads-file-images/kt-download-image.jpg",
+          "alt": null,
+          "width": 300,
+          "height": 300,
+          "focus": "50% 50%"
+        },
+        "topics": [
+          {
+            "title": "Downloads",
+            "slug": "downloads"
+          },
+          {
+            "title": "Kill Team",
+            "slug": "kill-team"
+          }
+        ],
+        "game_systems": [
+          {
+            "title": "Kill Team",
+            "slug": "kill-team"
+          }
+        ],
+        "download_categories": [
+          {
+            "title": "Key Downloads",
+            "slug": "key-downloads"
+          }
+        ],
+        "download_languages": []
+      },
+      "download_categories": [
+        "key-downloads"
+      ],
+      "game_systems": "kill-team",
+      "objectID": "entry::b050b409-44d2-49e6-8550-5305acc87dde::english",
+      "_highlightResult": {
+        "title": {
+          "value": "<em>Approved</em> Ops: Update Log",
+          "matchLevel": "full",
+          "fullyHighlighted": false,
+          "matchedWords": [
+            "approved"
+          ]
+        }
+      }
+    }
+  ],
+  "totalPages": 1,
+  "totalHits": 2,
+  "query": "Approved",
+  "params": "query=Approved&filters=locale%3Aen-gb+AND+game_systems%3Akill-team+AND+download_languages%3Aenglish&hitsPerPage=500&page=0"
+}

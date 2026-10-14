@@ -1,0 +1,80 @@
+/* Shared palette: charcoal headers, orange accents, neutral paper panels. */
+:root{color-scheme:dark;--bg:#171717;--panel:#242424;--line:#494744;--muted:#bdb8b0;--text:#f0ede7;--accent:#ef884d;--warn:#f2b86a;--paper:#e7e7e3;--ink:#292827;--orange:#dd672b}
+body{background:radial-gradient(ellipse at 80% 0%,#38302a 0,transparent 42%),var(--bg)}
+header{border-bottom:2px solid var(--orange)}
+button{background:#202020;border-color:var(--line);color:var(--text)}
+button:hover{border-color:var(--accent);background:#302720}
+.primary{background:var(--orange);border-color:var(--orange);color:#fff8ef}
+.primary:hover{background:#c8561f;border-color:#f6a06a}
+a,.brand small,.eyebrow,.sigil{color:var(--accent)}
+.brand{color:var(--text)}
+.lang{background:#242424}
+.dot{background:var(--orange)}
+.hero{background:repeating-linear-gradient(0deg,#ffffff03 0 1px,transparent 1px 4px),linear-gradient(115deg,#33302c,#202020);border-color:#56504a;border-top:3px solid var(--orange)}
+.hero:after{color:#ef884d16}
+.hero em{color:var(--accent)}
+.hero-bottom{border-color:#5b5046}
+.team-card,.team-card:nth-child(2){background:linear-gradient(135deg,#34302b,#202020);border-color:#56504a;border-top:3px solid var(--orange)}
+.team-card:hover{background:linear-gradient(135deg,#44352b,#29221d)}
+.team-symbol{color:#ef884d55}
+.roster-card{background:#262626;border-color:#55504a;border-left:3px solid var(--orange)}
+.card-link{background:none}
+.card-link:hover{background:none;color:var(--accent)}
+.panel{background:#242424;border-color:#55504a}
+.panel label{color:var(--muted)}
+input:not([type=checkbox]),select{background:#191919;border-color:#55504a;color:var(--text)}
+input[type=checkbox]{accent-color:var(--orange)}
+.choices>div{background:#252525;border-color:#55504a}
+.choices button,.choices button:hover{background:none;color:var(--accent)}
+.good,.stats strong,h2 small,.number{color:var(--accent)}
+.stats>div,.weapon-stats>div{background:#1b1b1b;border-color:#55504a}
+.validation{background:#32271d;border-color:#ac7744;color:#f0c28a}
+.validation.valid{background:#30251c;border-color:#c97945;color:#ffc49d}
+.danger{color:#f0a092}
+.empty{border-color:#65564b;background:#222120}
+.sheet-head{background:linear-gradient(130deg,#3a3027,#222);border-color:#6b5242;border-top:3px solid var(--orange)}
+.tabs{background:var(--bg)}
+.tabs .selected{border-bottom-color:var(--orange);color:var(--accent)}
+.tags button,.tag{background:#39291e;border-color:#80583d;color:#ffd0ac}
+.tag:hover,.tags button:hover{background:#4c3322}
+.badge{color:var(--accent);border-color:#6c5240}
+.prose details{color:var(--muted)}
+.search-result{background:#252525;border-color:#55504a}
+.notice{color:var(--accent)}
+.bottom-nav{background:#222222f5;border-color:#55504a}
+.bottom-nav button,.bottom-nav button:hover{background:none;color:var(--muted)}
+.bottom-nav button.active{background:#ef884d12;color:var(--accent)}
+.bottom-nav .active:before{background:var(--orange)}
+.scroll-navigator{background:#2b2723;border-color:var(--orange)}
+.scroll-navigator-toggle,.scroll-navigator-toggle:hover{background:none;color:var(--accent)}
+.scroll-navigator-list button{background:#202020;border-color:#55504a}
+.scroll-navigator-list button[aria-current=location]{background:#49301f;color:#ffd0ac;border-color:var(--orange)}
+dialog{background:#262626;border-color:var(--orange);color:var(--text)}
+dialog .heading{background:#262626}
+/* Strong divisions on the reference-style light card. */
+.compact-datasheet{--card-orange:var(--orange);--card-ink:var(--ink);--card-paper:var(--paper);border-color:#66605a}
+.ds-body{background:radial-gradient(ellipse at 20% 20%,#fff7,transparent 65%),var(--paper)}
+.ds-header{background:repeating-linear-gradient(0deg,#ffffff04 0 1px,transparent 1px 4px),linear-gradient(110deg,#292929,#171717)}
+.ds-statline>span{background:#292929;border-color:#64605a}
+.ds-stat-icon{stroke:#a74319}
+.ds-table tbody tr.ds-stripe th,.ds-table tbody tr.ds-stripe td{background:#d0d0cb}
+.ds-table thead th,.ds-abilities{border-color:#c66c38}
+.ds-rules button{color:#35312c;border-color:#938676}
+.ds-rules button:hover{color:#a64219;background:#fff5}
+.ds-abilities{padding-top:0;border-top:2px solid #bf622f}
+.ds-ability{padding:10px 10px 10px 12px;background:#f5f4ef;border-left:3px solid #b95827}
+.ds-ability:hover{background:#f5f4ef}
+.ds-ability+.ds-ability{border-top:2px solid #8f8981;margin-top:0;padding-top:10px}
+.ds-ability:nth-child(even),.ds-ability:nth-child(even):hover{background:#deded8}
+.ds-ability-title{color:#26231f;background:none}
+.ds-ability-title:hover{background:none;color:#a7431d}
+.ds-ability-title small{color:#8f451f}
+.ds-ability-text{color:#2e2b27}
+.ds-related{border-top:2px solid #aaa096}
+.ds-related h3{color:#5b4d41}
+.ds-related button,.ds-related button:hover{color:#934117;background:none;border-color:#a78167}
+.ds-keywords{background:repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 5px),#252525;color:#e6e2db}
+.ds-keywords strong{color:#ef884d}
+.ds-base{border-color:#b8afa4;outline-color:#615b53;color:#eee8df}
+.ds-base small{color:#c3b9ac}
+@media(max-width:600px){.ds-ability{padding:9px 8px 9px 10px}.ds-ability+.ds-ability{padding-top:9px}}

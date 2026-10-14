@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+tmp/
+docs/**/*.pdf
+docs/**/*.html
+docs/mission-audit/*.js
+docs/**/*.png
