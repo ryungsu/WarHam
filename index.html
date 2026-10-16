@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261016-26">
+  <link rel="stylesheet" href="styles.css?v=20261016-28">
 </head>
 <body>
   <header class="topbar">
@@ -38,6 +38,10 @@
     <section id="assistant-page" class="assistant-page" hidden aria-live="polite"></section>
     <section id="game-page" class="game-page" hidden aria-live="polite"></section>
     <aside id="unit-quick-nav" class="unit-quick-nav" hidden aria-label="분대 바로가기">
+      <details id="quick-assistant" class="quick-assistant">
+        <summary>전투 보조 <small id="quick-assistant-count"></small></summary>
+        <div id="quick-assistant-content" class="quick-assistant-content"></div>
+      </details>
       <div id="unit-quick-nav-list" class="unit-quick-nav-list" hidden></div>
       <button id="unit-quick-nav-toggle" class="unit-quick-nav-toggle" type="button" aria-expanded="false" aria-controls="unit-quick-nav-list">분대 바로가기</button>
     </aside>
@@ -57,6 +61,6 @@
   </main>
   <footer>원문 데이터와 번역은 분리해 관리합니다. <a href="https://github.com/BSData/wh40k-11e" target="_blank" rel="noreferrer">11판 BSData</a> · <a href="https://github.com/wn-mitch/40kdc-data" target="_blank" rel="noreferrer">Powered by 40kdc-data</a> · <a href="https://github.com/Locequen/40k-Data-Card" target="_blank" rel="noreferrer">40k Data Card 아이콘 참고</a> · 판본을 확인한 뒤 사용하세요.</footer>
   <script src="workbook-glossary.js"></script>
-  <script src="app.js?v=20261016-26"></script>
+  <script src="app.js?v=20261016-28"></script>
 </body>
 </html>

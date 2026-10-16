@@ -393,3 +393,54 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
   #results .weapon-attack-count{display:grid;justify-items:center;line-height:1.15}
   #results .weapon-attack-count small{font-size:9px;color:#c2ceda}
 }
+
+/* Compact roster entry without triggering iOS focus zoom. */
+.input-panel{margin:10px 0;padding:10px 12px;border-color:rgba(var(--faction-accent-rgb,183,219,136),.48);border-left:3px solid var(--faction-accent,#b7db88);border-radius:10px}
+.input-panel .section-heading{margin-bottom:6px}
+.input-panel .section-heading h2{font-size:16px}
+.input-panel .section-heading .eyebrow{margin-bottom:1px}
+.input-panel textarea{height:84px;min-height:64px;max-height:180px;padding:8px 10px;border-color:#465565;font-size:13px}
+.input-panel textarea:focus{outline:2px solid var(--faction-accent,#b7db88);border-color:var(--faction-accent,#b7db88)}
+.input-panel .roster-presets{gap:5px;margin-top:6px}
+.input-panel .roster-presets label{font-size:11px}
+.input-panel .roster-presets select,.input-panel .roster-presets input{min-height:32px;padding:5px 8px;border-color:#3b4855}
+.input-panel .actions{gap:7px;margin-top:6px}
+.input-panel .actions button,.input-panel .section-heading>.quiet{padding:6px 10px;font-size:12px}
+.input-panel .hint{margin-top:4px;font-size:11px;line-height:1.4}
+.input-panel .primary{background:var(--faction-accent,#b7db88)}
+.roster-presets input:focus,.roster-presets select:focus{outline-color:var(--faction-accent,#b7db88)}
+@media(max-width:600px){
+  .input-panel{margin:8px 0;padding:8px 9px}
+  .input-panel .section-heading h2{font-size:15px}
+  .input-panel textarea{height:72px;min-height:60px;padding:7px 9px;font:16px/1.35 Consolas,monospace;resize:vertical}
+  .input-panel .roster-presets select,.input-panel .roster-presets input{min-height:34px;font-size:16px}
+  .input-panel .actions{margin-top:5px}
+  .input-panel .hint{font-size:10px}
+}
+
+/* Fixed, collapsible phase checklist beside the squad navigator. */
+.unit-quick-nav{display:flex;flex-direction:column;gap:6px;max-height:min(82vh,720px);overflow:hidden}
+.quick-assistant{min-width:0;border-bottom:1px solid rgba(var(--faction-accent-rgb,183,219,136),.35);padding-bottom:5px}
+.quick-assistant>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border-radius:7px;color:var(--faction-accent,#b7db88);font-size:13px;font-weight:800;cursor:pointer;list-style:none}
+.quick-assistant>summary::-webkit-details-marker{display:none}
+.quick-assistant>summary::after{content:"＋";margin-left:auto;font-size:15px}
+.quick-assistant[open]>summary::after{content:"−"}
+.quick-assistant>summary small{color:var(--muted);font-size:10px;font-weight:500}
+.quick-assistant-content{display:grid;gap:6px;min-height:0}
+.quick-assistant:not([open]) .quick-assistant-content{display:none}
+.quick-assistant-phases{display:flex;gap:5px;overflow-x:auto;padding:1px 2px 5px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.quick-assistant-phase{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 7px;border:1px solid var(--line);border-radius:999px;background:#151b17;color:var(--muted);font:11px/1.2 "Segoe UI",sans-serif;cursor:pointer}
+.quick-assistant-phase.active{border-color:var(--faction-accent,#b7db88);color:var(--faction-accent,#b7db88)}
+.quick-assistant-phase small{font-size:9px;opacity:.8}
+.quick-assistant-rows{display:grid;gap:4px;max-height:min(34vh,260px);overflow-y:auto;padding:1px 3px 4px;overscroll-behavior-y:contain}
+.quick-assistant-row{display:grid;grid-template-columns:17px minmax(0,1fr);align-items:start;gap:7px;padding:6px 7px;border:1px solid #34404a;border-radius:7px;background:#171e24;color:var(--text);cursor:pointer}
+.quick-assistant-row.checked{opacity:.55}
+.quick-assistant-row input{width:15px;height:15px;margin:2px 0 0;accent-color:var(--faction-accent,#b7db88)}
+.quick-assistant-row span{min-width:0}
+.quick-assistant-row b{display:block;font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.quick-assistant-row i{color:var(--faction-accent,#b7db88);font-style:normal}
+.quick-assistant-row small{display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.quick-assistant-open{justify-self:start;padding:4px 7px;border:0;background:transparent;color:var(--faction-accent,#b7db88);font:700 10px/1.3 "Segoe UI",sans-serif;text-decoration:underline;cursor:pointer}
+.quick-assistant-empty{padding:7px;color:var(--muted);font-size:11px}
+.unit-quick-nav-list{max-height:min(30vh,220px);flex:0 1 auto}
+@media(max-width:600px){.unit-quick-nav{max-height:78vh}.quick-assistant-rows{max-height:30vh}.unit-quick-nav-list{max-height:27vh}}
