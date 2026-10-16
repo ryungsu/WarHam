@@ -357,3 +357,39 @@
   #results .card-head .stat-pill{height:68px}
   #results .card-head .stat-pill strong{font-size:19px}
 }
+
+/* Faction palette follows the faction keyword while keeping the datasheet dark and legible. */
+body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accent-rgb,183,219,136),.15) 0,transparent 38%)}
+#results .card{border-left:2px solid var(--faction-accent,#b7db88)}
+#results .card:focus-within{border-color:var(--faction-accent,#b7db88)}
+#results .card-head .stat-pill{border-top-color:var(--faction-accent,#b7db88)}
+#results .card-head .tag,#results .card-head .wound-button{color:var(--faction-accent,#b7db88)}
+#results .card-body .profile-title,#results .card-body .effect-summary h4,#results .card-body .effect-summary strong{color:var(--faction-accent,#b7db88)}
+#results .card-body .ability-block,#results .card-body .effect-summary{border-left-color:var(--faction-accent,#b7db88)}
+#results .card-body .roster-gear{border-top-color:var(--faction-accent,#b7db88)}
+#results .card-body .keyword-chip,#results .card-body .ability-text .keyword-chip{color:var(--faction-accent,#b7db88);border-bottom-color:var(--faction-accent,#b7db88)}
+#results .weapon-profile-toolbar{border-left-color:var(--faction-accent,#b7db88)}
+#results .weapon-profile-toolbar button,#results .profile-image-search-trigger{border-color:var(--faction-accent,#b7db88);color:var(--faction-accent,#b7db88)}
+#results .weapon-row.is-equipped{background:rgba(var(--faction-accent-rgb,183,219,136),.12)}
+#results .weapon-choice input{accent-color:var(--faction-accent,#b7db88)}
+#results .weapon-name-scroll{display:block;min-width:0;flex:1 1 auto;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--faction-accent,#b7db88) transparent;touch-action:pan-x}
+#results .weapon-name-scroll>span{display:inline-block;white-space:normal;overflow-wrap:anywhere}
+#results .weapon-name-scroll small{color:#aeb8c2;font-size:.88em}
+#results .weapon-keywords{margin-left:0}
+#results .weapon-compact-scroll{overflow-x:visible}
+@media(max-width:600px){
+  #results .weapon-compact-scroll{overflow-x:hidden}
+  #results .weapon-compact-table{width:100%;min-width:0;table-layout:fixed}
+  #results .weapon-compact-table th:first-child,#results .weapon-compact-table td:first-child{width:36%;min-width:0;max-width:none}
+  #results .weapon-compact-table th,#results .weapon-compact-table td{padding:4px 2px;white-space:normal;overflow-wrap:anywhere;text-align:center;font-size:10px;line-height:1.25}
+  #results .weapon-compact-table th:first-child,#results .weapon-compact-table td:first-child{text-align:left}
+  #results .weapon-choice{gap:5px;font-size:12px;line-height:1.35}
+  #results .weapon-choice input{width:16px;height:16px;margin-top:1px}
+  #results .weapon-name-scroll{white-space:nowrap;line-height:1.4}
+  #results .weapon-name-scroll>span{white-space:nowrap;overflow-wrap:normal}
+  #results .weapon-name-scroll small{font-size:11px}
+  #results .weapon-keywords{gap:1px 5px;margin-top:3px;line-height:1.35}
+  #results .weapon-keywords .keyword-chip{font-size:10px;line-height:1.35}
+  #results .weapon-attack-count{display:grid;justify-items:center;line-height:1.15}
+  #results .weapon-attack-count small{font-size:9px;color:#c2ceda}
+}
