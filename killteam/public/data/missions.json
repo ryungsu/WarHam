@@ -17,7 +17,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**확보 · 1AP:** 활성 오퍼레이티브가 통제하는 목표 마커 1개를 내 킬팀이 확보합니다. 적 킬팀이 그 마커를 확보할 때까지 유지됩니다. TP1 또는 적 오퍼레이티브의 통제 범위 안에서는 이 행동을 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 내 킬팀이 확보한 목표가 하나 이상이면 1VP. 적보다 더 많은 목표를 확보했다면 추가 1VP.",
+      "sourceText": "METTERE AL SICURO · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla è messo in sicurezza (secured) dal tuo kill team finché il kill team nemico non mette in sicurezza quel segnalino obiettivo. Un agente non può eseguire questa azione durante il primo punto di svolta, o mentre si trova entro il raggio di controllo di un agente nemico.\n\nAlla fine di ogni punto di svolta dopo il primo:\n\nSe qualsiasi segnalino obiettivo è messo in sicurezza dal tuo kill team, ottieni 1PV.\n\n\nSe sono messi in sicurezza dal tuo kill team più segnalini obiettivo rispetto al kill team del tuo avversario, ottieni 1PV.\n",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-02",
@@ -28,7 +31,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**약탈 · 1AP:** 활성 오퍼레이티브가 통제하는 목표 마커 1개를 약탈합니다. TP1, 적 오퍼레이티브의 통제 범위 안, 또는 해당 목표가 이번 TP에 이미 약탈된 경우에는 수행할 수 없습니다.\n\n**득점:** 아군이 약탈 행동을 수행할 때마다 1VP. TP당 최대 2VP.",
+      "sourceText": "LOOTARE · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla è saccheggiato. Un agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se quel segnalino obiettivo è già stato saccheggiato durante questo punto di svolta.\n\nOgni volta che un agente amico esegue l'azione Saccheggiare, ottieni 1PV (fino a un massimo di 2PV per punto di svolta).",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-03",
@@ -39,7 +45,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**전송 · 1AP:** 활성 오퍼레이티브가 통제하는 목표 마커 1개가 다음 TP 시작까지 전송 상태가 됩니다. TP1 또는 적 오퍼레이티브의 통제 범위 안에서는 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 아군이 전송 중인 목표를 하나 이상 통제하면 1VP. 적보다 더 많은 전송 중 목표를 통제하면 추가 1VP.",
+      "sourceText": "TRASMETTI · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla sta trasmettendo fino all'inizio del prossimo punto di svolta. Un agente non può eseguire questa azione durante il primo punto di svolta, o mentre si trova entro il raggio di controllo di un agente nemico.\n\nAlla fine di ogni punto di svolta dopo il primo:\n\nSe gli agenti amici controllano qualsiasi segnalino obiettivo che trasmette, ottieni 1PV.\n\n\nSe gli agenti amici controllano più segnalini obiettivo che trasmettono rispetto agli agenti nemici, ottieni 1PV.\n",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-04",
@@ -50,7 +59,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**준비:** 전투 시작 시 중앙 목표에 구체 토큰을 놓습니다.\n\n**구체 이동 · 1AP:** 활성 오퍼레이티브가 구체 토큰이 있는 목표를 통제하면 토큰을 이동합니다. 중앙에 있다면 원하는 플레이어 측 목표로, 플레이어 측 목표에 있다면 중앙 목표로 옮깁니다. TP1, 적 통제 범위 안, 또는 구체가 있는 목표를 통제하지 않으면 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 아군이 통제하는 목표 중 구체 토큰이 없는 목표마다 1VP.",
+      "sourceText": "All'inizio della battaglia, l'obiettivo centrale ha il gettone Sfera.\n\nMUOVERE LA SFERA · 1PA\n\nSe l'agente attivo controlla il segnalino obiettivo che ha il gettone Sfera, muovi il gettone come segue:\n\nSe il segnalino obiettivo centrale ce l'ha, spostalo sul segnalino obiettivo di uno dei due giocatori (a tua scelta).\n\n\nSe il segnalino obiettivo di un giocatore ce l'ha, spostalo sul segnalino obiettivo centrale.\n\nUn agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se non controlla il segnalino obiettivo che ha il gettone Sfera.\n\nAlla fine di ogni punto di svolta dopo il primo, per ogni segnalino obiettivo che gli agenti amici controllano che non ha il gettone Sfera, ottieni 1PV.",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-05",
@@ -83,7 +95,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**다운로드 · 1AP:** 활성 오퍼레이티브가 통제하는 중앙 또는 상대 측 목표 마커 1개에서 다운로드합니다. TP1, 적 통제 범위 안, 또는 해당 목표가 이번 전투에서 이미 다운로드된 경우에는 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시 적보다 더 많은 목표를 통제하면 1VP. 이때 다운로드된 목표는 제외합니다. 아군이 TP3에 다운로드할 때마다 1VP, TP4에 다운로드할 때마다 2VP.",
+      "sourceText": "DOWNLOAD · 1PA\n\nUn segnalino obiettivo centrale o dell'avversario che l'agente attivo controlla è scaricato. Un agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se quel segnalino obiettivo è già stato scaricato durante la battaglia.\n\nAlla fine di ogni punto di svolta dopo il primo, se gli agenti amici controllano più segnalini obiettivo di quanto facciano gli agenti nemici, ottieni 1PV. Ignora i segnalini obiettivo scaricati quando determini questo.\nOgni volta che un agente amico esegue l'azione Download durante il terzo punto di svolta, ottieni 1PV.\nOgni volta che un agente amico esegue l'azione Download durante il quarto punto di svolta, ottieni 2PV.",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-08",
@@ -94,7 +109,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**데이터 수집 · 1AP:** 활성 오퍼레이티브가 통제하는 목표에 데이터 점수 1점을 추가합니다. 주사위 등으로 누적량을 표시합니다. TP1, 적 통제 범위 안, 또는 해당 목표가 이번 TP에 이미 데이터 점수를 얻었다면 수행할 수 없습니다.\n\n**데이터 전송 · 1AP:** 활성 오퍼레이티브가 통제하는 목표의 데이터 점수를 모두 제거합니다. TP1~TP3, 적 통제 범위 안, 또는 제거할 데이터 점수가 없으면 수행할 수 없습니다.\n\n**득점:** TP2·TP3 종료 시 이번 TP에 적보다 더 많은 데이터 수집 행동을 했다면 1VP. 아군이 데이터 전송을 할 때마다 제거한 데이터 점수만큼 VP를 얻습니다.",
+      "sourceText": "COMPILARE DATI · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla ottiene 1 punto Dati (usa un dado come gettone per tenere traccia dei punti). Un agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se quel segnalino obiettivo ha già ottenuto un punto Dati durante questo punto di svolta.\n\nINVIARE DATI · 1PA\n\nRimuovi tutti i punti Dati da un segnalino obiettivo che l'agente attivo controlla. Un agente non può eseguire questa azione durante il primo, secondo o terzo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se quel segnalino obiettivo non ha alcun punto Dati da rimuovere.\n\nAlla fine del secondo e terzo punto di svolta, se gli agenti amici hanno eseguito più azioni Compile Data durante quel punto di svolta rispetto agli agenti nemici, ottieni 1PV.\nOgni volta che un agente amico esegue l'azione Send Data, ottieni PV pari al numero di punti Dati rimossi.",
+      "sourceLanguage": "it"
     },
     {
       "id": "crit-09",
@@ -105,7 +123,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**준비·선택:** 목표 배치 후 각 목표를 1~3번으로 구분합니다. 매 전략 단계의 Gambit 시작 시 양측은 목표 하나를 비밀리에 선택하고 동시에 공개합니다. 같은 목표를 골랐다면 그 목표가 이번 TP에 비활성화됩니다. 서로 다른 목표를 골랐다면 아무도 고르지 않은 목표가 비활성화됩니다.\n\n**재부팅 · 2AP:** 활성 오퍼레이티브가 통제하는 비활성 목표 하나를 활성화합니다. TP1 또는 적 통제 범위 안에서는 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 아군이 통제하는 목표마다 1VP. 비활성 목표는 제외합니다.",
+      "sourceText": "Quando si prepara la battaglia, dopo aver posizionato i segnalini obiettivo, numera ciascun segnalino obiettivo 1-3. All'inizio della fase di Azzardo (Gambit step) per ogni fase di Strategia, ogni giocatore seleziona segretamente un segnalino obiettivo posizionando un numero di dadi nella propria mano che corrisponde al numero del segnalino obiettivo. Poi rivelano le loro selezioni simultaneamente. Se entrambi i giocatori hanno selezionato lo stesso, quel segnalino obiettivo è inerte durante questo punto di svolta. Se no, il segnalino obiettivo che nessun giocatore ha selezionato è inerte durante questo punto di svolta.\n\nRIAVVIARE · 2PA\n\nUn segnalino obiettivo inerte che l'agente attivo controlla non è più inerte. Un agente non può eseguire questa azione durante il primo punto di svolta, o mentre si trova entro il raggio di controllo di un agente nemico.\n\nAlla fine di ogni punto di svolta dopo il primo, per ogni segnalino obiettivo controllato dagli agenti amici, ottieni 1PV. Ignora i segnalini obiettivo inerti quando determini questo.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-recon-01",
@@ -127,7 +148,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 아군이 처음 정찰 행동을 수행할 때.\n\n**발견! · 1AP:** 활성 오퍼레이티브에게 보이고 6인치 초과 떨어진 Ready 상태의 적 하나를 선택합니다. 그 적은 다음 전략 단계의 Ready 단계까지 발견 상태입니다. Engage 명령 상태, TP1, 또는 적 통제 범위 안에서는 이 행동을 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 발견 상태이며 아군에게 보이는 적마다 1VP. 정찰 행동을 했던 아군일 필요는 없습니다. TP당 최대 2VP.\n\n*원문은 공개 조건의 행동명과 실제 행동명이 다릅니다. 위 번역은 원문 표현을 유지한 초안입니다.*",
+      "sourceText": "La prima volta che un agente amico esegue l'azione Esplorare.\n\nINDIVIDUATO! · 1PA\n\nSeleziona un agente nemico pronto (ready) visibile e a più di 6\" dall'agente attivo. Quell'agente nemico è ora individuato fino alla fase di Approntamento (Ready step) della successiva fase di Strategia. Un agente non può eseguire questa azione mentre ha un ordine di ingaggiare, durante il primo punto di svolta, o mentre si trova entro il raggio di controllo di un agente nemico.\n\nAlla fine di ogni punto di svolta dopo il primo, per ogni agente nemico individuato che è visibile agli agenti amici, ottieni 1PV. Nota che non deve essere per forza un agente amico che ha eseguito l'azione Esplorare.\nNon puoi ottenere più di 2PV da questa op per punto di svolta.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-recon-03",
@@ -149,7 +173,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 이 작전에서 처음 VP를 얻을 때.\n\n**추적 조건:** 적이 6인치 이내 아군에게 유효한 표적이면 추적됩니다. 그 아군은 Conceal 명령이어야 하고, 추적하려는 적에게는 유효한 표적이 아니어야 하며, 적 오퍼레이티브의 통제 범위 밖이어야 합니다.\n\n**득점:** TP2부터 각 TP 종료 시, 적 하나를 추적 중이면 1VP(TP4에는 대신 2VP). 둘 이상을 추적 중이면 2VP. TP당 최대 2VP.",
+      "sourceText": "La prima volta che ottieni PV da questa op.\n\nUn agente nemico viene tracciato se è un bersaglio valido per un agente amico entro 6\" da esso. Quell'agente amico deve avere un ordine di nascondersi, non può essere un bersaglio valido per l'agente nemico che sta tentando di tracciare, e non può trovarsi entro il raggio di controllo degli agenti nemici.\n\nAlla fine di ogni punto di svolta dopo il primo:\n\nSe un agente nemico è tracciato, ottieni 1PV, o 2PV invece se è il quarto punto di svolta.\n\n\nSe due o più agenti nemici sono tracciati, ottieni 2PV.\n\nNon puoi ottenere più di 2PV da questa op per punto di svolta.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-infil-02",
@@ -160,7 +187,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 적이 처음 전투불능이 될 때.\n\n**정보 마커:** 적이 전투불능이 될 때마다 제거 전에 그 적의 통제 범위 안에 내 정보 임무 마커 하나를 놓습니다. 아군은 이 마커에 Pick Up Marker를 수행할 수 있습니다. 해당 행동의 조건을 확인할 때 운반 중인 첫 번째 정보 마커는 무시합니다. 따라서 아군 하나는 정보 마커 두 개, 또는 정보 마커 하나와 다른 마커 하나를 운반할 수 있습니다.\n\n**득점:** TP2부터 각 TP 종료 시 아군이 내 정보 마커를 하나 이상 운반 중이면 1VP. 전투 종료 시 아군이 운반하는 내 정보 마커마다 1VP.",
+      "sourceText": "La prima volta che un agente nemico viene neutralizzato.\n\nOgni volta che un agente nemico viene neutralizzato, prima che venga rimosso dalla killzone, posiziona uno dei tuoi segnalini missione Informazione entro il suo raggio di controllo. Gli agenti amici possono eseguire l'azione Raccogliere Segnalino sui tuoi segnalini missione Informazione, e ai fini delle condizioni di quell'azione, ignora il primo segnalino missione Informazione che l'agente attivo sta trasportando. In altre parole, ogni agente amico può trasportare fino a due segnalini missione Informazione, oppure uno e un altro segnalino.\n\nAlla fine di ogni punto di svolta dopo il primo, se eventuali agenti amici stanno trasportando qualsiasi dei tuoi segnalini missione Informazione, ottieni 1PV.\nAlla fine della battaglia, per ciascuno dei tuoi segnalini missione Informazione che gli agenti amici stanno trasportando, ottieni 1PV.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-infil-03",
@@ -171,7 +201,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 아군이 처음 장치 설치 행동을 수행할 때.\n\n**장치 설치 · 1AP:** 활성 오퍼레이티브가 통제하는 목표에 내 장치 토큰 하나를 놓습니다. TP1, 적 통제 범위 안, 또는 해당 목표에 이미 내 장치 토큰이 있으면 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 상대 측 목표에 내 장치 토큰이 있으면 1VP. 그 외 목표 중 내 장치 토큰이 있고 적이 contest하는 목표마다 1VP. TP당 최대 2VP.",
+      "sourceText": "La prima volta che un agente amico esegue l'azione Piazzare Dispositivo.\n\nPIAZZARE DISPOSITIVO · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla ottiene uno dei tuoi gettoni Dispositivo. Un agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se quel segnalino obiettivo ha già uno dei tuoi gettoni Dispositivo.\n\nAlla fine di ogni punto di svolta dopo il primo:\n\nSe il segnalino obiettivo del tuo avversario ha uno dei tuoi gettoni Dispositivo, ottieni 1PV.\n\n\nPer ogni altro segnalino obiettivo che gli agenti nemici contestano che ha uno dei tuoi gettoni Dispositivo, ottieni 1PV.\n\nNon puoi ottenere più di 2PV da questa op per punto di svolta.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-sec-01",
@@ -182,7 +215,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 깃발 설치 행동을 수행할 때.\n\n**깃발 설치 · 1AP:** 활성 오퍼레이티브의 통제 범위 안, 상대 영역에 완전히 포함되고 중립 전장 가장자리에서 5인치 초과 떨어진 곳에 내 깃발 임무 마커를 놓습니다. 오퍼레이티브는 이 마커에 Pick Up Marker를 수행할 수 있습니다. TP1, 적 통제 범위 안, 또는 이번 전투에 아군이 이미 이 행동을 수행했다면 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 깃발이 상대 영역에 완전히 포함되고 아군이 통제하면 1VP. 여기에 적이 contest하지도 않는다면 대신 2VP. 깃발은 전장에 놓여 있어야 하며 운반 중에는 득점하지 못합니다.",
+      "sourceText": "Quando esegui l'azione Piazzare Stendardo.\n\nPIAZZARE STENDARDO · 1PA\n\nPosiziona il tuo segnalino missione Stendardo entro il raggio di controllo dell'agente attivo, interamente all'interno del territorio del tuo avversario e a più di 5\" da un bordo neutro della killzone. Gli agenti possono eseguire l'azione Raccogliere Segnalino sul tuo segnalino missione Stendardo. Un agente non può eseguire questa azione durante il primo punto di svolta, mentre si trova entro il raggio di controllo di un agente nemico, o se un agente amico ha già eseguito questa azione durante la battaglia.\n\nAlla fine di ogni punto di svolta dopo il primo, se il tuo segnalino missione Stendardo è interamente all'interno del territorio del tuo avversario e gli agenti amici lo controllano, ottieni 1PV; se questo è vero e nessun agente nemico lo contesta, ottieni invece 2PV. Il tuo segnalino missione Stendardo deve essere nella killzone per segnare (non deve essere trasportato).",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-sec-02",
@@ -215,7 +251,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "공식 문서의 Additional Rules 문장이 불완전하여 본문 적용을 보류했습니다."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 목표를 contest하던 적이 처음 전투불능이 되거나 아군이 처음 확보 행동을 수행할 때 중 먼저 발생한 시점.\n\n**소탕 토큰:** 목표를 contest하는 적이 전투불능이 되면 해당 목표에 내 소탕 토큰이 없는 경우 하나를 놓습니다. 다음 전략 단계의 Ready 단계까지 유지합니다.\n\n**확보 · 1AP:** 활성 오퍼레이티브가 통제하는 목표를 이번 TP 동안 확보합니다. TP1 또는 적 통제 범위 안에서는 수행할 수 없습니다.\n\n**득점:** TP2부터 각 TP 종료 시, 내 소탕 토큰이 있는 목표를 아군이 하나 이상 통제하면 1VP. 그중 하나 이상을 확보한 상태라면 대신 2VP. TP당 최대 2VP.\n\n*공식 업데이트의 해당 문장에 불완전한 부분이 있어 커뮤니티 자료 기준으로 번역했습니다. 공식 대조는 보류 상태입니다.*",
+      "sourceText": "La prima volta che un agente nemico viene neutralizzato mentre contesta un segnalino obiettivo, o la prima volta che un agente amico esegue l'azione Liberare (qualunque avvenga prima).\n\nQuando un agente nemico che contesta un segnalino obiettivo viene neutralizzato, quel segnalino obiettivo ottiene uno dei tuoi gettoni Setacciato (se non ne ha già uno) fino alla fase di Approntamento della successiva fase di Strategia.\n\nLIBERA · 1PA\n\nUn segnalino obiettivo che l'agente attivo controlla è liberato per il punto di svolta. Un agente non può eseguire questa azione durante il primo punto di svolta, o mentre si trova entro il raggio di controllo di un agente nemico.\n\nAlla fine di ogni punto di svolta dopo il primo, se gli agenti amici controllano qualsiasi segnalino obiettivo che ha uno dei tuoi gettoni Setacciato, ottieni 1PV. Se questo è vero e uno qualsiasi di quei segnalini obiettivo è anche liberato, ottieni invece 2PV.\nNon puoi ottenere più di 2PV da questa op per punto di svolta.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-seek-02",
@@ -226,7 +265,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**공개:** 이 작전에서 처음 VP를 얻을 때.\n\n**득점:** 아군이 적을 전투불능으로 만들 때, 그 아군이 상대 강하 구역에서 6인치 이내이면 1VP. 추가로 그 적의 Wounds 능력치가 12 이상이었다면 대신 2VP. TP당 최대 2VP.",
+      "sourceText": "La prima volta che ottieni PV da questa op.\n\nOgni volta che un agente amico neutralizza un agente nemico, se quell'agente amico è entro 6\" dalla drop zone del tuo avversario, ottieni 1PV; se questo è vero e l'agente nemico aveva una statistica ferite di 12 o più, ottieni invece 2PV.\nNon puoi ottenere più di 2PV da questa op per punto di svolta.",
+      "sourceLanguage": "it"
     },
     {
       "id": "tac-seek-03",
@@ -248,7 +290,10 @@
       "status": "catalog-only",
       "english": "",
       "source": "https://github.com/ArturoBianchi/kt-op-2025",
-      "note": "카드 본문 전체의 최신 공식 일치는 아직 검증되지 않았습니다. 실물 카드 또는 공식 앱을 참고하세요."
+      "note": "커뮤니티 이탈리아어 자료의 한국어 번역 초안 · 최신 공식 본문 대조 전.",
+      "koreanDraft": "**킬 등급:** 등급 없이 시작합니다. 전투불능으로 만든 적의 수에 따라 등급이 올라가며 최대 5등급입니다. 새 등급에 도달할 때마다 1VP. TP4 종료 시 내 등급이 상대보다 높으면 추가 1VP를 얻습니다. 동률이면 추가 VP는 없습니다.\n\n**등급표:** 전투 시작 당시 적 오퍼레이티브 수에 해당하는 행을 사용합니다. 각 숫자는 해당 등급에 도달하기 위해 전투불능으로 만들어야 하는 적의 누적 수입니다.\n\n|시작 적 수|1등급|2등급|3등급|4등급|5등급|\n|---|---|---|---|---|---|\n|5|1|2|3|4|5|\n|6|1|2|3|4|6|\n|7|1|2|4|5|7|\n|8|2|3|4|6|8|\n|9|2|3|5|7|9|\n|10|2|4|6|8|10|\n|11|2|4|7|9|11|\n|12|2|5|7|10|12|\n|13|2|5|8|10|13|\n|14|3|6|8|11|14|",
+      "sourceText": "Inizi senza un grado uccisioni. Man mano che gli operativi nemici vengono neutralizzati, il tuo grado sale fino a raggiungere 5. Ogni volta che passi a un nuovo grado, ottieni 1VP. Alla fine del quarto punto di svolta, se il tuo grado è più alto di quello del tuo avversario, ottieni 1PV. In un pareggio, nessun giocatore ottiene un PV extra. La tabella seguente mostra quanti operativi nemici devono essere neutralizzati per raggiungere ciascun grado. La riga che utilizzi è determinata dal numero iniziale di agenti nemici. \n\n[{\"startingAgents\": 5, \"grade1\": 1, \"grade2\": 2, \"grade3\": 3, \"grade4\": 4, \"grade5\": 5}, {\"startingAgents\": 6, \"grade1\": 1, \"grade2\": 2, \"grade3\": 3, \"grade4\": 4, \"grade5\": 6}, {\"startingAgents\": 7, \"grade1\": 1, \"grade2\": 2, \"grade3\": 4, \"grade4\": 5, \"grade5\": 7}, {\"startingAgents\": 8, \"grade1\": 2, \"grade2\": 3, \"grade3\": 4, \"grade4\": 6, \"grade5\": 8}, {\"startingAgents\": 9, \"grade1\": 2, \"grade2\": 3, \"grade3\": 5, \"grade4\": 7, \"grade5\": 9}, {\"startingAgents\": 10, \"grade1\": 2, \"grade2\": 4, \"grade3\": 6, \"grade4\": 8, \"grade5\": 10}, {\"startingAgents\": 11, \"grade1\": 2, \"grade2\": 4, \"grade3\": 7, \"grade4\": 9, \"grade5\": 11}, {\"startingAgents\": 12, \"grade1\": 2, \"grade2\": 5, \"grade3\": 7, \"grade4\": 10, \"grade5\": 12}, {\"startingAgents\": 13, \"grade1\": 2, \"grade2\": 5, \"grade3\": 8, \"grade4\": 10, \"grade5\": 13}, {\"startingAgents\": 14, \"grade1\": 3, \"grade2\": 6, \"grade3\": 8, \"grade4\": 11, \"grade5\": 14}]",
+      "sourceLanguage": "it"
     }
   ]
 }

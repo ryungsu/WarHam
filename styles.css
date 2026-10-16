@@ -17,6 +17,7 @@
 .unit-match-control{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;max-width:520px;margin-top:12px;color:var(--accent);font-size:13px}.unit-match-control select{width:100%;color:var(--text)}.unit-match-control small{color:var(--muted);font-size:11px}
 .stratagem-library{margin:10px 0 18px;padding:0 14px 12px}.stratagem-library>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;list-style:none;cursor:pointer;font-weight:750;color:var(--accent)}.stratagem-library>summary::-webkit-details-marker,.stratagem-phase>summary::-webkit-details-marker{display:none}.stratagem-library>summary::after{content:"＋";color:var(--muted)}.stratagem-library[open]>summary::after{content:"−"}.stratagem-library>summary span,.stratagem-phase>summary span{color:var(--muted);font-size:12px;font-weight:500}.stratagem-phase{border-top:1px solid var(--line)}.stratagem-phase>summary{padding:11px 4px;list-style:none;cursor:pointer;font-weight:700}.stratagem-phase[open]>summary{color:var(--accent)}.stratagem-library .stratagem-toolbar{flex-wrap:wrap;padding:8px 0 12px;border-top:1px solid var(--line)}.stratagem-library .stratagem-list{margin:0 0 12px}.stratagem-card button{margin-top:8px}.stratagem-card p{overflow-wrap:anywhere}
 .translation-feed-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;margin:-8px 0 18px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#151b17}.translation-feed-panel label{grid-column:1/-1;color:var(--muted);font-size:12px;font-weight:700}.translation-feed-panel input{min-width:0;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:#101511;color:var(--text);font:13px/1.4 Consolas,monospace}.translation-feed-panel input:focus{outline:2px solid #779761}.translation-feed-panel button{white-space:nowrap}.translation-feed-panel button:disabled{opacity:.7;cursor:wait}@media(max-width:600px){.translation-feed-panel{grid-template-columns:1fr}.translation-feed-panel label{grid-column:1}.translation-feed-panel button{width:100%}}
+.translation-loading-gear{display:inline-block;margin-right:7px;font-size:1.15em;line-height:1;transform-origin:50% 50%;animation:translation-gear-spin 1.1s linear infinite}@keyframes translation-gear-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.translation-loading-gear{animation:none}}
 
 .actions{justify-content:space-between}.match-map-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-6px 0 18px;padding:10px 13px;border:1px solid var(--line);border-radius:9px;background:#151b17}.match-map-tools>div:first-child{display:grid;gap:2px}.match-map-tools strong{font-size:13px;color:var(--accent)}.match-map-tools small,.match-map-tools p,.translation-feed-status{font-size:11px;color:var(--muted)}.match-map-tools>div:last-child{display:flex;align-items:center;gap:8px}.import-map-label{display:inline-block;cursor:pointer}.translation-feed-status{grid-column:1/-1;margin:0;min-height:1em}.unit-match-control small{line-height:1.5}@media(max-width:600px){.match-map-tools{align-items:flex-start;flex-direction:column}.match-map-tools>div:last-child{flex-wrap:wrap}}
 .roster-presets{display:grid;grid-template-columns:minmax(180px,1fr) minmax(220px,1.4fr) auto auto auto;gap:8px;align-items:center;margin-top:12px}.roster-presets label{grid-column:1/-1;color:var(--muted);font-size:12px;font-weight:700}.roster-presets select,.roster-presets input{width:100%;min-width:0;min-height:38px;border:1px solid var(--line);border-radius:7px;background:#101511;color:var(--text);padding:8px 10px;font:13px/1.4 "Segoe UI",sans-serif}.roster-presets input:focus,.roster-presets select:focus{outline:2px solid #779761}.roster-presets button{white-space:nowrap}.roster-presets button:disabled{opacity:.45;cursor:default}.roster-presets-status{grid-column:1/-1;min-height:1em;margin:0;color:var(--muted);font-size:11px}@media(max-width:900px){.roster-presets{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.roster-presets label,.roster-presets-status{grid-column:1/-1}.roster-presets select{grid-column:1/3}.roster-presets input{grid-column:1/3}.roster-presets #save-roster-preset{grid-column:3;grid-row:2}.roster-presets #load-roster-preset{grid-column:1}.roster-presets #delete-roster-preset{grid-column:2}}@media(max-width:600px){.roster-presets{grid-template-columns:1fr 1fr}.roster-presets select,.roster-presets input{grid-column:1/-1}.roster-presets #save-roster-preset,.roster-presets #load-roster-preset,.roster-presets #delete-roster-preset{grid-column:auto;grid-row:auto}.roster-presets button{width:100%}}
@@ -55,6 +56,12 @@
 .card-title{display:flex;align-items:center;gap:12px;min-width:0}.card-title-text{min-width:0}.card-title .unit-head-image{flex:0 0 58px;width:58px;height:58px}@media(max-width:760px){.card-title .unit-head-image{flex-basis:48px;width:48px;height:48px}}
 .translation-review{border:1px solid #806b3d;border-radius:10px;background:#211e17;padding:12px 14px;margin-bottom:4px}.translation-review>summary,.translation-review-item>summary{cursor:pointer;list-style:none}.translation-review>summary::-webkit-details-marker,.translation-review-item>summary::-webkit-details-marker{display:none}.translation-review>summary{display:flex;justify-content:space-between;gap:12px;color:var(--warn);font-weight:750}.translation-review>summary span,.translation-review-item>summary span{color:var(--muted);font-size:12px;font-weight:400}.translation-review-list{display:grid;gap:7px;margin-top:12px}.translation-review-item{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#171b18}.translation-review-item>summary{display:flex;justify-content:space-between;gap:12px}.translation-review-item>summary b{font-size:13px}.translation-review-item p{margin-top:8px;font-size:12px;line-height:1.65;overflow-wrap:anywhere}.translation-review-item p b{display:block;color:var(--accent)}.translation-review-note,.translation-review-more{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.55}@media(max-width:600px){.translation-review>summary,.translation-review-item>summary{align-items:flex-start;flex-direction:column}}
 .translation-feed-hint{font-size:11px;color:var(--muted)}.translation-review-tools{display:flex;align-items:center;gap:10px;margin:12px 0}.translation-review-tools [role=status]{font-size:12px;color:var(--muted)}.translation-review-item>button{margin-top:8px}.draft-note{display:inline-block;margin-top:8px;color:var(--accent)}
+.translation-edit-label{display:block;margin-top:10px;color:var(--accent);font-weight:700;font-size:13px}
+.translation-review-item textarea[data-translation-edit]{display:block;width:100%;min-height:120px;margin-top:5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#111613;color:var(--text);font:14px/1.6 "Segoe UI",sans-serif;resize:vertical;white-space:pre-wrap}
+.translation-review-item textarea[data-translation-edit]:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.translation-save-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.translation-save-row [role=status]{flex:1 1 100%;color:var(--warn);font-size:12px;overflow-wrap:anywhere}
+@media(max-width:600px){.translation-edit-label{font-size:15px}.translation-review-item textarea[data-translation-edit]{min-height:150px;font-size:16px;line-height:1.55}.translation-save-row button{font-size:14px;min-height:42px}.translation-save-row [role=status]{font-size:13px}}
 
 /* Datasheet card redesign: scoped to #results so assistant/game screens keep their own layout. */
 #results .card {
@@ -72,6 +79,17 @@
   box-shadow: 0 5px 18px #0005;
   scroll-margin-top: 16px;
 }
+
+/* Compact source toggle for translated ability text. */
+#results .card-body .ability-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:6px 10px}
+#results .card-body .ability-heading>.profile-title{grid-column:1;grid-row:1;margin:0;min-width:0}
+#results .card-body .ability-original{grid-column:2;grid-row:1;justify-self:end;max-width:100%}
+#results .card-body .ability-original>summary{list-style:none;cursor:pointer;white-space:nowrap;border:1px solid #536b83;border-radius:5px;padding:3px 7px;color:#b9d6f4;font-size:11px;font-weight:700;line-height:1.35}
+#results .card-body .ability-original>summary::-webkit-details-marker{display:none}
+#results .card-body .ability-original>summary::before{content:"＋ ";color:var(--faction-accent,#7eb5f5)}
+#results .card-body .ability-original[open]>summary::before{content:"− "}
+#results .card-body .ability-original[open]{grid-column:1/-1;grid-row:2;justify-self:stretch}
+#results .card-body .ability-original-text{margin:6px 0 2px;padding:8px 10px;border:1px solid #354553;border-radius:6px;background:#12181e;color:#bdc9d5;font-size:12px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
 #results .card-head {
   position: relative;
   display: grid;
@@ -331,3 +349,152 @@
 #results .profile-image-search-trigger:hover,#results .profile-image-search-trigger:focus-visible{border-color:#83baff;background:#20354a;color:#fff}
 @media(max-width:700px){#google-image-search-dialog .image-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#google-image-search-dialog .image-search-result img{height:125px}}
 #google-image-search-dialog{width:min(440px,calc(100vw - 24px));max-height:88dvh;padding:20px;overflow:auto}
+
+/* Readability pass: keep weapon keywords beside their weapon and let long labels wrap. */
+#results .weapon-compact-table{min-width:540px;font-size:13px}
+#results .weapon-compact-table th,#results .weapon-compact-table td{padding:6px 8px}
+#results .weapon-compact-table th{font-size:11px}
+#results .weapon-compact-table td:first-child{min-width:170px;max-width:240px;white-space:normal}
+#results .weapon-compact-table td:not(:first-child){white-space:nowrap}
+#results .weapon-choice{align-items:flex-start;gap:8px;font-size:14px;line-height:1.35}
+#results .weapon-choice input{margin-top:2px;width:17px;height:17px}
+#results .weapon-name-cell .weapon-choice span{overflow-wrap:anywhere}
+#results .weapon-keywords{display:flex;flex-wrap:wrap;gap:2px 8px;margin:4px 0 0 25px;line-height:1.55}
+#results .weapon-keywords .keyword-chip{font-size:12px;white-space:normal;text-align:left}
+#results .card-body .profile-table{font-size:14px}
+#results .card-body .profile-title{font-size:16px}
+#results .card-body .ability-text{font-size:15px;line-height:1.75}
+#results .card-head .stat-pill b{font-size:11px}
+#results .card-head .stat-pill b span{font-size:9px}
+#results .card-head .stat-pill strong{font-size:20px}
+@media(max-width:600px){
+  #results .weapon-compact-table{min-width:520px}
+  #results .weapon-compact-table td:first-child{min-width:155px;max-width:200px}
+  #results .weapon-choice{font-size:13px}
+  #results .weapon-keywords .keyword-chip{font-size:12px}
+  #results .card-head .stat-pill{height:68px}
+  #results .card-head .stat-pill strong{font-size:19px}
+}
+
+/* Faction palette follows the faction keyword while keeping the datasheet dark and legible. */
+body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accent-rgb,183,219,136),.15) 0,transparent 38%)}
+#results .card{border-left:2px solid var(--faction-accent,#b7db88)}
+#results .card:focus-within{border-color:var(--faction-accent,#b7db88)}
+#results .card-head .stat-pill{border-top-color:var(--faction-accent,#b7db88)}
+#results .card-head .tag,#results .card-head .wound-button{color:var(--faction-accent,#b7db88)}
+#results .card-body .profile-title,#results .card-body .effect-summary h4,#results .card-body .effect-summary strong{color:var(--faction-accent,#b7db88)}
+#results .card-body .ability-block,#results .card-body .effect-summary{border-left-color:var(--faction-accent,#b7db88)}
+#results .card-body .roster-gear{border-top-color:var(--faction-accent,#b7db88)}
+#results .card-body .keyword-chip,#results .card-body .ability-text .keyword-chip{color:var(--faction-accent,#b7db88);border-bottom-color:var(--faction-accent,#b7db88)}
+#results .weapon-profile-toolbar{border-left-color:var(--faction-accent,#b7db88)}
+#results .weapon-profile-toolbar button,#results .profile-image-search-trigger{border-color:var(--faction-accent,#b7db88);color:var(--faction-accent,#b7db88)}
+#results .weapon-row.is-equipped{background:rgba(var(--faction-accent-rgb,183,219,136),.12)}
+#results .weapon-choice input{accent-color:var(--faction-accent,#b7db88)}
+#results .weapon-name-scroll{display:block;min-width:0;flex:1 1 auto;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:var(--faction-accent,#b7db88) transparent;touch-action:pan-x}
+#results .weapon-name-scroll>span{display:inline-block;white-space:normal;overflow-wrap:anywhere}
+#results .weapon-name-scroll small{color:#aeb8c2;font-size:.88em}
+#results .weapon-keywords{margin-left:0}
+#results .weapon-compact-scroll{overflow-x:visible}
+@media(max-width:600px){
+  #results .weapon-compact-scroll{overflow-x:hidden}
+  #results .weapon-compact-table{width:100%;min-width:0;table-layout:fixed}
+  #results .weapon-compact-table th:first-child,#results .weapon-compact-table td:first-child{width:36%;min-width:0;max-width:none}
+  #results .weapon-compact-table th,#results .weapon-compact-table td{padding:4px 2px;white-space:normal;overflow-wrap:anywhere;text-align:center;font-size:10px;line-height:1.25}
+  #results .weapon-compact-table th:first-child,#results .weapon-compact-table td:first-child{text-align:left}
+  #results .weapon-choice{gap:5px;font-size:12px;line-height:1.35}
+  #results .weapon-choice input{width:16px;height:16px;margin-top:1px}
+  #results .weapon-name-scroll{white-space:nowrap;line-height:1.4}
+  #results .weapon-name-scroll>span{white-space:nowrap;overflow-wrap:normal}
+  #results .weapon-name-scroll small{font-size:11px}
+  #results .weapon-keywords{gap:1px 5px;margin-top:3px;line-height:1.35}
+  #results .weapon-keywords .keyword-chip{font-size:10px;line-height:1.35}
+  #results .weapon-attack-count{display:grid;justify-items:center;line-height:1.15}
+  #results .weapon-attack-count small{font-size:9px;color:#c2ceda}
+}
+
+/* Compact roster entry without triggering iOS focus zoom. */
+.input-panel{margin:10px 0;padding:10px 12px;border-color:rgba(var(--faction-accent-rgb,183,219,136),.48);border-left:3px solid var(--faction-accent,#b7db88);border-radius:10px}
+.input-panel .section-heading{margin-bottom:6px}
+.input-panel .section-heading h2{font-size:16px}
+.input-panel .section-heading .eyebrow{margin-bottom:1px}
+.input-panel textarea{height:84px;min-height:64px;max-height:180px;padding:8px 10px;border-color:#465565;font-size:13px}
+.input-panel textarea:focus{outline:2px solid var(--faction-accent,#b7db88);border-color:var(--faction-accent,#b7db88)}
+.input-panel .roster-presets{gap:5px;margin-top:6px}
+.input-panel .roster-presets label{font-size:11px}
+.input-panel .roster-presets select,.input-panel .roster-presets input{min-height:32px;padding:5px 8px;border-color:#3b4855}
+.input-panel .actions{gap:7px;margin-top:6px}
+.input-panel .actions button,.input-panel .section-heading>.quiet{padding:6px 10px;font-size:12px}
+.input-panel .hint{margin-top:4px;font-size:11px;line-height:1.4}
+.input-panel .primary{background:var(--faction-accent,#b7db88)}
+.roster-presets input:focus,.roster-presets select:focus{outline-color:var(--faction-accent,#b7db88)}
+@media(max-width:600px){
+  .input-panel{margin:8px 0;padding:8px 9px}
+  .input-panel .section-heading h2{font-size:15px}
+  .input-panel textarea{height:72px;min-height:60px;padding:7px 9px;font:16px/1.35 Consolas,monospace;resize:vertical}
+  .input-panel .roster-presets select,.input-panel .roster-presets input{min-height:34px;font-size:16px}
+  .input-panel .actions{margin-top:5px}
+  .input-panel .hint{font-size:10px}
+}
+
+/* Fixed, collapsible phase checklist beside the squad navigator. */
+.unit-quick-nav{display:flex;flex-direction:column;gap:6px;max-height:min(82vh,720px);overflow:hidden}
+.quick-assistant{min-width:0;border-bottom:1px solid rgba(var(--faction-accent-rgb,183,219,136),.35);padding-bottom:5px}
+.quick-assistant>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border-radius:7px;color:var(--faction-accent,#b7db88);font-size:13px;font-weight:800;cursor:pointer;list-style:none}
+.quick-assistant>summary::-webkit-details-marker{display:none}
+.quick-assistant>summary::after{content:"＋";margin-left:auto;font-size:15px}
+.quick-assistant[open]>summary::after{content:"−"}
+.quick-assistant>summary small{color:var(--muted);font-size:10px;font-weight:500}
+.quick-assistant-content{display:grid;gap:6px;min-height:0}
+.quick-assistant:not([open]) .quick-assistant-content{display:none}
+.quick-assistant-phases{display:flex;gap:5px;overflow-x:auto;padding:1px 2px 5px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.quick-assistant-phase{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 7px;border:1px solid var(--line);border-radius:999px;background:#151b17;color:var(--muted);font:11px/1.2 "Segoe UI",sans-serif;cursor:pointer}
+.quick-assistant-phase.active{border-color:var(--faction-accent,#b7db88);color:var(--faction-accent,#b7db88)}
+.quick-assistant-phase small{font-size:9px;opacity:.8}
+.quick-assistant-rows{display:grid;gap:4px;max-height:min(34vh,260px);overflow-y:auto;padding:1px 3px 4px;overscroll-behavior-y:contain}
+.quick-assistant-row{display:grid;grid-template-columns:17px minmax(0,1fr);align-items:start;gap:7px;padding:6px 7px;border:1px solid #34404a;border-radius:7px;background:#171e24;color:var(--text);cursor:pointer}
+.quick-assistant-row.checked{opacity:.55}
+.quick-assistant-row input{width:15px;height:15px;margin:2px 0 0;accent-color:var(--faction-accent,#b7db88)}
+.quick-assistant-row span{min-width:0}
+.quick-assistant-row b{display:block;font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.quick-assistant-row i{color:var(--faction-accent,#b7db88);font-style:normal}
+.quick-assistant-row small{display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.quick-assistant-open{justify-self:start;padding:4px 7px;border:0;background:transparent;color:var(--faction-accent,#b7db88);font:700 10px/1.3 "Segoe UI",sans-serif;text-decoration:underline;cursor:pointer}
+.quick-assistant-empty{padding:7px;color:var(--muted);font-size:11px}
+.unit-quick-nav-list{max-height:min(30vh,220px);flex:0 1 auto}
+@media(max-width:600px){.unit-quick-nav{max-height:78vh}.quick-assistant-rows{max-height:30vh}.unit-quick-nav-list{max-height:27vh}}
+
+/* Larger touch-screen typography: prioritize readable stats and checklist copy. */
+@media(max-width:600px){
+  body{font-size:17px;line-height:1.55}
+  .topbar{padding:22px 0 16px}
+  .edition,.data-status,.hint,footer{font-size:13px;line-height:1.5}
+  .view-tab{font-size:15px;padding:9px 11px}
+  #results .card-head h3{font-size:20px;line-height:1.3}
+  #results .card-head .original,#results .card-head .tag{font-size:14px;line-height:1.45}
+  #results .card-body .meta,#results .card-body .equip{font-size:14px;line-height:1.65}
+  #results .card-body .profile-title,#results .card-body .effect-summary h4{font-size:16px}
+  #results .card-body .ability-text,#results .card-body .effect-summary p{font-size:15px;line-height:1.65}
+  #results .keyword-chip{font-size:12px;line-height:1.45}
+  #results .weapon-profile-toolbar{min-height:54px}
+  #results .weapon-profile-toolbar strong{font-size:16px}
+  #results .weapon-profile-toolbar button{font-size:14px;padding:8px 10px}
+  #results .weapon-profile-toolbar small{font-size:12px}
+  #results .weapon-group h5{font-size:14px}
+  #results .weapon-compact-table th,#results .weapon-compact-table td{font-size:12px;line-height:1.35;padding:6px 3px}
+  #results .weapon-compact-table th:first-child{font-size:12px}
+  #results .weapon-choice{font-size:13px;line-height:1.45}
+  #results .weapon-choice input{width:18px;height:18px}
+  #results .weapon-name-scroll small{font-size:12px}
+  #results .weapon-keywords .keyword-chip{font-size:11px;line-height:1.45}
+  #results .weapon-attack-count small{font-size:11px}
+  .quick-assistant>summary{font-size:15px;min-height:42px}
+  .quick-assistant>summary small{font-size:12px}
+  .quick-assistant-phase{font-size:13px;padding:7px 9px}
+  .quick-assistant-phase small{font-size:11px}
+  .quick-assistant-row{grid-template-columns:21px minmax(0,1fr);gap:8px;padding:8px}
+  .quick-assistant-row input{width:19px;height:19px}
+  .quick-assistant-row b{font-size:14px;line-height:1.45}
+  .quick-assistant-row small{font-size:12px;line-height:1.5}
+  .quick-assistant-open{font-size:12px;padding:6px 8px}
+  .unit-quick-nav-toggle{font-size:16px;padding:11px 12px}
+}

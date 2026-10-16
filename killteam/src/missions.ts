@@ -1,4 +1,4 @@
-export type MissionCard={id:string;title:string;ko:string;kind:'crit'|'tac'|'kill';archetype:string|null;status:'official-text'|'catalog-only';english:string;source:string;note:string};
+export type MissionCard={koreanDraft?:string;sourceText?:string;sourceLanguage?:string;id:string;title:string;ko:string;kind:'crit'|'tac'|'kill';archetype:string|null;status:'official-text'|'catalog-only';english:string;source:string;note:string};
 export type MissionPack={id:string;title:string;checked:string;officialUpdated:string;sourceCommit:string;officialSource:string;companion:string;cards:MissionCard[]};
 export const missionKo:Record<string,string>={
 'crit-05':'**선택:** 첫 터닝 포인트 이후 각 전략 단계 Gambit 시작에 선제권 플레이어부터 각자 목표 마커 1개와 이번 터닝 포인트의 주장 1개를 선택합니다. 주장은 “종료 시 아군이 그 마커를 통제한다” 또는 “종료 시 적이 그 마커를 contest하지 않는다”입니다. 각 마커는 전투당 한 번만 선택합니다.\n\n**득점:** 첫 터닝 포인트 이후 종료 시, 적보다 더 많은 목표 마커를 통제하면 1VP. 선택한 주장이 참이면 1VP.',
