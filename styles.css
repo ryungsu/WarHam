@@ -331,3 +331,29 @@
 #results .profile-image-search-trigger:hover,#results .profile-image-search-trigger:focus-visible{border-color:#83baff;background:#20354a;color:#fff}
 @media(max-width:700px){#google-image-search-dialog .image-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#google-image-search-dialog .image-search-result img{height:125px}}
 #google-image-search-dialog{width:min(440px,calc(100vw - 24px));max-height:88dvh;padding:20px;overflow:auto}
+
+/* Readability pass: keep weapon keywords beside their weapon and let long labels wrap. */
+#results .weapon-compact-table{min-width:540px;font-size:13px}
+#results .weapon-compact-table th,#results .weapon-compact-table td{padding:6px 8px}
+#results .weapon-compact-table th{font-size:11px}
+#results .weapon-compact-table td:first-child{min-width:170px;max-width:240px;white-space:normal}
+#results .weapon-compact-table td:not(:first-child){white-space:nowrap}
+#results .weapon-choice{align-items:flex-start;gap:8px;font-size:14px;line-height:1.35}
+#results .weapon-choice input{margin-top:2px;width:17px;height:17px}
+#results .weapon-name-cell .weapon-choice span{overflow-wrap:anywhere}
+#results .weapon-keywords{display:flex;flex-wrap:wrap;gap:2px 8px;margin:4px 0 0 25px;line-height:1.55}
+#results .weapon-keywords .keyword-chip{font-size:12px;white-space:normal;text-align:left}
+#results .card-body .profile-table{font-size:14px}
+#results .card-body .profile-title{font-size:16px}
+#results .card-body .ability-text{font-size:15px;line-height:1.75}
+#results .card-head .stat-pill b{font-size:11px}
+#results .card-head .stat-pill b span{font-size:9px}
+#results .card-head .stat-pill strong{font-size:20px}
+@media(max-width:600px){
+  #results .weapon-compact-table{min-width:520px}
+  #results .weapon-compact-table td:first-child{min-width:155px;max-width:200px}
+  #results .weapon-choice{font-size:13px}
+  #results .weapon-keywords .keyword-chip{font-size:12px}
+  #results .card-head .stat-pill{height:68px}
+  #results .card-head .stat-pill strong{font-size:19px}
+}
