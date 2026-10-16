@@ -300,9 +300,44 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action === "translateDraft") {
     return jsonpOutput_(translateDraftFromApp_(e.parameter), e.parameter.callback);
   }
+  if (e && e.parameter && e.parameter.action === "saveTranslationDraft") {
+    return jsonpOutput_(saveTranslationDraftFromApp_(e.parameter), e.parameter.callback);
+  }
   const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet), rows = sheet.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
   const payload = { schemaVersion: 1, edition: V2.edition, translations: rows.filter(r => r[ix("Status")] === "APPROVED" && r[ix("Translation KO")]).map(r => ({ id: r[ix("Source ID")], kind: r[ix("Kind")], name: r[ix("Name EN")], source: r[ix("Source EN")], translation: r[ix("Translation KO")] })) };
   return jsonpOutput_(payload, e && e.parameter && e.parameter.callback);
+}
+
+// Stores a user-edited Korean draft. It deliberately does not publish/approve it.
+function saveTranslationDraftFromApp_(params) {
+  try {
+    const props = PropertiesService.getScriptProperties(), expected = props.getProperty("V2_WEB_WRITE_TOKEN");
+    if (!expected || !params.token || !constantTimeEqual_(String(params.token), expected)) throw new Error("번역 저장 키가 올바르지 않습니다. Google Sheet 메뉴에서 키를 표시/생성하세요.");
+    if (!params.item || String(params.item).length > 12000) throw new Error("번역 원문 정보가 비어 있거나 너무 깁니다.");
+    const item = JSON.parse(params.item), name = String(item.name || "").trim(), source = cleanText_(item.source), file = String(item.file || "").trim(), id = String(item.id || "").trim();
+    const translation = String(params.translation || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").trim();
+    if (!name || !source || source.length > 8000 || !/^[\w .'-]{1,180}\.json$/i.test(file) || !id || id.length > 200) throw new Error("번역 원문 정보가 올바르지 않습니다.");
+    if (!translation || translation.length > 8000 || !/[가-힣]/.test(translation)) throw new Error("한국어 번역을 입력해 주세요. 최대 8,000자까지 저장할 수 있습니다.");
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) throw new Error("다른 번역 저장 작업이 진행 중입니다. 잠시 후 다시 시도하세요.");
+    try {
+      const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+      if (!sheet) throw new Error("Translations 시트가 없습니다. 먼저 시트 준비를 실행하세요.");
+      const values = sheet.getDataRange().getValues(), headers = values[0], col = key => headers.indexOf(key);
+      const required = ["Key", "Edition", "Faction", "Source file", "Source ID", "Kind", "Name EN", "Source EN", "Source hash", "Translation KO", "Status", "AI model", "Updated at", "Review note"];
+      if (required.some(key => col(key) < 0)) throw new Error("Translations 시트의 열 구성이 다릅니다. 시트 준비 상태를 확인하세요.");
+      const hash = sha256_([name, source].join("\n")), stableKey = [V2.edition, file, id, "ability"].join("|"), key = stableKey + "|" + hash.slice(0, 12);
+      let rowNumber = -1;
+      for (let i = values.length - 1; i > 0; i--) if (String(values[i][col("Key")]) === key) { rowNumber = i + 1; break; }
+      const faction = String(item.faction || "").slice(0, 160), now = new Date(), tail = [translation, "AI_DRAFT", "MANUAL", now, "앱에서 직접 입력/수정 · 확인 후 APPROVED로 변경"];
+      if (rowNumber > 0) sheet.getRange(rowNumber, col("Translation KO") + 1, 1, tail.length).setValues([tail]);
+      else sheet.appendRow([key, V2.edition, faction, file, id, "ability", name, source, hash, ...tail]);
+      log_("app-manual-translation", "AI_DRAFT 저장", `${file} · ${name}`);
+      return { ok: true, translation, status: "AI_DRAFT" };
+    } finally { lock.releaseLock(); }
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  }
 }
 
 // The public GitHub Pages app can request one bounded translation at a time.
