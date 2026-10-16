@@ -444,3 +444,39 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .quick-assistant-empty{padding:7px;color:var(--muted);font-size:11px}
 .unit-quick-nav-list{max-height:min(30vh,220px);flex:0 1 auto}
 @media(max-width:600px){.unit-quick-nav{max-height:78vh}.quick-assistant-rows{max-height:30vh}.unit-quick-nav-list{max-height:27vh}}
+
+/* Larger touch-screen typography: prioritize readable stats and checklist copy. */
+@media(max-width:600px){
+  body{font-size:17px;line-height:1.55}
+  .topbar{padding:22px 0 16px}
+  .edition,.data-status,.hint,footer{font-size:13px;line-height:1.5}
+  .view-tab{font-size:15px;padding:9px 11px}
+  #results .card-head h3{font-size:20px;line-height:1.3}
+  #results .card-head .original,#results .card-head .tag{font-size:14px;line-height:1.45}
+  #results .card-body .meta,#results .card-body .equip{font-size:14px;line-height:1.65}
+  #results .card-body .profile-title,#results .card-body .effect-summary h4{font-size:16px}
+  #results .card-body .ability-text,#results .card-body .effect-summary p{font-size:15px;line-height:1.65}
+  #results .keyword-chip{font-size:12px;line-height:1.45}
+  #results .weapon-profile-toolbar{min-height:54px}
+  #results .weapon-profile-toolbar strong{font-size:16px}
+  #results .weapon-profile-toolbar button{font-size:14px;padding:8px 10px}
+  #results .weapon-profile-toolbar small{font-size:12px}
+  #results .weapon-group h5{font-size:14px}
+  #results .weapon-compact-table th,#results .weapon-compact-table td{font-size:12px;line-height:1.35;padding:6px 3px}
+  #results .weapon-compact-table th:first-child{font-size:12px}
+  #results .weapon-choice{font-size:13px;line-height:1.45}
+  #results .weapon-choice input{width:18px;height:18px}
+  #results .weapon-name-scroll small{font-size:12px}
+  #results .weapon-keywords .keyword-chip{font-size:11px;line-height:1.45}
+  #results .weapon-attack-count small{font-size:11px}
+  .quick-assistant>summary{font-size:15px;min-height:42px}
+  .quick-assistant>summary small{font-size:12px}
+  .quick-assistant-phase{font-size:13px;padding:7px 9px}
+  .quick-assistant-phase small{font-size:11px}
+  .quick-assistant-row{grid-template-columns:21px minmax(0,1fr);gap:8px;padding:8px}
+  .quick-assistant-row input{width:19px;height:19px}
+  .quick-assistant-row b{font-size:14px;line-height:1.45}
+  .quick-assistant-row small{font-size:12px;line-height:1.5}
+  .quick-assistant-open{font-size:12px;padding:6px 8px}
+  .unit-quick-nav-toggle{font-size:16px;padding:11px 12px}
+}
