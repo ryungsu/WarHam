@@ -9,6 +9,7 @@ const V2 = {
   maxSourcesPerRun: 8,
   aiBatchesPerRun: 5,
   rowsPerAiBatch: 8,
+  maxSheetRowsPerRequest: 250,
   sourceSheet: "Sources",
   translationSheet: "Translations",
   glossarySheet: "Glossary",
@@ -119,47 +120,51 @@ function syncSourceBatch_() {
   const batch = Array.from({ length: Math.min(V2.maxSourcesPerRun, sourceRows.length) }, (_, i) => sourceRows[(start + i) % sourceRows.length]);
   props.setProperty("V2_SOURCE_CURSOR", String((start + batch.length) % sourceRows.length));
   const requests = batch.map(r => ({ url: V2.repo + encodeURIComponent(r.values[0]), muteHttpExceptions: true, followRedirects: true }));
-  const responses = UrlFetchApp.fetchAll(requests), existing = transSheet.getDataRange().getValues(), header = existing.shift();
-  const keyIndex = header.indexOf("Key"), hashIndex = header.indexOf("Source hash"), statusIndex = header.indexOf("Status");
-  const editionIndex = header.indexOf("Edition"), fileIndex = header.indexOf("Source file"), sourceIdIndex = header.indexOf("Source ID"), kindIndex = header.indexOf("Kind");
-  const current = new Map(), batchFiles = new Set(batch.map(row => String(row.values[0]))), duplicates = [];
-  existing.forEach((r, i) => {
-    if (!r[keyIndex] || r[statusIndex] === "SUPERSEDED") return;
-    const sourceKey = [r[editionIndex], r[fileIndex], r[sourceIdIndex], r[kindIndex]].join("|"), candidate = { row: r, index: i + 2 };
-    const prior = current.get(sourceKey);
-    if (!prior) { current.set(sourceKey, candidate); return; }
-    if (batchFiles.has(String(r[fileIndex]))) {
-      const rank = status => status === "APPROVED" ? 3 : status === "AI_DRAFT" ? 2 : 1;
-      const keepPrior = rank(prior.row[statusIndex]) > rank(r[statusIndex]);
-      duplicates.push(keepPrior ? candidate.index : prior.index);
-      if (!keepPrior) current.set(sourceKey, candidate);
-    } else current.set(sourceKey, candidate);
-  });
-  const append = [], supersede = [], now = new Date();
+  const responses = UrlFetchApp.fetchAll(requests), prepared = [], now = new Date();
   let okFiles = 0;
   responses.forEach((response, i) => {
     const configRow = batch[i], file = String(configRow.values[0]);
     try {
       if (response.getResponseCode() !== 200) throw new Error(`HTTP ${response.getResponseCode()}`);
       const data = JSON.parse(response.getContentText()), root = data.catalogue || data, revision = String(root.revision || "unknown");
-      const records = collectRecords_(data, file), faction = factionForFile_(file);
-      for (const record of records) {
-        const sourceHash = sha256_([record.name, record.source].join("\n")), key = [V2.edition, file, record.id, record.kind].join("|");
-        const prior = current.get(key);
-        if (prior && String(prior.row[hashIndex]) === sourceHash) continue;
-        if (prior) supersede.push(prior.index);
-        append.push([key + "|" + sourceHash.slice(0, 12), V2.edition, faction, file, record.id, record.kind, record.name, record.source, sourceHash, "", "PENDING", "", now, prior ? "원문이 바뀌어 재번역 대기" : ""]);
-      }
+      const unchanged = String(configRow.values[2] || "") === revision && Boolean(configRow.values[2]);
       sourceSheet.getRange(configRow.rowNumber, 3, 1, 3).setValues([[revision, now, ""]]);
       okFiles++;
+      // The regular 15-minute trigger usually sees unchanged catalogues. Skip
+      // record extraction and sheet lookup entirely in that common case.
+      if (!unchanged) prepared.push({ data, file, configRow, revision, records: collectRecords_(data, file), faction: factionForFile_(file) });
     } catch (err) {
-      const sourceIndex = configRow.rowNumber;
-      sourceSheet.getRange(sourceIndex, 5).setValue(String(err.message || err));
+      sourceSheet.getRange(configRow.rowNumber, 5).setValue(String(err.message || err));
       log_("sync", "파일 오류", `${file}: ${err.message || err}`);
     }
   });
-  writeStatusRows_(transSheet, [...duplicates, ...supersede], statusIndex + 1, "SUPERSEDED");
-  if (append.length) transSheet.getRange(transSheet.getLastRow() + 1, 1, append.length, V2.translationHeaders.length).setValues(append);
+
+  const changedFiles = [...new Set(prepared.map(item => item.file))];
+  const existing = readExistingSourceRows_(transSheet, changedFiles);
+  const current = new Map(), duplicates = [];
+  existing.forEach(candidate => {
+    if (!candidate.key || candidate.status === "SUPERSEDED") return;
+    const sourceKey = [candidate.edition, candidate.file, candidate.sourceId, candidate.kind].join("|");
+    const prior = current.get(sourceKey);
+    if (!prior) { current.set(sourceKey, candidate); return; }
+    const rank = status => status === "APPROVED" ? 3 : status === "AI_DRAFT" ? 2 : 1;
+    const keepPrior = rank(prior.status) > rank(candidate.status);
+    duplicates.push(keepPrior ? candidate.row : prior.row);
+    if (!keepPrior) current.set(sourceKey, candidate);
+  });
+  const append = [], supersede = [];
+  prepared.forEach(item => {
+    for (const record of item.records) {
+      const sourceHash = sha256_([record.name, record.source].join("\n")), key = [V2.edition, item.file, record.id, record.kind].join("|");
+      const prior = current.get(key);
+      if (prior && prior.hash === sourceHash) continue;
+      if (prior) supersede.push(prior.row);
+      append.push([key + "|" + sourceHash.slice(0, 12), V2.edition, item.faction, item.file, record.id, record.kind, record.name, record.source, sourceHash, "", "PENDING", "", now, prior ? "원문이 바뀌어 재번역 대기" : ""]);
+    }
+  });
+  writeStatusRows_(transSheet, [...duplicates, ...supersede], 11, "SUPERSEDED");
+  if (duplicates.length || supersede.length) clearApprovedTranslationCache_();
+  appendRowsInChunks_(transSheet, transSheet.getLastRow() + 1, 1, append, V2.translationHeaders.length);
   return { files: okFiles, added: append.length };
 }
 
@@ -197,10 +202,10 @@ function collectRecords_(root, file) {
 function translatePendingBatch_() {
   const apiKey = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
   if (!apiKey) { log_("translate", "건너뜀", "Script Properties에 GEMINI_API_KEY가 없습니다."); return 0; }
-  const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet), values = sheet.getDataRange().getValues();
-  if (values.length < 2) return 0;
-  const headers = values[0], col = name => headers.indexOf(name), pending = [];
-  for (let i = 1; i < values.length && pending.length < V2.aiBatchesPerRun * V2.rowsPerAiBatch; i++) if (values[i][col("Status")] === "PENDING") pending.push({ row: i + 1, id: values[i][col("Key")], faction: values[i][col("Faction")], kind: values[i][col("Kind")], name: values[i][col("Name EN")], source: values[i][col("Source EN")] });
+  const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+  const limit = V2.aiBatchesPerRun * V2.rowsPerAiBatch;
+  const pending = findPendingTranslationRows_(sheet, limit);
+  if (!pending.length) return 0;
   let done = 0;
   for (let offset = 0; offset < pending.length; offset += V2.rowsPerAiBatch) {
     const batch = pending.slice(offset, offset + V2.rowsPerAiBatch);
@@ -215,6 +220,92 @@ function translatePendingBatch_() {
     } catch (err) { log_("translate", "배치 오류 · 대기 유지", String(err.message || err)); break; }
   }
   return done;
+}
+
+// TextFinder searches only the Status column on Google's side. It avoids
+// transferring hundreds of thousands of Translation rows into Apps Script.
+function findPendingTranslationRows_(sheet, limit) {
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const statusCol = V2.translationHeaders.indexOf("Status") + 1;
+  const matches = sheet.getRange(2, statusCol, sheet.getLastRow() - 1, 1)
+    .createTextFinder("PENDING").matchCase(true).matchEntireCell(true).findAll();
+  const rowNumbers = matches.slice(0, limit).map(cell => cell.getRow());
+  return readTranslationWindows_(sheet, rowNumbers, 3, 6).map(({ row, values }) => ({
+    row, faction: values[0], kind: values[3], name: values[4], source: values[5]
+  })).filter(item => item.source);
+}
+
+function readExistingSourceRows_(sheet, files) {
+  const lastRow = sheet.getLastRow();
+  if (!files.length || lastRow < 2) return [];
+  const fileCol = V2.translationHeaders.indexOf("Source file") + 1;
+  const pattern = "^(?:" + files.map(regexEscape_).join("|") + ")$";
+  const matches = sheet.getRange(2, fileCol, lastRow - 1, 1).createTextFinder(pattern)
+    .useRegularExpression(true).matchEntireCell(true).findAll();
+  const wanted = new Set(files);
+  return readTranslationWindows_(sheet, matches.map(cell => cell.getRow()), 2, 10)
+    .map(({ row, values }) => ({
+      row, edition: values[0], file: values[2], sourceId: values[3], kind: values[4],
+      hash: values[7], status: values[9], key: values[0] && values[2] && values[3] && values[4]
+    })).filter(item => wanted.has(String(item.file)) && item.key);
+}
+
+// Read sorted row numbers in small contiguous windows so sparse hits do not
+// cause a large rectangular getRange transfer.
+function readTranslationWindows_(sheet, rowNumbers, startColumn, width) {
+  const rows = [...new Set(rowNumbers)].sort((a, b) => a - b), result = [];
+  for (let i = 0; i < rows.length;) {
+    let end = i + 1;
+    while (end < rows.length && rows[end] - rows[end - 1] <= 20 && rows[end] - rows[i] < V2.maxSheetRowsPerRequest) end++;
+    const startRow = rows[i], lastRow = rows[end - 1];
+    const values = sheet.getRange(startRow, startColumn, lastRow - startRow + 1, width).getValues();
+    for (let j = i; j < end; j++) result.push({ row: rows[j], values: values[rows[j] - startRow] });
+    i = end;
+  }
+  return result;
+}
+
+function regexEscape_(value) { return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+function appendRowsInChunks_(sheet, startRow, startColumn, rows, width) {
+  const size = V2.maxSheetRowsPerRequest;
+  for (let offset = 0; offset < rows.length; offset += size) {
+    const chunk = rows.slice(offset, offset + size);
+    sheet.getRange(startRow + offset, startColumn, chunk.length, width).setValues(chunk);
+  }
+}
+
+function approvedTranslationRows_() {
+  const cache = CacheService.getScriptCache(), cacheKey = "V2_APPROVED_TRANSLATIONS_V1";
+  try {
+    const cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (_) {}
+  const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const statusCol = V2.translationHeaders.indexOf("Status") + 1;
+  const matches = sheet.getRange(2, statusCol, sheet.getLastRow() - 1, 1)
+    .createTextFinder("APPROVED").matchCase(true).matchEntireCell(true).findAll();
+  const rows = readTranslationWindows_(sheet, matches.map(cell => cell.getRow()), 2, 9)
+    .map(({ values }) => ({ edition: values[0], faction: values[1], file: values[2], id: values[3], kind: values[4], name: values[5], source: values[6], hash: values[7], translation: values[8] }))
+    .filter(row => row.translation);
+  try {
+    const serialized = JSON.stringify(rows);
+    if (serialized.length <= 90000) cache.put(cacheKey, serialized, 300);
+  } catch (_) {}
+  return rows;
+}
+
+function clearApprovedTranslationCache_() {
+  try { CacheService.getScriptCache().removeAll(["V2_APPROVED_TRANSLATIONS_V1", "V2_APPROVED_LABEL_GLOSSARY_V1"]); } catch (_) {}
+}
+
+function findExactValueRow_(sheet, column, value) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return -1;
+  const matches = sheet.getRange(2, column, lastRow - 1, 1).createTextFinder(String(value))
+    .matchCase(true).matchEntireCell(true).findAll();
+  return matches.length ? matches[matches.length - 1].getRow() : -1;
 }
 
 function callGemini_(batch, apiKey) {
@@ -249,17 +340,35 @@ function approvedGlossary_() {
     rows.filter(row => String(row[ix("Status")]).trim().toUpperCase() === "APPROVED" && row[ix("English")] && row[ix("Korean")])
       .forEach(row => entries.set(String(row[ix("English")]).trim().toLowerCase(), { en: String(row[ix("English")]).trim(), ko: String(row[ix("Korean")]).trim(), context: String(row[ix("Note")]||"").trim() }));
   }
-  // Reuse already-reviewed catalogue labels as a growing cross-faction term bank.
-  const translations = ss.getSheetByName(V2.translationSheet);
-  if (translations && translations.getLastRow() > 1) {
-    const rows = translations.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
-    rows.filter(row => row[ix("Status")] === "APPROVED" && row[ix("Kind")] === "label" && row[ix("Name EN")] && row[ix("Translation KO")])
-      .slice(-2000).forEach(row => {
-        const en = String(row[ix("Name EN")]).trim(), key = en.toLowerCase();
-        if (!entries.has(key)) entries.set(key, { en, ko: String(row[ix("Translation KO")]).trim(), context: "검수 완료 데이터시트 용어" });
-      });
-  }
+  approvedLabelGlossary_().forEach(entry => {
+    const key = entry.en.toLowerCase();
+    if (!entries.has(key)) entries.set(key, entry);
+  });
   return [...entries.values()];
+}
+
+function approvedLabelGlossary_() {
+  const cache = CacheService.getScriptCache(), cacheKey = "V2_APPROVED_LABEL_GLOSSARY_V1";
+  try {
+    const cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (_) {}
+  const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const statusCol = V2.translationHeaders.indexOf("Status") + 1, kindCol = V2.translationHeaders.indexOf("Kind") + 1;
+  const approved = new Set(sheet.getRange(2, statusCol, sheet.getLastRow() - 1, 1)
+    .createTextFinder("APPROVED").matchCase(true).matchEntireCell(true).findAll().map(cell => cell.getRow()));
+  const labels = sheet.getRange(2, kindCol, sheet.getLastRow() - 1, 1)
+    .createTextFinder("label").matchCase(true).matchEntireCell(true).findAll()
+    .map(cell => cell.getRow()).filter(row => approved.has(row)).slice(-2000);
+  const entries = readTranslationWindows_(sheet, labels, 7, 4)
+    .map(({ values }) => ({ en: String(values[0] || "").trim(), ko: String(values[3] || "").trim(), context: "검수 완료 데이터시트 용어" }))
+    .filter(entry => entry.en && entry.ko);
+  try {
+    const serialized = JSON.stringify(entries);
+    if (serialized.length <= 90000) cache.put(cacheKey, serialized, 300);
+  } catch (_) {}
+  return entries;
 }
 
 function callGeminiWithRetry_(batch, apiKey) {
@@ -282,12 +391,18 @@ function approveSelectedRows() {
   if (sheet.getName() !== V2.translationSheet) throw new Error("Translations 시트에서 검수 완료할 행을 선택하세요.");
   const range = sheet.getActiveRange(), statusCol = V2.translationHeaders.indexOf("Status") + 1;
   if (range.getRow() === 1) throw new Error("헤더가 아닌 번역 행을 선택하세요.");
-  for (let row = range.getRow(); row < range.getRow() + range.getNumRows(); row++) if (sheet.getRange(row, V2.translationHeaders.indexOf("Translation KO") + 1).getValue()) sheet.getRange(row, statusCol).setValue("APPROVED");
+  const start = range.getRow(), count = range.getNumRows();
+  const translationCol = V2.translationHeaders.indexOf("Translation KO") + 1;
+  for (let offset = 0; offset < count; offset += V2.maxSheetRowsPerRequest) {
+    const size = Math.min(V2.maxSheetRowsPerRequest, count - offset);
+    const values = sheet.getRange(start + offset, translationCol, size, 2).getValues();
+    sheet.getRange(start + offset, statusCol, size, 1).setValues(values.map(([translation, status]) => [translation ? "APPROVED" : status]));
+  }
+  clearApprovedTranslationCache_();
 }
 
 function exportApprovedJson() {
-  const rows = getSpreadsheet_().getSheetByName(V2.translationSheet).getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
-  const translations = rows.filter(r => r[ix("Status")] === "APPROVED" && r[ix("Translation KO")]).map(r => ({ edition: r[ix("Edition")], file: r[ix("Source file")], id: r[ix("Source ID")], kind: r[ix("Kind")], name: r[ix("Name EN")], source: r[ix("Source EN")], translation: r[ix("Translation KO")], hash: r[ix("Source hash")] }));
+  const translations = approvedTranslationRows_().map(({ edition, file, id, kind, name, source, translation, hash }) => ({ edition, file, id, kind, name, source, translation, hash }));
   const output = JSON.stringify({ schemaVersion: 1, edition: V2.edition, generatedAt: new Date().toISOString(), translations }, null, 2);
   const props = PropertiesService.getScriptProperties(), fileId = props.getProperty("V2_EXPORT_FILE_ID");
   let file = fileId ? DriveApp.getFileById(fileId) : null;
@@ -305,13 +420,8 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action === "saveTranslationDraft") {
     return jsonpOutput_(saveTranslationDraftFromApp_(e.parameter), e.parameter.callback);
   }
-  const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
-  const lastRow = sheet ? sheet.getLastRow() : 0;
-  // The app feed needs only columns B:K. Avoid loading the full 14-column
-  // translation table (which can contain tens of thousands of rows) on every
-  // page load.
-  const rows = lastRow > 1 ? sheet.getRange(2, 2, lastRow - 1, 10).getValues() : [];
-  const payload = { schemaVersion: 1, edition: V2.edition, translations: rows.filter(r => r[9] === "APPROVED" && r[8]).map(r => ({ id: r[3], kind: r[4], name: r[5], source: r[6], translation: r[8] })) };
+  const translations = approvedTranslationRows_().map(({ id, kind, name, source, translation }) => ({ id, kind, name, source, translation }));
+  const payload = { schemaVersion: 1, edition: V2.edition, translations };
   return jsonpOutput_(payload, e && e.parameter && e.parameter.callback);
 }
 
@@ -330,15 +440,15 @@ function saveTranslationDraftFromApp_(params) {
     try {
       const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
       if (!sheet) throw new Error("Translations 시트가 없습니다. 먼저 시트 준비를 실행하세요.");
-      const values = sheet.getDataRange().getValues(), headers = values[0], col = key => headers.indexOf(key);
-      const required = ["Key", "Edition", "Faction", "Source file", "Source ID", "Kind", "Name EN", "Source EN", "Source hash", "Translation KO", "Status", "AI model", "Updated at", "Review note"];
+      const headers = sheet.getRange(1, 1, 1, V2.translationHeaders.length).getValues()[0], col = key => headers.indexOf(key);
+      const required = V2.translationHeaders;
       if (required.some(key => col(key) < 0)) throw new Error("Translations 시트의 열 구성이 다릅니다. 시트 준비 상태를 확인하세요.");
       const hash = sha256_([name, source].join("\n")), stableKey = [V2.edition, file, id, "ability"].join("|"), key = stableKey + "|" + hash.slice(0, 12);
-      let rowNumber = -1;
-      for (let i = values.length - 1; i > 0; i--) if (String(values[i][col("Key")]) === key) { rowNumber = i + 1; break; }
+      let rowNumber = findExactValueRow_(sheet, col("Key") + 1, key);
       const faction = String(item.faction || "").slice(0, 160), now = new Date(), tail = [translation, "AI_DRAFT", "MANUAL", now, "앱에서 직접 입력/수정 · 확인 후 APPROVED로 변경"];
       if (rowNumber > 0) sheet.getRange(rowNumber, col("Translation KO") + 1, 1, tail.length).setValues([tail]);
       else sheet.appendRow([key, V2.edition, faction, file, id, "ability", name, source, hash, ...tail]);
+      clearApprovedTranslationCache_();
       log_("app-manual-translation", "AI_DRAFT 저장", `${file} · ${name}`);
       return { ok: true, translation, status: "AI_DRAFT" };
     } finally { lock.releaseLock(); }
@@ -363,25 +473,19 @@ function translateDraftFromApp_(params) {
     try {
       const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
       if (!sheet) throw new Error("Translations 시트가 없습니다. 먼저 시트 준비를 실행하세요.");
-      const values = sheet.getDataRange().getValues(), headers = values[0], col = key => headers.indexOf(key);
+      const headers = sheet.getRange(1, 1, 1, V2.translationHeaders.length).getValues()[0], col = key => headers.indexOf(key);
       const hash = sha256_([name, source].join("\n")), stableKey = [V2.edition, file, id, "ability"].join("|");
-      let rowNumber = -1;
-      for (let i = values.length - 1; i > 0; i--) if (String(values[i][col("Key")]).startsWith(stableKey + "|")) { rowNumber = i + 1; break; }
-      let row;
-      if (rowNumber > 0) {
-        row = values[rowNumber - 1];
-        if (String(row[col("Source hash")]) !== hash) rowNumber = -1;
-      }
+      const key = stableKey + "|" + hash.slice(0, 12);
+      let rowNumber = findExactValueRow_(sheet, col("Key") + 1, key);
+      const row = rowNumber > 0 ? sheet.getRange(rowNumber, 1, 1, V2.translationHeaders.length).getValues()[0] : null;
       if (rowNumber > 0 && row[col("Translation KO")] && ["APPROVED", "AI_DRAFT"].includes(String(row[col("Status")]))) {
         return { ok: true, translation: String(row[col("Translation KO")]), status: String(row[col("Status")]), reused: true };
       }
       const faction = String(item.faction || "").slice(0, 160), now = new Date();
       if (rowNumber < 0) {
-        const key = stableKey + "|" + hash.slice(0, 12);
         sheet.appendRow([key, V2.edition, faction, file, id, "ability", name, source, hash, "", "PENDING", "", now, "앱 요청 · AI 번역 후 검수 필요"]);
         rowNumber = sheet.getLastRow();
       } else {
-        row = values[rowNumber - 1];
         if (String(row[col("Status")]) === "PENDING") {
           // Keep the existing row and translate its current source.
         } else {
@@ -393,6 +497,7 @@ function translateDraftFromApp_(params) {
       if (!ko) throw new Error("AI가 빈 번역을 반환했습니다.");
       const model = props.getProperty("GEMINI_MODEL") || "gemini-3.8-flash";
       sheet.getRange(rowNumber, col("Translation KO") + 1, 1, 5).setValues([[ko, "AI_DRAFT", model, now, "앱에서 생성 · 확인 후 APPROVED로 변경"]]);
+      clearApprovedTranslationCache_();
       log_("app-translate", "AI_DRAFT 저장", `${file} · ${name}`);
       return { ok: true, translation: ko, status: "AI_DRAFT", reused: false };
     } finally { lock.releaseLock(); }
@@ -437,7 +542,7 @@ function writeStatusRows_(sheet, rowNumbers, column, value) {
   const sorted = [...new Set(rowNumbers)].sort((a, b) => a - b);
   for (let i = 0; i < sorted.length;) {
     let end = i + 1;
-    while (end < sorted.length && sorted[end] === sorted[end - 1] + 1) end++;
+    while (end < sorted.length && sorted[end] === sorted[end - 1] + 1 && end - i < V2.maxSheetRowsPerRequest) end++;
     sheet.getRange(sorted[i], column, end - i, 1).setValues(Array.from({ length: end - i }, () => [value]));
     i = end;
   }
