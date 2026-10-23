@@ -456,8 +456,8 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.action === "saveTranslationDraft") {
     return jsonpOutput_(saveTranslationDraftFromApp_(e.parameter), e.parameter.callback);
   }
-  const translations = approvedTranslationRows_().map(({ id, kind, name, source, translation }) => ({ id, kind, name, source, translation }));
-  const payload = { schemaVersion: 1, edition: V2.edition, translations };
+  const translations = approvedTranslationRows_().map(({ edition, file, id, kind, name, source, hash, translation }) => ({ edition, file, id, kind, name, source, hash, translation }));
+  const payload = { schemaVersion: 2, edition: V2.edition, translations };
   return jsonpOutput_(payload, e && e.parameter && e.parameter.callback);
 }
 
