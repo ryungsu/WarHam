@@ -246,8 +246,8 @@ function translateRulesText(profileName,text="",identity={}){
 function keywordInfo(raw=""){
   const clean=raw.replace(/\*\*/g,"").replace(/[\[\]]/g,"").replace(/\u00a0/g," ").trim(),key=textKey(clean),canonicalKey=textKey(clean.replace(/\s*\(([^()]*)\)\s*/g,(_,inside)=>textKey(inside)===textKey(clean.split("(")[0])?"":" "+inside).trim());
   if(["librarius","librarius psyker","librarius ability"].includes(canonicalKey)||/\blibrarius\b/i.test(clean))return {key:"librarius",ko:"리브라리우스",en:"Librarius",description:"아뎁투스 아스타르테스 PSYKER 유닛은 데이터시트에 표시된 사이커 레벨만큼 매 배틀 라운드에 사이킥 능력을 사용할 수 있습니다. 사용하는 능력들의 사이킥 레벨 합계는 해당 유닛의 사이커 레벨을 넘을 수 없습니다."};
-  const conditionalHits=clean.match(/^(lethal\s+hits|sustained\s+hits\s*\d+)\s*:\s*non[\s\-‐‑‒–—]*([a-z]+(?:\s*\/\s*[a-z]+)*)$/i);
-  if(conditionalHits){const base=conditionalHits[1].replace(/\s+/g," ").trim(),targets=conditionalHits[2].split("/").map(x=>x.trim()),targetNames={monster:"몬스터",vehicle:"차량",infantry:"보병",mounted:"기병",beast:"야수"},targetKo=targets.map(x=>targetNames[textKey(x)]||translateTerms(x.charAt(0)+x.slice(1).toLowerCase())).join("/");const sustainedBase=base.match(/^sustained\s+hits\s*(\d+)$/i),isLethal=/^lethal\s+hits$/i.test(base),label=isLethal?"치명타 명중":`지속 명중 ${sustainedBase?.[1]||""}`.trim(),effect=isLethal?"치명 명중을 기록하면 해당 공격은 운드 굴림 없이 자동으로 운드를 입힙니다.":`치명 명중을 기록할 때마다 추가 명중 ${sustainedBase?.[1]||"1"}회를 얻습니다.`;return {key:clean,ko:`${label} (${targetKo} 제외)`,en:`${base.replace(/\b\w+/g,w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase())}: non-${targets.join("/").toUpperCase()}`,description:`${effect} 이 효과는 대상 유닛에 ${targetKo} 키워드가 하나도 없을 때만 적용됩니다.`};}
+  const conditionalHits=clean.match(/^(lethal\s+hits|sustained\s+hits\s*\d+)\s*[:：]\s*non[\s\-‐‑‒–—]*([a-z]+(?:\s*\/\s*[a-z]+)*)$/i),localizedConditionalHits=clean.match(/^(치명타\s*명중|지속\s*명중\s*(\d+))\s*[:：]?\s*(?:\(\s*)?((?:몬스터|차량|보병|기병|야수)(?:\s*\/\s*(?:몬스터|차량|보병|기병|야수))*)\s*제외\s*\)?$/);
+  if(conditionalHits||localizedConditionalHits){const englishTargets={monster:"몬스터",vehicle:"차량",infantry:"보병",mounted:"기병",beast:"야수"},koreanTargets={몬스터:"MONSTER",차량:"VEHICLE",보병:"INFANTRY",기병:"MOUNTED",야수:"BEAST"},isLocalized=Boolean(localizedConditionalHits),base=isLocalized?(localizedConditionalHits[1].startsWith("지속")?`Sustained Hits ${localizedConditionalHits[2]}`:"Lethal Hits"):conditionalHits[1].replace(/\s+/g," ").trim(),targets=(isLocalized?localizedConditionalHits[3].split("/").map(x=>x.trim()):conditionalHits[2].split("/").map(x=>x.trim())),targetKo=targets.map(x=>isLocalized?x:(englishTargets[textKey(x)]||translateTerms(x.charAt(0)+x.slice(1).toLowerCase()))).join("/"),targetEn=targets.map(x=>isLocalized?(koreanTargets[x]||x.toUpperCase()):x.toUpperCase()).join("/"),sustainedBase=base.match(/^sustained\s+hits\s*(\d+)$/i),isLethal=/^lethal\s+hits$/i.test(base),label=isLethal?"치명타 명중":`지속 명중 ${sustainedBase?.[1]||""}`.trim(),effect=isLethal?"치명 명중을 기록하면 해당 공격은 운드 굴림 없이 자동으로 운드를 입힙니다.":`치명 명중을 기록할 때마다 추가 명중 ${sustainedBase?.[1]||"1"}회를 얻습니다.`;return {key:clean,ko:`${label} (${targetKo} 제외)`,en:`${base}: non-${targetEn}`,description:`${effect} 이 효과는 대상 유닛에 ${targetKo} 키워드가 하나도 없을 때만 적용됩니다.`};}
   const sustained=clean.match(/^sustained\s+hits\s*(\d+)$/i)||key.match(/^sustainedhits(\d+)$/i);
   if(sustained){const n=sustained[1];return {key:`sustained hits ${n}`,ko:`지속 명중 ${n}`,en:`Sustained Hits ${n}`,description:`치명 명중을 기록할 때마다 추가 명중 ${n}회를 얻습니다.`};}
   const korean=clean.match(/^지속\s*명중\s*(\d+)$/);
@@ -256,8 +256,8 @@ function keywordInfo(raw=""){
   if(fnp){const n=fnp[1];return {key:`feel no pain ${n}+`,ko:`고통 경감 ${n}+`,en:`Feel No Pain ${n}+`,description:`이 능력이 있는 모델이 운드를 잃을 때마다 D6을 굴립니다. ${n}+가 나오면 그 운드를 잃지 않습니다.`};}
   const scouts=clean.match(/^scouts\s*(\d+)\s*[”’\u201d\u2019\u2033\u2032\"]?$/i);
   if(scouts){const n=scouts[1];return {key:`scouts ${n}`,ko:`스카웃 ${n}인치`,en:`Scouts ${n}\"`,description:`모든 모델이 이 능력을 가진 유닛은 첫 턴 시작 전에 최대 ${n}인치 이동할 수 있습니다. 아군 수송차량에 탑승 중이면 차량이 대신 이동할 수 있습니다.`};}
-  const anti=clean.match(/^anti[\s\-‐‑‒–—]*([a-z][a-z -]*?)\s*(\d+)\s*\+?$/i);
-  if(anti){const target=anti[1].trim().replace(/\s+/g," "),n=anti[2],base=keyGlossary.get(`anti-${target.toLowerCase()}`),translatedTarget=translateTerms(target);return {key:`anti-${target.toLowerCase()} ${n}`,ko:`${base?.ko||`안티 ${translatedTarget}`} ${n}+`,en:`Anti-${target} ${n}+`,description:`대상 유닛에 ${target} 키워드가 있으면, 수정하지 않은 운드 굴림 ${n}+는 치명 운드로 간주됩니다.`};}
+  const anti=clean.match(/^anti[\s\-‐‑‒–—]*([a-z][a-z /-]*?)\s*(\d+)\s*\+?$/i);
+  if(anti){const targets=anti[1].split("/").map(x=>x.trim().replace(/\s+/g," ")),n=anti[2],translatedTargets=targets.map(target=>{const base=keyGlossary.get(`anti-${target.toLowerCase()}`);return base?.ko?.replace(/^안티\s*/,"")||translateTerms(target);}),targetKo=translatedTargets.join("/");return {key:`anti-${targets.map(x=>x.toLowerCase()).join("/")} ${n}`,ko:`안티 ${targetKo} ${n}+`,en:`Anti-${targets.join("/")} ${n}+`,description:`대상 유닛에 ${targets.join(" 또는 ")} 키워드 중 하나 이상이 있으면, 수정하지 않은 운드 굴림 ${n}+는 치명 운드로 간주됩니다.`};}
   for(const [k,v] of keyGlossary)if(key===textKey(k)||key===textKey(v.ko))return {key:k,...v};
   const rule=abilityTextTranslations.get(key);
   if(rule){const original=[...abilityTranslations.keys()].find(x=>textKey(x)===key)||clean;return {key:original,ko:abilityTranslations.get(original)||translateTerms(original),en:original,description:rule};}
@@ -699,7 +699,7 @@ function showAssistantRuleDetail(title,detail){
 function showKeywordToast(raw){
   const info=keywordInfo(raw),toast=$("toast");
   $("toast-title").textContent=info?`${info.ko} (${info.en})`:raw;
-  let description=info?.description||"규칙 데이터에서 설명을 찾지 못했습니다. 현재 BSData에 규칙 본문이 연결되어 있는지 확인해 주세요.";
+  let description=info?.description||"앱에 등록된 설명을 찾지 못했습니다. 이 키워드가 BSData 공통 규칙 본문에 연결되어 있는지 확인해 주세요.";
   $("toast-description").textContent=description;
   toast.classList.add("show");toast.setAttribute("aria-hidden","false");clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},5000);
 }
