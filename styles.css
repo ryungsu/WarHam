@@ -500,6 +500,24 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .unit-quick-nav-list{max-height:min(30vh,220px);flex:0 1 auto}
 @media(max-width:600px){.unit-quick-nav{max-height:78dvh;overscroll-behavior:contain}.quick-assistant-rows{max-height:30vh}.quick-stratagem-content{max-height:min(38dvh,300px)}.unit-quick-nav-list{max-height:27vh}}
 
+/* Roster-selected enhancements and their visible stat deltas. */
+.roster-enhancements{margin:10px 0;border:1px solid var(--line);border-left:3px solid var(--faction-accent,var(--accent));border-radius:8px;background:#151b20;padding:9px 11px}
+.roster-enhancements>h4{display:flex;align-items:center;gap:7px;margin:0 0 7px;font-size:13px;color:var(--faction-accent,var(--accent))}
+.roster-enhancements>h4 span{font-size:11px;color:var(--muted);font-weight:500}
+.roster-enhancement{padding:8px 0;border-top:1px solid var(--line)}
+.roster-enhancement-heading{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+.roster-enhancement-heading>b{font-size:13px}
+.roster-enhancement-heading>small,.roster-enhancement-heading>span,.enhancement-source-warning{color:var(--muted);font-size:11px}
+.roster-enhancement-heading>span{margin-left:auto}
+.roster-enhancement>p{margin:5px 0 0;font-size:13px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
+.roster-enhancement details{margin-top:5px}
+.roster-enhancement details summary{font-size:11px;color:var(--muted);cursor:pointer}
+.roster-enhancement .enhancement-source-warning{display:block;margin-top:5px}
+.stat-pill-value .enhancement-value,.enhancement-value{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.enhancement-value del,.stat-pill-value del{color:var(--muted);font-size:.85em}
+.enhancement-value b{color:var(--faction-accent,var(--accent))}
+.enhancement-value small,.stat-pill-value small{color:var(--faction-accent,var(--accent));font-size:9px;white-space:nowrap}
+
 /* Larger touch-screen typography: prioritize readable stats and checklist copy. */
 @media(max-width:600px){
   body{font-size:17px;line-height:1.55}
