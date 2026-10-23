@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261023-52">
+  <link rel="stylesheet" href="styles.css?v=20261023-54">
 </head>
 <body>
   <header class="topbar">
@@ -12,22 +12,30 @@
     <div class="edition">판본<strong>11판 · 자동 데이터 연결</strong></div>
   </header>
   <main>
+    <section class="connection-progress-panel" aria-label="데이터 연결 진행 상황">
+      <div class="connection-progress-heading"><strong>데이터 연결</strong><span id="connection-progress-percent">대기</span></div>
+      <progress id="connection-progress" max="100" value="0" aria-label="BSData 연결 진행률"></progress>
+      <div id="data-status" class="data-status" role="status">편성표를 불러오면 BSData와 공통 규칙 연결을 시작합니다.</div>
+    </section>
     <section class="input-panel">
       <div class="section-heading"><div><p class="eyebrow">1 · 입력</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
       <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
       <div class="roster-presets" aria-label="편성표 프리셋">
-        <label for="roster-preset-select">최근 편성표 / 내 프리셋</label>
-        <select id="roster-preset-select"><option value="">불러올 편성표 선택…</option></select>
-        <input id="roster-preset-name" type="text" maxlength="48" placeholder="저장할 이름 입력 (예: 소로리타스 1000점)">
-        <button id="save-roster-preset" class="quiet" type="button">이름 붙여 저장</button>
-        <button id="load-roster-preset" class="quiet" type="button">불러오기</button>
-        <button id="delete-roster-preset" class="quiet" type="button" disabled>삭제</button>
+        <section class="roster-library-group" aria-label="내 프리셋 슬롯">
+          <label for="roster-preset-select">내 프리셋 · 최대 30개</label>
+          <div class="roster-library-controls"><select id="roster-preset-select"><option value="">저장한 프리셋 없음</option></select><button id="load-roster-preset" class="quiet" type="button">프리셋 불러오기</button><button id="delete-roster-preset" class="quiet" type="button" disabled>삭제</button></div>
+        </section>
+        <section class="roster-library-group" aria-label="최근 편성표">
+          <label for="roster-recent-select">최근 편성표 · 자동 보관 6개</label>
+          <div class="roster-library-controls"><select id="roster-recent-select"><option value="">최근 편성표 없음</option></select><button id="load-roster-recent" class="quiet" type="button">최근 편성표 불러오기</button></div>
+        </section>
+        <div class="roster-preset-save"><input id="roster-preset-name" type="text" maxlength="48" placeholder="저장할 프리셋 이름 (예: 소로리타스 1000점)"><button id="save-roster-preset" class="quiet" type="button">내 프리셋에 저장</button></div>
+        <button id="load-preferred-roster" class="primary roster-default-load" type="button" disabled>기본 편성표 불러오기</button>
       </div>
       <div class="actions"><button id="clear-roster" class="quiet" type="button">입력 초기화</button><button id="parse" class="primary">편성표 분석</button></div>
       <p id="roster-preset-status" class="hint" role="status"></p>
-      <p class="hint">NewRecruit의 텍스트 내보내기 결과를 그대로 붙여넣으면 됩니다. 최근 분석한 편성표 6개는 자동 보관되고, 이름을 붙인 프리셋은 이 브라우저에 저장됩니다.</p>
+      <p class="hint">NewRecruit 편성표를 붙여넣거나 기본 편성표를 불러오세요. 기본 불러오기는 내 프리셋을 우선하고, 없으면 최근 편성표를 선택합니다. 모든 데이터는 이 브라우저에 저장됩니다.</p>
     </section>
-    <div id="data-status" class="data-status" role="status">BSData 공개 저장소에 자동 연결 중…</div>
     <nav class="view-tabs" aria-label="도구 페이지">
       <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
       <button type="button" class="view-tab" data-view="assistant">전투 보조</button>
@@ -65,6 +73,6 @@
   </main>
   <footer>원문 데이터와 번역은 분리해 관리합니다. <a href="https://github.com/BSData/wh40k-11e" target="_blank" rel="noreferrer">11판 BSData</a> · <a href="https://github.com/wn-mitch/40kdc-data" target="_blank" rel="noreferrer">Powered by 40kdc-data</a> · <a href="https://github.com/Locequen/40k-Data-Card" target="_blank" rel="noreferrer">40k Data Card 아이콘 참고</a> · 판본을 확인한 뒤 사용하세요.</footer>
   <script src="workbook-glossary.js"></script>
-  <script src="app.js?v=20261023-51"></script>
+  <script src="app.js?v=20261023-54"></script>
 </body>
 </html>

@@ -588,3 +588,39 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .detachment-rule-text{padding:0 2px 12px;color:var(--text);font-size:14px;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere}
 .detachment-rule-original{margin:0 0 10px;padding:0 9px;border-left:2px solid var(--line)}
 .detachment-rule-original>summary{padding:5px 0;color:var(--muted);font-size:12px;cursor:pointer;list-style:none}
+
+/* Connection progress and separate roster preset/recent libraries. */
+.connection-progress-panel{margin:0 0 12px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#151b17}
+.connection-progress-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;color:var(--faction-accent,var(--accent));font-size:13px}
+.connection-progress-heading span{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+#connection-progress{display:block;width:100%;height:8px;overflow:hidden;border:0;border-radius:99px;background:#0d120f;accent-color:var(--faction-accent,var(--accent))}
+#connection-progress::-webkit-progress-bar{border-radius:99px;background:#0d120f}
+#connection-progress::-webkit-progress-value{border-radius:99px;background:var(--faction-accent,var(--accent));transition:width .25s ease}
+#connection-progress::-moz-progress-bar{border-radius:99px;background:var(--faction-accent,var(--accent));transition:width .25s ease}
+.connection-progress-panel .data-status{margin:7px 0 0;padding:0;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.connection-progress-panel[data-state="ready"]{border-color:color-mix(in srgb,var(--faction-accent,var(--accent)) 50%,var(--line))}
+.connection-progress-panel[data-state="error"]{border-color:var(--warn)}
+.connection-progress-panel[data-state="error"] .connection-progress-heading{color:var(--warn)}
+.roster-presets{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:8px;margin-top:10px}
+.roster-library-group{min-width:0;padding:9px;border:1px solid var(--line);border-radius:8px;background:#151b17}
+.roster-library-group label{display:block;grid-column:auto;margin:0 0 5px;color:var(--muted);font-size:11px;font-weight:700}
+.roster-library-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center}
+.roster-library-controls select{grid-column:auto!important;min-width:0;width:100%;min-height:36px;padding:5px 7px;font-size:12px}
+.roster-library-controls button{min-height:36px;padding:6px 9px;font-size:12px}
+.roster-preset-save{grid-column:1/-1;display:flex;gap:6px;min-width:0}
+.roster-preset-save input{flex:1;min-width:0}
+.roster-preset-save button{flex:0 0 auto}
+.roster-presets .roster-default-load{grid-column:1/-1;width:100%;min-height:38px}
+.assistant-mode .connection-progress-panel,.game-mode .connection-progress-panel{display:none!important}
+@media(max-width:700px){
+  .connection-progress-panel{padding:10px 11px}
+  .roster-presets{grid-template-columns:1fr;gap:7px}
+  .roster-presets .roster-library-group{grid-column:1}
+  .roster-library-controls{grid-template-columns:minmax(0,1fr) auto auto}
+  .roster-library-controls select{grid-column:auto!important}
+  .roster-library-controls button{width:auto;white-space:nowrap}
+  .roster-preset-save{grid-column:1;flex-wrap:wrap}
+  .roster-preset-save input{flex-basis:100%}
+  .roster-preset-save button{width:100%}
+  .roster-presets .roster-default-load{grid-column:1}
+}
