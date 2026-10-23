@@ -304,7 +304,7 @@ function doGet(e) {
     return jsonpOutput_(saveTranslationDraftFromApp_(e.parameter), e.parameter.callback);
   }
   const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet), rows = sheet.getDataRange().getValues(), headers = rows.shift(), ix = name => headers.indexOf(name);
-  const payload = { schemaVersion: 1, edition: V2.edition, translations: rows.filter(r => r[ix("Status")] === "APPROVED" && r[ix("Translation KO")]).map(r => ({ id: r[ix("Source ID")], kind: r[ix("Kind")], name: r[ix("Name EN")], source: r[ix("Source EN")], translation: r[ix("Translation KO")] })) };
+  const payload = { schemaVersion: 2, edition: V2.edition, translations: rows.filter(r => r[ix("Status")] === "APPROVED" && r[ix("Translation KO")] && String(r[ix("Edition")]) === String(V2.edition)).map(r => ({ edition: r[ix("Edition")], file: r[ix("Source file")], id: r[ix("Source ID")], kind: r[ix("Kind")], name: r[ix("Name EN")], source: r[ix("Source EN")], hash: r[ix("Source hash")], translation: r[ix("Translation KO")] })) };
   return jsonpOutput_(payload, e && e.parameter && e.parameter.callback);
 }
 

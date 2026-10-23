@@ -15,7 +15,7 @@ V1 stays on `master` at commit `5632063`. This branch adds a Google Apps Script 
 
 ## Connect reviewed translations to the app
 
-1. Deploy the Apps Script as a web app. Set it to execute as you, and grant public access so the browser app can read approved translations. `doGet` publishes only rows whose status is `APPROVED`; it never publishes the Gemini key or AI drafts.
+1. Deploy the Apps Script as a web app. Set it to execute as you, and grant public access so the browser app can read approved translations. `doGet` publishes only approved current-edition rows; it never publishes the Gemini key or AI drafts. The feed includes edition, source file, Source ID, kind, source text/hash, and translation so the app can match by BSData identity first and retain exact name/source matching as a backward-compatible fallback.
 2. In the spreadsheet, reload the page and choose **40K 번역 V2 → 웹 앱 번역 저장 키 표시/생성**. The random write key is stored in Script Properties as `V2_WEB_WRITE_TOKEN`; enter it in the app's **번역 저장 키** field. The app keeps it in that browser's local storage and does not include it in the repository.
 3. Copy the deployed `/exec` URL.
 4. Open the app with that URL in the `translationFeed` query parameter, for example:
