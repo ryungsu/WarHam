@@ -1427,5 +1427,29 @@ window.WH40K_WORKBOOK_GLOSSARY = [
   [
     "HIVE TYRANT",
     "하이브 타이런트"
+  ],
+  [
+    "SPECTRUS KILL TEAM",
+    "스펙트루스 킬 팀"
+  ],
+  [
+    "WOLF SCOUTS",
+    "울프 스카우트"
+  ],
+  [
+    "DEATHWATCH TERMINATOR SQUAD",
+    "데스워치 터미네이터 분대"
+  ],
+  [
+    "DEATHWING KNIGHTS",
+    "데스윙 나이트"
+  ],
+  [
+    "DEATHWING TERMINATOR SQUAD",
+    "데스윙 터미네이터 분대"
+  ],
+  [
+    "RELIC TERMINATOR SQUAD",
+    "유물 터미네이터 분대"
   ]
 ];
