@@ -244,7 +244,7 @@ function translateRulesText(profileName,text="",identity={}){
   const clean=text.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");return translateTerms(clean);
 }
 function keywordInfo(raw=""){
-  const clean=raw.replace(/\*\*/g,"").replace(/[\[\]]/g,"").replace(/\u00a0/g," ").trim(),key=textKey(clean),canonicalKey=textKey(clean.replace(/\s*\(([^()]*)\)\s*/g,(_,inside)=>textKey(inside)===textKey(clean.split("(")[0])?"":" "+inside).trim());
+  const source=keywordText(raw),clean=source.replace(/\*\*/g,"").replace(/[\[\]]/g,"").replace(/\u00a0/g," ").trim(),key=textKey(clean),canonicalKey=textKey(clean.replace(/\s*\(([^()]*)\)\s*/g,(_,inside)=>textKey(inside)===textKey(clean.split("(")[0])?"":" "+inside).trim());
   if(["librarius","librarius psyker","librarius ability"].includes(canonicalKey)||/\blibrarius\b/i.test(clean))return {key:"librarius",ko:"리브라리우스",en:"Librarius",description:"아뎁투스 아스타르테스 PSYKER 유닛은 데이터시트에 표시된 사이커 레벨만큼 매 배틀 라운드에 사이킥 능력을 사용할 수 있습니다. 사용하는 능력들의 사이킥 레벨 합계는 해당 유닛의 사이커 레벨을 넘을 수 없습니다."};
   const conditionalHits=clean.match(/^(lethal\s+hits|sustained\s+hits\s*\d+)\s*[:：]\s*non[\s\-‐‑‒–—]*([a-z]+(?:\s*\/\s*[a-z]+)*)$/i),localizedConditionalHits=clean.match(/^(치명타\s*명중|지속\s*명중\s*(\d+))\s*[:：]?\s*(?:\(\s*)?((?:몬스터|차량|보병|기병|야수)(?:\s*\/\s*(?:몬스터|차량|보병|기병|야수))*)\s*제외\s*\)?$/);
   if(conditionalHits||localizedConditionalHits){const englishTargets={monster:"몬스터",vehicle:"차량",infantry:"보병",mounted:"기병",beast:"야수"},koreanTargets={몬스터:"MONSTER",차량:"VEHICLE",보병:"INFANTRY",기병:"MOUNTED",야수:"BEAST"},isLocalized=Boolean(localizedConditionalHits),base=isLocalized?(localizedConditionalHits[1].startsWith("지속")?`Sustained Hits ${localizedConditionalHits[2]}`:"Lethal Hits"):conditionalHits[1].replace(/\s+/g," ").trim(),targets=(isLocalized?localizedConditionalHits[3].split("/").map(x=>x.trim()):conditionalHits[2].split("/").map(x=>x.trim())),targetKo=targets.map(x=>isLocalized?x:(englishTargets[textKey(x)]||translateTerms(x.charAt(0)+x.slice(1).toLowerCase()))).join("/"),targetEn=targets.map(x=>isLocalized?(koreanTargets[x]||x.toUpperCase()):x.toUpperCase()).join("/"),sustainedBase=base.match(/^sustained\s+hits\s*(\d+)$/i),isLethal=/^lethal\s+hits$/i.test(base),label=isLethal?"치명타 명중":`지속 명중 ${sustainedBase?.[1]||""}`.trim(),effect=isLethal?"치명 명중을 기록하면 해당 공격은 운드 굴림 없이 자동으로 운드를 입힙니다.":`치명 명중을 기록할 때마다 추가 명중 ${sustainedBase?.[1]||"1"}회를 얻습니다.`;return {key:clean,ko:`${label} (${targetKo} 제외)`,en:`${base}: non-${targetEn}`,description:`${effect} 이 효과는 대상 유닛에 ${targetKo} 키워드가 하나도 없을 때만 적용됩니다.`};}
@@ -266,9 +266,10 @@ function keywordInfo(raw=""){
   return null;
 }
 function renderKeywordButton(raw){
-  const info=keywordInfo(raw),translated=tr(raw),display=info?`${info.ko} (${info.en})`:translated!==raw?`${translated} (${raw})`:raw;
-  return `<button type="button" class="keyword-chip" data-keyword="${escapeHtml(info?.key||raw)}">${escapeHtml(display)}</button>`;
+  const source=keywordText(raw),info=keywordInfo(source),translated=tr(source),display=info?`${info.ko} (${info.en})`:translated!==source?`${translated} (${source})`:source;
+  return `<button type="button" class="keyword-chip" data-keyword="${escapeHtml(info?.key||source)}">${escapeHtml(display)}</button>`;
 }
+function keywordText(raw=""){if(typeof raw==="string")return raw;if(raw&&typeof raw==="object")return String(raw.label??raw.name??raw.keyword??raw.text??fortykdcKeywordLabel(raw)??"");return String(raw??"");}
 function unitWoundMax(data,count){const wounds=(data.profiles||[]).flatMap(p=>p.characteristics||[]).find(x=>x.name==="W")?.value;const perModel=Number.parseInt(wounds,10);return Number.isFinite(perModel)&&perModel>0?perModel*Math.max(1,count):0;}
 const woundState=new Map();
 function currentWounds(key,max){if(!max)return 0;const value=woundState.has(key)?Math.min(woundState.get(key),max):max;woundState.set(key,value);return value;}
