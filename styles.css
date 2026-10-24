@@ -491,6 +491,7 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .quick-stratagem-spend{margin-top:4px;padding:5px 8px;border:1px solid var(--faction-accent,#b7db88);border-radius:6px;background:transparent;color:var(--faction-accent,#b7db88);font:700 11px/1.2 "Segoe UI",sans-serif;cursor:pointer}
 .quick-stratagem-spend:disabled{opacity:.55;cursor:default}
 .quick-stratagem-status{margin:0;padding:7px;color:var(--muted);font-size:11px;line-height:1.4}
+  .stratagem-library .quick-stratagem-retry{margin:0 0 6px 7px}
 .quick-stratagem-retry{justify-self:start;margin:0 7px 6px;padding:5px 8px;border:1px solid var(--faction-accent,#b7db88);border-radius:6px;background:transparent;color:var(--faction-accent,#b7db88);font:700 11px/1.2 "Segoe UI",sans-serif;cursor:pointer}
 .stratagem-detail-dialog .stratagem-detail-copy{font-size:14px;line-height:1.65}
 .stratagem-detail-dialog .stratagem-detail-copy p{margin:8px 0;overflow-wrap:anywhere}
@@ -509,6 +510,13 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .roster-enhancement-heading>b{font-size:13px}
 .roster-enhancement-heading>small,.roster-enhancement-heading>span,.enhancement-source-warning{color:var(--muted);font-size:11px}
 .roster-enhancement-heading>span{margin-left:auto}
+  .roster-enhancements>summary{display:flex;align-items:baseline;gap:8px;cursor:pointer;list-style:none}
+  .roster-enhancements>summary::-webkit-details-marker{display:none}
+  .roster-enhancements>summary::after{content:"＋";margin-left:auto;color:var(--faction-accent,var(--accent));font-weight:800}
+  .roster-enhancements[open]>summary::after{content:"−"}
+  .roster-enhancements>summary>b{flex:0 0 auto;color:var(--faction-accent,var(--accent));font-size:13px}
+  .roster-enhancements>summary>span{min-width:0;color:var(--muted);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+  .roster-enhancement-list{margin-top:7px}
 .roster-enhancement>p{margin:5px 0 0;font-size:13px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
 .roster-enhancement details{margin-top:5px}
 .roster-enhancement details summary{font-size:11px;color:var(--muted);cursor:pointer}
