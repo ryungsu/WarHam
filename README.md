@@ -4,7 +4,7 @@ NewRecruit에서 복사한 편성표 텍스트를 붙여넣으면 `FACTION KEYWO
 
 ## 실행
 
-`index.html`을 브라우저에서 엽니다. 예시 편성표는 자동으로 채워지고 공개 데이터 연결을 시작합니다. 원격 데이터 연결에는 인터넷이 필요합니다.
+`index.html`을 브라우저에서 엽니다. 편성표는 비어 있으며, 편성표를 불러오면 공개 데이터 연결을 시작합니다. 승인 번역은 Git에 포함된 `approved-translations.js`를 먼저 적용하고, Google Sheets에서 최신 승인본을 비동기로 확인합니다. 원격 데이터 연결에는 인터넷이 필요합니다.
 
 ## 현재 구현된 범위
 
@@ -36,6 +36,8 @@ NewRecruit에서 복사한 편성표 텍스트를 붙여넣으면 `FACTION KEYWO
 ## V2 비교 프로토타입
 
 현재 `codex/google-sheets-ai-translation-v2` 브랜치는 V1 기능을 기준으로 Google Sheets에서 BSData 변경분을 감지하고 Gemini 번역 초안을 관리하는 파이프라인을 추가합니다. 설치·시트 구성·검수·앱 연결 방법은 [`google-sheets-v2/README.md`](google-sheets-v2/README.md)를 참고하세요. V1 기준 커밋은 `5632063`입니다.
+
+앱 시작 시 Git의 번역 스냅샷을 즉시 적용합니다. 시트 피드가 응답하면 그 전체 승인본으로 교체해 최신 상태를 반영하고, 피드 연결에 실패하면 Git 스냅샷을 계속 사용합니다. 스냅샷은 시트에서 `검수 완료 JSON 내보내기`를 실행해 Drive에서 내려받은 `40k-translations-v2.json`입니다. 저장소 폴더에서 `node update-approved-translations.mjs .\40k-translations-v2.json`을 실행하면 `approved-translations.js`와 정적 파일 캐시 버전이 갱신됩니다. 이후 앱 파일을 저장소에 올리면 정적 스냅샷도 업데이트됩니다.
 
 ## 다음 단계
 

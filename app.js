@@ -521,17 +521,31 @@ async function loadCoreStratagems(){
     if(requestToken!==stratLoadToken)return;coreStratagems=[];factionStratagemCount=0;detachmentRules=[];detachmentRulesStatus=error?.message||"네트워크 또는 데이터 형식 오류";stratagemLoadStatus=`연결 실패 · ${error?.message||"네트워크 또는 데이터 형식 오류"}`;console.warn("Stratagem data load failed",error);if($("assistant-page"))render();
   }
 }
+function applyV2TranslationPayload(payload,replace=false){
+  if(!payload||!Array.isArray(payload.translations))return 0;
+  if(replace){v2LabelTranslations.clear();v2RuleTranslations.clear();v2RuleTranslationsById.clear();}
+  for(const raw of payload.translations){
+    const item={...raw,edition:String(raw.edition||payload.edition||"")};
+    if(item.kind==="label"&&item.name&&item.translation)v2LabelTranslations.set(textKey(item.name),item.translation);
+    else if(item.name&&item.source&&item.translation){
+      v2RuleTranslations.set(ruleFeedKey(item.name,item.source),item.translation);
+      const idKey=ruleIdentityKey(item.id);if(idKey){const records=v2RuleTranslationsById.get(idKey)||[],recordKey=entry=>`${sourceFileKey(entry.file)}|${textKey(entry.kind)}|${ruleFeedKey(entry.name,entry.source)}`,existing=records.findIndex(entry=>recordKey(entry)===recordKey(item));if(existing>=0)records[existing]=item;else records.push(item);v2RuleTranslationsById.set(idKey,records);}
+    }
+  }
+  return payload.translations.length;
+}
+const bundledTranslationCount=applyV2TranslationPayload(window.WARHAMMER_APPROVED_TRANSLATIONS,true);
 function loadV2TranslationFeed(){
   const button=$("load-translations"),status=$("translation-feed-status");
   if(!v2TranslationFeed){if(status){status.textContent="번역 피드 주소를 입력하면 승인된 번역을 불러와 편성표에 적용합니다.";status.className="translation-feed-status";}return;}
   if(button){button.disabled=true;button.setAttribute("aria-busy","true");button.innerHTML='<span class="translation-loading-gear" aria-hidden="true">⚙</span><span>번역 불러오는 중…</span>';}
-  if(status){status.textContent="Google Sheets에서 승인된 번역을 불러오는 중…";status.className="translation-feed-status";}
+  if(status){status.textContent=`Google Sheets에서 최신 승인 번역 확인 중… · GitHub 번역 ${bundledTranslationCount}개 적용됨`;status.className="translation-feed-status";}
   let feedUrl;try{feedUrl=new URL(v2TranslationFeed);if(feedUrl.protocol!=="https:"||feedUrl.hostname!=="script.google.com"&&feedUrl.hostname!=="script.googleusercontent.com")throw new Error("Google Apps Script HTTPS 웹 앱 주소를 확인하세요.");}catch(err){finishError(err.message||"주소 형식이 올바르지 않습니다.");return;}
   const callback=`v2Translation_${Date.now()}_${Math.floor(Math.random()*1e6)}`,script=document.createElement("script");feedUrl.searchParams.set("callback",callback);
-  const cleanup=()=>{delete window[callback];script.remove();if(button){button.disabled=false;button.removeAttribute("aria-busy");button.textContent="번역 불러오기 · 적용";}};
+  const cleanup=()=>{delete window[callback];script.remove();if(button){button.disabled=false;button.removeAttribute("aria-busy");button.textContent="시트 최신 번역 불러오기";}};
   const timer=setTimeout(()=>finishError("응답 시간이 초과됐습니다. 배포 URL과 웹 앱 액세스 설정을 확인하세요."),60000);
-  function finishError(message){clearTimeout(timer);cleanup();if(status){status.textContent=`번역 피드를 불러오지 못했습니다. ${message}`;status.className="translation-feed-status error";}}
-  window[callback]=payload=>{clearTimeout(timer);if(!payload||!Array.isArray(payload.translations)){finishError("피드 응답 형식이 예상과 다릅니다.");return;}v2LabelTranslations.clear();v2RuleTranslations.clear();v2RuleTranslationsById.clear();for(const raw of payload.translations){const item={...raw,edition:String(raw.edition||payload.edition||"")};if(item.kind==="label"&&item.name&&item.translation)v2LabelTranslations.set(textKey(item.name),item.translation);else if(item.name&&item.source&&item.translation){v2RuleTranslations.set(ruleFeedKey(item.name,item.source),item.translation);const idKey=ruleIdentityKey(item.id);if(idKey){const records=v2RuleTranslationsById.get(idKey)||[];records.push(item);v2RuleTranslationsById.set(idKey,records);}}}cleanup();if(status){status.textContent=`Google Sheets · 승인 번역 ${payload.translations.length}개 불러옴`;status.className="translation-feed-status ready";}render();};
+  function finishError(message){clearTimeout(timer);cleanup();if(status){status.textContent=`Google Sheets 최신 확인 실패 · GitHub 번역 ${bundledTranslationCount}개 사용 중 · ${message}`;status.className="translation-feed-status error";}}
+  window[callback]=payload=>{clearTimeout(timer);if(!payload||!Array.isArray(payload.translations)){finishError("피드 응답 형식이 예상과 다릅니다.");return;}applyV2TranslationPayload(payload,true);cleanup();if(status){status.textContent=`GitHub 기본 번역 ${bundledTranslationCount}개 적용 · Google Sheets 승인 번역 ${payload.translations.length}개 최신본 적용`;status.className="translation-feed-status ready";}render();};
   script.onerror=()=>finishError("웹 앱에서 익명 접근을 허용하는지 확인하세요.");script.src=feedUrl.toString();document.head.appendChild(script);
 }
 function normalizeLoadoutText(value=""){return String(value).normalize("NFKC").toLowerCase().replace(/[^a-z0-9가-힣]+/g," ").replace(/\s+/g," ").trim();}
@@ -812,7 +826,7 @@ $("translation-feed-url").value=v2TranslationFeed;
 $("translation-write-token").value=savedTranslationWriteToken;
 $("load-translations").addEventListener("click",()=>{v2TranslationFeed=$("translation-feed-url").value.trim();try{if(v2TranslationFeed)localStorage.setItem("40k-translation-feed",v2TranslationFeed);}catch{}loadV2TranslationFeed();});
 $("translation-write-token").addEventListener("change",()=>{try{const token=$("translation-write-token").value.trim();if(token)localStorage.setItem("40k-translation-write-token",token);else localStorage.removeItem("40k-translation-write-token");}catch{}});
-if(v2TranslationFeed)loadV2TranslationFeed();
 $("roster").value="";resizeRoster();render();currentConnectionProgress=0;updateDataConnectionProgress(0,"편성표를 불러오면 BSData와 공통 규칙 연결을 시작합니다.","waiting");
+if(v2TranslationFeed)loadV2TranslationFeed();else{$("translation-feed-status").textContent=`GitHub 기본 번역 ${bundledTranslationCount}개 적용됨 · Google Sheets 주소를 연결하면 최신 승인 번역을 확인합니다.`;$('translation-feed-status').className="translation-feed-status ready";}
 $("game-page").addEventListener("input",e=>{const field=e.target.closest("[data-game-field]"),score=e.target.closest("[data-round-score]");if(!field&&!score)return;const state=readGameTracker();if(field)state[field.dataset.gameField]=field.value;else{const round=Number(score.dataset.roundScore),player=score.dataset.player;if(round>=0&&round<5&&(player==="us"||player==="them"))state.rounds[round][player]=Math.max(0,Math.min(99,Number(score.value)||0));}writeGameTracker(state);for(const side of ["us","them"]){const total=state.rounds.reduce((sum,r)=>sum+r[side],0),output=$("game-page").querySelector(`[data-score-total="${side}"]`);if(output)output.textContent=String(total);}});
 $("game-page").addEventListener("click",e=>{if(!e.target.closest("[data-reset-game]"))return;try{localStorage.removeItem(GAME_TRACKER_KEY);}catch{}$("game-page").innerHTML=renderGameTracker(parseRoster($("roster").value).meta);});
