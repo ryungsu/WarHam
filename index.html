@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261025-5">
+  <link rel="stylesheet" href="styles.css?v=20261026-3">
 </head>
 <body>
   <header class="topbar">
@@ -40,11 +40,13 @@
       <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
       <button type="button" class="view-tab" data-view="assistant">전투 보조</button>
       <button type="button" class="view-tab" data-view="game">미션 · 라운드 점수</button>
+      <button type="button" class="view-tab" data-view="stratagems">스트라타젬</button>
     </nav>
     <section id="summary" class="summary" hidden></section>
     <section id="results" class="results" aria-live="polite"></section>
     <section id="assistant-page" class="assistant-page" hidden aria-live="polite"></section>
     <section id="game-page" class="game-page" hidden aria-live="polite"></section>
+    <section id="stratagem-page" class="stratagem-page" hidden aria-live="polite"></section>
     <aside id="unit-quick-nav" class="unit-quick-nav" hidden aria-label="전투 도구 및 분대 바로가기">
       <details id="quick-assistant" class="quick-assistant">
         <summary>전투 보조 <small id="quick-assistant-count"></small></summary>
@@ -75,6 +77,6 @@
   <script src="workbook-glossary.js"></script>
   <script defer src="approved-translations.js?v=20261024-1"></script>
   <script defer src="stratagem-translations.js?v=20261026-2"></script>
-  <script defer src="app.js?v=20261026-2"></script>
+  <script defer src="app.js?v=20261026-5"></script>
 </body>
 </html>
