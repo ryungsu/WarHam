@@ -706,7 +706,9 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 #results .weapon-mobile-profile{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:#34414d;border-bottom:1px solid #34414d}
 #results .weapon-mobile-profile:last-child{border-bottom:0}
 #results .weapon-mobile-stat{display:grid;align-content:center;min-width:0;min-height:46px;gap:2px;padding:5px 3px;background:#1a222b;text-align:center}
-#results .weapon-mobile-profile>.weapon-mobile-stat:first-child{grid-column:1/-1;min-height:36px}
+#results .weapon-mobile-profile>.weapon-mobile-stat:first-child{grid-column:1/-1;min-height:36px;grid-template-columns:max-content minmax(0,1fr);align-items:center;justify-items:stretch;column-gap:8px;padding:6px 9px;text-align:left}
+#results .weapon-mobile-profile>.weapon-mobile-stat:first-child small{text-align:left}
+#results .weapon-mobile-profile>.weapon-mobile-stat:first-child b{text-align:left}
 #results .weapon-mobile-stat small,#results .weapon-mobile-keywords small{color:#a9b8c8;font-size:10px;line-height:1.15;overflow-wrap:anywhere}
 #results .weapon-mobile-stat b{color:#f0f4f8;font-size:13px;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
 #results .weapon-mobile-keywords{grid-column:1/-1;display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;gap:4px;padding:6px 7px;background:#1a222b;font-size:11px;line-height:1.4;text-align:left}
@@ -714,3 +716,11 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 #results .weapon-mobile-keywords .keyword-chip{font-size:11px;line-height:1.4;white-space:normal;text-align:left}
 #results .weapon-profile-groups[data-show-options="false"] .weapon-mobile-card.not-equipped{display:none}
 #results .weapon-mobile-card .weapon-replace-picker{margin:4px 0 2px 22px}
+#results .weapon-group{margin:10px 0 14px}
+#results .weapon-group>h5{margin:0;padding:6px 9px;border-left:3px solid #55718b;border-bottom:1px solid #405160;background:#202a34;color:#dbe7f1;font-size:12px;letter-spacing:.01em}
+#results .weapon-group-ranged{margin-top:12px;padding-top:7px;border-top:1px solid #526d86}
+#results .weapon-group-ranged>h5{border-left:3px solid #65a8ff;border-bottom:1px solid #45617d;background:#1e3041;color:#b9d8ff}
+#results .weapon-group-ranged+.weapon-group-ranged{margin-top:8px;padding-top:0;border-top:0}
+#results .weapon-group-ranged~.weapon-group-melee{margin-top:18px;padding-top:10px;border-top:2px solid #6f8396}
+#results .weapon-group-melee>h5{border-left-color:#c39762;background:#30281f;color:#f1d4ad}
+#results .weapon-group-melee .weapon-mobile-list{padding-top:2px}
