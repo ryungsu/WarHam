@@ -680,3 +680,10 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
   #results .weapon-profile-groups[data-show-options="false"] .weapon-mobile-card.not-equipped{display:none}
   #results .weapon-mobile-card .weapon-replace-picker{margin:4px 0 2px 22px}
 }
+@media(max-width:600px){
+  #results .weapon-mobile-name{display:flex;align-items:center;gap:6px;min-width:0;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+  #results .weapon-mobile-name>b{min-width:0;overflow-wrap:anywhere}
+  #results .weapon-mobile-name>small{color:#aeb8c2;font-size:11px}
+  #results .weapon-mobile-name>em{flex:0 0 auto;margin-left:auto;padding:2px 6px;border:1px solid rgba(var(--faction-accent-rgb,183,219,136),.55);border-radius:999px;color:var(--faction-accent,#b7db88);font-size:10px;font-style:normal;font-weight:700}
+  #results .weapon-equipped-mark{display:inline-grid;flex:0 0 18px;width:18px;height:18px;place-items:center;border-radius:5px;background:var(--faction-accent,#b7db88);color:#111;font-size:12px;font-weight:900}
+}
