@@ -310,6 +310,13 @@
 #results .weapon-compact-table td:first-child{min-width:190px}
 #results .weapon-compact-table .weapon-row.is-equipped{background:#1c2d3d}
 #results .weapon-compact-table .weapon-row.not-equipped{background:#171e25;color:#bdc8d3}
+#results .weapon-model-assignment{display:block;margin:3px 0 0 25px;padding:0;border:0;background:transparent;color:#8eb7ff;font-size:11px;line-height:1.3;text-align:left;cursor:pointer}
+#results .weapon-model-assignment:hover,#results .weapon-model-assignment:focus-visible{text-decoration:underline;outline:none;color:#c6dcff}
+#results .weapon-mode-cell{min-width:120px;color:#d5e2ef;font-size:11px;white-space:normal}
+#results .weapon-unmatched-loadout{margin-top:10px;padding:8px 10px;border-left:3px solid #e0a84f;background:#29251d;font-size:12px}
+#results .weapon-unmatched-loadout h5{margin:0 0 5px;color:#f0c478}
+#results .weapon-unmatched-loadout>div{padding:2px 0}
+#results .weapon-unmatched-loadout small{color:#bfc8d1}
 #results .weapon-choice{display:flex;align-items:center;gap:7px;color:#f0f4f8;cursor:pointer}
 #results .weapon-choice input{width:15px;height:15px;margin:0;accent-color:#3479c3;flex:0 0 auto}
 #results .weapon-row.not-equipped .weapon-choice{color:#c2ccd6}
@@ -632,3 +639,5 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
   .roster-preset-save button{width:100%}
   .roster-presets .roster-default-load{grid-column:1}
 }
+
+.attachment-group-start,.attachment-group-member{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}.attachment-group-member{margin-left:clamp(0px,3vw,28px)}.attachment-banner{padding:7px 16px;background:#263126;border-bottom:1px solid var(--line);color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.02em}.attachment-banner::before{content:'↳ ';font-size:15px}.attachment-banner.member{background:#202822;color:#c6d9b0}@media(max-width:600px){.attachment-group-member{margin-left:12px}.attachment-banner{padding:6px 12px}}

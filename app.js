@@ -136,14 +136,33 @@ const norm = (s) => s.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu,
 function indexRuleDescriptions(root){const stack=[root],seen=new WeakSet();while(stack.length){const value=stack.pop();if(!value||typeof value!=="object"||seen.has(value))continue;seen.add(value);if(!Array.isArray(value)&&value.name){const c=(value.characteristics||[]).find(x=>x.name==="Description");let description=c?.["$text"]??c?.text??value.description??value.ruleDescription;if(description&&typeof description==="object")description=description.$text??description.value??"";if(typeof description==="string"&&description.trim()){const clean=description.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();sourceRuleDescriptions.set(textKey(value.name),clean);if(value.id)sourceRuleDescriptionsById.set(value.id,clean);}}if(Array.isArray(value)){for(const item of value)stack.push(item);}else{for(const [key,item] of Object.entries(value))if(key!=="$schema"&&item&&typeof item==="object")stack.push(item);}}}
 function sourceDescriptionFor(name){const key=textKey(name);if(sourceRuleDescriptions.has(key))return sourceRuleDescriptions.get(key);const compact=norm(name);for(const [ruleKey,description] of sourceRuleDescriptions)if(norm(ruleKey)===compact)return description;return "";}
 function splitEnhancementNames(value=""){return String(value||"").replace(/^\s*(?:enhancements?|강화)\s*:\s*/i,"").split(/\s*[,;]\s*/).map(item=>item.trim()).filter(Boolean);}
+function parseRosterModelLoadoutLine(value,defaultCount=1){
+  const match=String(value||"").match(/^(\d+)\s*x\s+([^:]+?)(?:\s*:\s*(.*))?$/i);
+  if(!match)return null;
+  const models=Number(match[1])||Number(defaultCount)||1,items=(match[3]||"").split(/,(?![^()]*\))/).map(raw=>{
+    const source=raw.trim(),withCount=source.match(/^(\d+)\s+with\s+(.+)$/i),explicit=source.match(/^(\d+)\s*x\s+(.+)$/i),name=(withCount?.[2]||explicit?.[2]||source).trim(),count=Number(withCount?.[1]||explicit?.[1]||models);
+    return {name,count:Math.min(models,count)};
+  }).filter(item=>item.name);
+  return {name:match[2].trim(),models,items};
+}
+function parseRosterEquipmentItems(value,modelCount=1){
+  const countForAll=Math.max(1,Number(modelCount)||1);
+  return String(value||"").split(/,(?![^()]*\))/).map(raw=>{
+    const text=raw.trim(),explicit=text.match(/^(\d+)\s*(?:x|with)\s+(.+)$/i),count=Math.min(countForAll,Number(explicit?.[1]||countForAll)),name=(explicit?.[2]||text).trim();
+    return name?{name,count}:null;
+  }).filter(Boolean);
+}
+function looksLikeRosterModelName(value=""){return !/\b(?:claws?|talons?|bonesword|lash whip|weapon|launcher|cannon|salvo|limbs?|ovipositor|barbed|chitin|fists?|blade|sword|rending|stinger|venom|spear|flamer|pistol|rifle|bolter|bolt\s?guns?|grenade|shotgun|melta|plasma|lasgun|carbine|knife|knives|sabre|mace|hammer|axe|lance|staff|crozius|shield|banner|standard|relic|auspex|vox|scanner|icon|signum|servo|grenades?)\b|볼터|볼트|권총|체인소드|체인블레이드|명장제조|라스캐논|미사일|런처|피스트|블레이드|소드|플라즈마|라이플|소총|파이어블래스터|파이어블라스터|파이어 블래스터|파이어 블라스터|볼트건|근접무기|샷건|저격|나이프|해머|메이스|방패|깃발|유물|수류탄/i.test(value);}
 function parseRoster(text) {
-  const lines = text.replace(/\u00a0/g," ").split(/\r?\n/).map((value,index)=>({line:value.trim(),index})).filter(x=>x.line);
-  const units = [], meta = {};let currentUnit=null,attachedGroup="";
+  const lines = text.replace(/\u00a0/g," ").split(/\r?\n/).map((value,index)=>({line:value.replace(/\*\*|__|~~|`/g,"").trim(),index})).filter(x=>x.line);
+  const units = [], meta = {};let currentUnit=null,currentModelLoadout=null,attachedGroup="";
   const headerRules = [[/FACTION KEYWORD:\s*(.+)/i,"faction"],[/DETACHMENT:\s*(.+)/i,"detachment"],[/FORCE DISPOSITION:\s*(.+)/i,"disposition"],[/TOTAL ARMY POINTS:\s*(\d+)/i,"points"],[/NUMBER OF UNITS:\s*(\d+)/i,"unitCount"],[/WARLORD:\s*(.+)/i,"warlord"]];
   for (const {line, index:sourceLineIndex} of lines) {
     const attachedGroupLine=line.match(/^(?:Attached Unit|합류 유닛|부착 유닛|부착 편성)\s*(\d+)$/i);if(attachedGroupLine){attachedGroup=attachedGroupLine[1];currentUnit=null;continue;}
     if(/^(?:CHARACTERS|BATTLELINE|OTHER DATASHEETS|DEDICATED TRANSPORTS|CHARACTER|전열|기타 데이터시트|전속 수송|캐릭터)$/i.test(line))attachedGroup="";
-    const attachedToLine=line.match(/^Attached to\s+(.+)$/i);if(attachedToLine&&currentUnit){currentUnit.attachedTo=attachedToLine[1].trim();continue;}
+    const attachedToLine=line.match(/^(?:[•●▪*◦○◆-]\s*)?Attached to\s*:?\s*(.+)$/i);if(attachedToLine&&currentUnit){currentUnit.attachedTo=attachedToLine[1].trim();continue;}
+    const attachedRoleLine=line.match(/^(?:[•●▪*◦○◆-]\s*)?Attached as\s*:?\s*(Leader|Bodyguard|Support|리더|경호원|지원)\b/i);if(attachedRoleLine&&currentUnit){currentUnit.attachedAs=attachedRoleLine[1];continue;}
+    const unbulletedWithLine=line.match(/^(\d+)\s+with\s+(.+)$/i);if(currentUnit&&currentModelLoadout&&unbulletedWithLine){currentModelLoadout.withVariants||=[];currentModelLoadout.withVariants.push({models:Math.min(currentModelLoadout.models,Number(unbulletedWithLine[1])||1),items:parseRosterEquipmentItems(unbulletedWithLine[2],Number(unbulletedWithLine[1])||1)});continue;}
     for (const [re,key] of headerRules) { const m=line.match(re); if(m) meta[key]=m[1].trim(); }
     const detachmentLine=line.match(/^(.+?)\s*\(\s*\d+\s*(?:디태치먼트\s*포인트|detachment\s*points?)\s*\)$/i);if(detachmentLine&&!meta.detachment)meta.detachment=detachmentLine[1].trim();
     const totalLine=line.match(/^\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)$/i);if(totalLine&&!meta.points)meta.points=totalLine[1];
@@ -155,12 +174,17 @@ function parseRoster(text) {
     const armyTitleLine=/^\d+\s*(?:포전|포|points?|pts?)?\s*\(\s*\d+\s*(?:포인트|points?|pts?)\s*\)$/i.test(unitLine);
     if (!armyTitleLine&&/^(?:\d+x\s+)?[^•+\-].*\(\s*\d+\s*(?:포인트|points?|pts?)\s*\)/i.test(unitLine)&&!/^(?:급습|대규모|incursion|strike\s*force|onslaught)\s*\(/i.test(unitLine)&&!/\((?:사본|copy)\)/i.test(unitLine)) {
       const m=unitLine.match(/^(?:(\d+)x\s+)?(.+?)\s*\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)\s*(?::\s*(.*))?$/i);
-      if (m) {const equipment=m[4]||"",enhancementMatch=equipment.match(/(?:enhancements?|강화)\s*:\s*(.+)$/i);currentUnit={count:Number(m[1]||0),rosterName:m[2].trim(),points:Number(m[3]),equipment:enhancementMatch?equipment.slice(0,enhancementMatch.index).replace(/[,;\s]+$/," ").trim():equipment,equipmentLines:[],enhancements:enhancementMatch?splitEnhancementNames(enhancementMatch[1]):[],modelCounts:[],sourceLine:line,sourceLineIndex,equipmentLineIndexes:[sourceLineIndex],attachedGroup,attachedAs:"",attachedTo:""};units.push(currentUnit);}
+      if (m) {const equipment=m[4]||"",enhancementMatch=equipment.match(/(?:enhancements?|강화)\s*:\s*(.+)$/i);currentUnit={count:Number(m[1]||0),rosterName:m[2].trim(),points:Number(m[3]),equipment:enhancementMatch?equipment.slice(0,enhancementMatch.index).replace(/[,;\s]+$/," ").trim():equipment,equipmentLines:[],modelLoadouts:[],enhancements:enhancementMatch?splitEnhancementNames(enhancementMatch[1]):[],modelCounts:[],sourceLine:line,sourceLineIndex,equipmentLineIndexes:[sourceLineIndex],attachedGroup,attachedAs:"",attachedTo:""};units.push(currentUnit);currentModelLoadout=null;}
     } else if(currentUnit&&/^[•●▪*◦○◆-]\s*/.test(line)) {
-      const item=line.replace(/^[•●▪*◦○◆-]\s*/,""),role=item.match(/^(?:Attached as|합류 방식)\s*:\s*(Leader|Bodyguard|Support|리더|경호원|지원)(?:\s|\(|$)/i);if(role){currentUnit.attachedAs=role[1];continue;}const enhancement=item.match(/^(?:enhancements?|강화)\s*:\s*(.+)$/i);if(enhancement){currentUnit.enhancements.push(...splitEnhancementNames(enhancement[1]));continue;}currentUnit.equipmentLines.push(item);currentUnit.equipmentLineIndexes.push(sourceLineIndex);const model=item.match(/^(\d+)x\s+(.+)$/i);if(model&&!/\b(?:claws?|talons?|bonesword|lash whip|weapon|launcher|cannon|salvo|limbs?|ovipositor|barbed|chitin|fists?|blade|sword|rending|stinger|venom|spear|flamer|pistol|rifle|bolter|grenade)\b|볼터|볼트|권총|체인소드|체인블레이드|명장제조|라스캐논|미사일|런처|피스트|블레이드|소드|플라즈마|라이플|소총|파이어블래스터|볼트건|근접무기/i.test(model[2]))currentUnit.modelCounts.push(Number(model[1]));
+      const symbol=line.match(/^([•●▪*◦○◆-])/)[1],item=line.replace(/^[•●▪*◦○◆-]\s*/,""),role=item.match(/^(?:Attached as|합류 방식)\s*:\s*(Leader|Bodyguard|Support|리더|경호원|지원)(?:\s|\(|$)/i);if(role){currentUnit.attachedAs=role[1];continue;}const enhancement=item.match(/^(?:enhancements?|강화)\s*:\s*(.+)$/i);if(enhancement){currentUnit.enhancements.push(...splitEnhancementNames(enhancement[1]));continue;}const withLine=item.match(/^(\d+)\s+with\s+(.+)$/i);if(withLine&&currentModelLoadout){currentModelLoadout.withVariants||=[];currentModelLoadout.withVariants.push({models:Math.min(currentModelLoadout.models,Number(withLine[1])||1),items:parseRosterEquipmentItems(withLine[2],Number(withLine[1])||1)});continue;}currentUnit.equipmentLines.push(item);currentUnit.equipmentLineIndexes.push(sourceLineIndex);
+      const parsedGroup=parseRosterModelLoadoutLine(item,currentUnit.count),hasInlineGear=Boolean(item.includes(":"));
+      if(parsedGroup&&hasInlineGear){currentUnit.modelLoadouts.push(parsedGroup);currentModelLoadout=parsedGroup;currentUnit.modelCounts.push(parsedGroup.models);continue;}
+      if(parsedGroup&&looksLikeRosterModelName(parsedGroup.name)) {parsedGroup.items=[];currentUnit.modelLoadouts.push(parsedGroup);currentModelLoadout=parsedGroup;currentUnit.modelCounts.push(parsedGroup.models);continue;}
+      if(parsedGroup&&currentModelLoadout){currentModelLoadout.items.push({name:parsedGroup.name,count:parsedGroup.models});continue;}
+      if(parsedGroup&&looksLikeRosterModelName(parsedGroup.name)){currentUnit.modelCounts.push(parsedGroup.models);continue;}
     }
   }
-  for(const unit of units){if(!unit.count){const inferred=unit.modelCounts.reduce((sum,n)=>sum+n,0),fallback=Math.max(0,...unit.equipmentLines.map(x=>Number(x.match(/^(\d+)x\s+/i)?.[1]||0)));unit.count=inferred||fallback||1;}delete unit.modelCounts;}
+  for(const unit of units){if(!unit.count){const inferred=unit.modelCounts.reduce((sum,n)=>sum+n,0),fallback=Math.max(0,...unit.equipmentLines.map(x=>Number(x.match(/^(\d+)x\s+/i)?.[1]||0)));unit.count=inferred||fallback||1;}delete unit.modelCounts;if(!unit.modelLoadouts.length){unit.modelLoadouts=(unit.equipmentLines||[]).map(line=>parseRosterModelLoadoutLine(line,unit.count)).filter(group=>group?.items?.length);}const expanded=[];for(const group of unit.modelLoadouts){if(!group.withVariants?.length){expanded.push(group);continue;}const variantSets=group.withVariants.map(variant=>new Set(variant.items.map(item=>normalizeLoadoutText(item.name)))),common=new Set([...variantSets[0]].filter(name=>variantSets.every(set=>set.has(name))));group.withVariants.forEach((variant,index)=>{const unique=variant.items.filter(item=>!common.has(normalizeLoadoutText(item.name))).map(item=>item.name),label=unique.length?unique.join(" + "): `장비 구성 ${index+1}`,name=`${group.name} · ${label}`;expanded.push({name,models:variant.models,items:variant.items});});const assigned=group.withVariants.reduce((sum,variant)=>sum+variant.models,0),remaining=Math.max(0,group.models-assigned);if(remaining)expanded.push({name:group.name,models:remaining,items:group.items||[]});}unit.modelLoadouts=expanded;}
   if(!meta.points&&units.length)meta.points=String(units.reduce((sum,unit)=>sum+unit.points,0));
   return {meta, units};
 }
@@ -550,22 +574,60 @@ function loadV2TranslationFeed(){
   script.onerror=()=>finishError("웹 앱에서 익명 접근을 허용하는지 확인하세요.");script.src=feedUrl.toString();document.head.appendChild(script);
 }
 function normalizeLoadoutText(value=""){return String(value).normalize("NFKC").toLowerCase().replace(/[^a-z0-9가-힣]+/g," ").replace(/\s+/g," ").trim();}
-function weaponBaseName(profile){return String(profile?.name||"").split(/\s+-\s+/)[0].replace(/\s*\([^)]*\)\s*$/,"" ).trim();}
+function weaponBaseName(profile){return String(profile?.name||"").replace(/^[\s➤▶▸→➢]+/u,"").split(/\s+-\s+/)[0].replace(/\s*\([^)]*\)\s*$/,"" ).trim();}
+function weaponProfileModeName(profile){const name=String(profile?.name||"").replace(/^[\s➤▶▸→➢]+/u,""),base=weaponBaseName(profile);return name.slice(base.length).replace(/^\s*(?:-|\()\s*/,"").replace(/\)\s*$/ ,"").trim();}
 function weaponRosterAliases(name=""){
-  const key=textKey(weaponBaseName({name}));
+  const key=normalizeLoadoutText(weaponBaseName({name}));
   const aliases={
     "master-crafted chainsword":["명장제조 체인소드"],
+    "astartes chainsword":["체인소드"],
+    "chainsword":["체인소드"],
     "master-crafted bolter":["명장제조 볼터","명장제조 볼트건"],
-    "power fist":["파워 피스트"]
+    "power fist":["파워 피스트"],
+    "boltgun":["bolt gun","볼트건","볼트 건","볼터"],
+    "bolt gun":["boltgun","볼트건","볼트 건","볼터"],
+    "bolt rifle":["볼트 라이플","볼트 소총"],
+    "bolt pistol":["볼트 피스톨","볼트 권총"],
+    "scout shotgun":["shotgun","샷건"],
+    "astartes shotgun":["shotgun","샷건"],
+    "shotgun":["샷건"],
+    "combat shotgun":["전투 샷건","샷건"],
+    "heavy bolter":["헤비 볼터","헤비볼터"],
+    "missile launcher":["rocket launcher","미사일 런처","미사일 발사기","로켓 런처"],
+    "scout sniper rifle":["sniper rifle","저격 소총","스나이퍼 라이플"],
+    "sniper rifle":["저격 소총","스나이퍼 라이플","저격총"],
+    "pyreblaster":["파이어블래스터","파이어 블래스터","파이어블라스터","파이어 블라스터","파이어 블래스터"],
+    "close combat weapon":["근접 무기","근접전 무기"]
   };
   return aliases[key]||[];
 }
 function weaponLabels(profile){const names=[profile?.name,weaponBaseName(profile),weaponName(profile?.name||""),weaponName(weaponBaseName(profile)),weaponName(profile?.name||"").match(/^(.+?)\s+\([^)]+\)$/)?.[1],weaponName(weaponBaseName(profile)).match(/^(.+?)\s+\([^)]+\)$/)?.[1],translateTerms(profile?.name||""),translateTerms(weaponBaseName(profile)),profileDisplayName(profile),...weaponRosterAliases(profile?.name||"")];return [...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);}
-function weaponIsEquipped(profile,loadout){if(!loadout)return false;const padded=` ${loadout} `;return weaponLabels(profile).map(normalizeLoadoutText).filter(x=>x.length>=4).some(label=>padded.includes(` ${label} `));}
+function loadoutHasWeaponLabels(loadout,labels){const padded=` ${normalizeLoadoutText(loadout)} `;return labels.map(normalizeLoadoutText).filter(label=>/[가-힣]/.test(label)?label.replace(/\s/g,"").length>=2:label.length>=4).some(label=>padded.includes(` ${label} `));}
+function weaponIsEquipped(profile,loadout,profileSet=[]){
+  if(!loadout)return false;
+  const variant=String(profile?.name||"").match(/^(.+?)\s+-\s+(.+)$/),base=weaponBaseName(profile);
+  const peers=(profileSet||[]).filter(candidate=>candidate!==profile&&normalizeLoadoutText(weaponBaseName(candidate))===normalizeLoadoutText(base));
+  if(variant&&peers.length){
+    const specific=[profile.name,profileDisplayName(profile),translateTerms(profile.name)];
+    if(loadoutHasWeaponLabels(loadout,specific))return true;
+    const modeProfiles=[profile,...peers].filter(candidate=>/\s+-\s+/.test(candidate.name||"")&&!/\b(?:standard|supercharged)\b/i.test(candidate.name||""));
+    if(modeProfiles.length>1){
+      if(modeProfiles.some(candidate=>loadoutHasWeaponLabels(loadout,[candidate.name,profileDisplayName(candidate),translateTerms(candidate.name)])))return modeProfiles.includes(profile);
+      if(loadoutHasWeaponLabels(loadout,[base,translateTerms(base),...weaponRosterAliases(base)]))return modeProfiles.includes(profile);
+    }
+    if(peers.some(candidate=>loadoutHasWeaponLabels(loadout,[candidate.name,profileDisplayName(candidate),translateTerms(candidate.name)])))return false;
+    if(/\bstandard\b/i.test(variant[2]))return loadoutHasWeaponLabels(loadout,[base,translateTerms(base),...weaponRosterAliases(base)]);
+    if(/\bsupercharged\b/i.test(variant[2]))return false;
+    // A base weapon name (e.g. Bolt Rifle) equips every firing profile
+    // belonging to that physical weapon (e.g. Focused Fire and Saturation).
+    return loadoutHasWeaponLabels(loadout,[base,translateTerms(base),...weaponRosterAliases(base)]);
+  }
+  return loadoutHasWeaponLabels(loadout,weaponLabels(profile));
+}
 function replaceRosterWeaponChoice(unitIndex,targetName,targetType,sourceName=""){
   const box=$("roster"),source=box.value,parsed=parseRoster(source),unit=parsed.units[unitIndex],target=findDataUnit(unit?.rosterName);
   if(!unit||!target||target.candidates)return {message:"유닛 데이터를 확정하지 못해 원본을 수정하지 않았습니다."};
-  const data=target.unit,category=/ranged/i.test(targetType)?"ranged":/melee/i.test(targetType)?"melee":"other",sameCategory=p=>/weapon/i.test(p.typeName||"")&&(category==="ranged"?/ranged/i.test(p.typeName||""):category==="melee"?/melee/i.test(p.typeName||""):!/ranged|melee/i.test(p.typeName||"")),all=(data.profiles||[]).filter(sameCategory),gear=normalizeLoadoutText([unit.equipment||"",...(unit.equipmentLines||[])].join(" ")),active=all.filter(p=>weaponIsEquipped(p,gear)),activeBases=[...new Map(active.map(p=>[normalizeLoadoutText(weaponBaseName(p)),p])).values()],desired=all.find(p=>p.name===targetName);
+  const data=target.unit,category=/ranged/i.test(targetType)?"ranged":/melee/i.test(targetType)?"melee":"other",sameCategory=p=>/weapon/i.test(p.typeName||"")&&(category==="ranged"?/ranged/i.test(p.typeName||""):category==="melee"?/melee/i.test(p.typeName||""):!/ranged|melee/i.test(p.typeName||"")),all=(data.profiles||[]).filter(sameCategory),gear=normalizeLoadoutText([unit.equipment||"",...(unit.equipmentLines||[])].join(" ")),active=all.filter(p=>weaponIsEquipped(p,gear,all)),activeBases=[...new Map(active.map(p=>[normalizeLoadoutText(weaponBaseName(p)),p])).values()],desired=all.find(p=>p.name===targetName);
   if(!desired)return {message:"선택한 무기 프로필을 찾지 못했습니다."};
   const current=sourceName?activeBases.find(p=>normalizeLoadoutText(weaponBaseName(p))===normalizeLoadoutText(sourceName)):activeBases.length===1?activeBases[0]:null;
   if(!current&&activeBases.length>1)return {needsChoice:true,choices:activeBases.map(p=>({name:weaponBaseName(p),label:profileDisplayName(p)}))};
@@ -579,14 +641,117 @@ function replaceRosterWeaponChoice(unitIndex,targetName,targetType,sourceName=""
   if(oneRepeatedEntry){const escaped=found.label.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");lines[found.lineIndex]=raw.replace(new RegExp(escaped,"gi"),replacement);}else lines[found.lineIndex]=raw.slice(0,found.at)+replacement+raw.slice(found.at+found.label.length);
   box.value=lines.join("\n");return {ok:true,message:"편성표 원문의 무기 장비를 바꿨습니다."};
 }
+function rosterAttachedRoleLabel(role){return ({Leader:"리더",Bodyguard:"경호 유닛",Support:"지원",리더:"리더",경호원:"경호 유닛",지원:"지원"})[role]||role||"";}
+function rosterAttachmentParents(units){
+  const parents=new Map(),groups=new Map();
+  const role=unit=>String(unit.attachedAs||"").toLowerCase();
+  const isBodyguard=unit=>/^(?:bodyguard|경호원)$/.test(role(unit));
+  const isLeader=unit=>/^(?:leader|리더)$/.test(role(unit));
+  const isAttachedCharacter=unit=>{
+    if(/^(?:leader|support|리더|지원)$/.test(role(unit)))return true;
+    const found=findDataUnit(unit.rosterName),keywords=found?.unit?.keywords||[];
+    return keywords.some(keyword=>/^(?:character|캐릭터)$/i.test(String(keyword)));
+  };
+  const matchAttachedTo=(unit,index)=>{
+    if(!unit.attachedTo)return -1;
+    const target=normalizeMatchName(unit.attachedTo);
+    if(!target)return -1;
+    const exact=units.findIndex((candidate,i)=>i!==index&&normalizeMatchName(candidate.rosterName)===target);
+    if(exact>=0)return exact;
+    const candidates=units.map((candidate,i)=>({i,name:normalizeMatchName(candidate.rosterName)}))
+      .filter(candidate=>candidate.i!==index&&candidate.name&&(target.includes(candidate.name)||candidate.name.includes(target)))
+      .sort((a,b)=>b.name.length-a.name.length);
+    return candidates[0]?.i??-1;
+  };
+  let groupKey="",groupMembers=[];
+  const saveGroup=()=>{if(groupMembers.length>1){if(!groups.has(groupKey))groups.set(groupKey,[]);groups.get(groupKey).push(...groupMembers);}groupMembers=[];};
+  units.forEach((unit,index)=>{if(unit.attachedGroup!==groupKey){saveGroup();groupKey=unit.attachedGroup||"";}if(unit.attachedGroup)groupMembers.push(index);});saveGroup();
+  for(const members of groups.values()){
+    if(members.length<2)continue;
+    const host=members.find(index=>isBodyguard(units[index]))??members.find(index=>!units[index].attachedAs)??members.find(index=>isLeader(units[index]))??members[0];
+    for(const index of members)if(index!==host&&!units[index].attachedTo)parents.set(index,host);
+  }
+  units.forEach((unit,index)=>{const explicit=matchAttachedTo(unit,index);if(explicit<0)return;const target=units[explicit],currentIsAttached=isAttachedCharacter(unit),targetIsAttached=isAttachedCharacter(target);if(targetIsAttached&&!currentIsAttached)parents.set(explicit,index);else parents.set(index,explicit);});
+  return parents;
+}
+function rosterUnitRenderOrder(units){
+  const parents=rosterAttachmentParents(units),children=new Map(),order=[],emitted=new Set();
+  const roleRank=unit=>{const role=String(unit.attachedAs||"").toLowerCase();return /^(?:leader|리더)$/.test(role)?0:/^(?:support|지원)$/.test(role)?1:2;};
+  for(const [child,parent] of parents){if(!children.has(parent))children.set(parent,[]);children.get(parent).push(child);}
+  const appendGroup=(root,depth=0)=>{if(emitted.has(root)||depth>units.length)return;order.push(root);emitted.add(root);const attached=children.get(root)||[];attached.sort((a,b)=>roleRank(units[a])-roleRank(units[b])||a-b);for(const child of attached)appendGroup(child,depth+1);};
+  units.forEach((_,index)=>{if(!parents.has(index))appendGroup(index);});
+  units.forEach((_,index)=>{if(!emitted.has(index))appendGroup(index);});
+  return order;
+}
+function weaponEquippedModelCount(profile,rosterUnit,unitCount,profileSet=[]){
+  const assignments=(rosterUnit.modelLoadouts||[]).flatMap(group=>group.items.filter(item=>weaponIsEquipped(profile,item.name,profileSet)).map(item=>({group,count:item.count})));
+  if(assignments.length)return Math.min(Math.max(1,Number(unitCount)||1),assignments.reduce((sum,item)=>sum+item.count,0));
+  const lines=[rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].map(line=>String(line||"").trim()).filter(Boolean);
+  const uniqueLines=[...new Set(lines)],matching=uniqueLines.filter(line=>weaponIsEquipped(profile,line,profileSet));
+  if(!matching.length)return Math.max(1,Number(unitCount)||1);
+  const countLines=sourceLines=>{
+    let specificTotal=0,fallbackTotal=0;
+    for(const line of sourceLines){
+      if(!weaponIsEquipped(profile,line,profileSet))continue;
+      const segments=line.split(/,(?![^()]*\))/).map(part=>part.trim()),explicit=segments
+        .map(segment=>({segment,count:Number(segment.match(/^(\d+)\s*x\s*/i)?.[1]||0)}))
+        .filter(item=>item.count&&weaponIsEquipped(profile,item.segment.replace(/^\d+\s*x\s*/i,""),profileSet));
+      if(explicit.length){specificTotal+=explicit.reduce((sum,item)=>sum+item.count,0);continue;}
+      const modelLine=line.match(/^\s*(\d+)\s*x\s+[^:]+:\s*(.+)$/i);
+      if(modelLine&&weaponIsEquipped(profile,modelLine[2],profileSet)){specificTotal+=Number(modelLine[1]);continue;}
+      const quantityLine=line.match(/^\s*(\d+)\s*x\s+/i);
+      if(quantityLine){specificTotal+=Number(quantityLine[1]);continue;}
+      fallbackTotal+=Math.max(1,Number(unitCount)||1);
+    }
+    return {specificTotal,fallbackTotal};
+  };
+  const detailed=countLines(rosterUnit.equipmentLines||[]),all=countLines([rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])]);
+  const total=detailed.specificTotal||all.specificTotal||all.fallbackTotal||detailed.fallbackTotal;
+  return Math.min(Math.max(1,Number(unitCount)||1),Math.max(1,total));
+}
+function weaponLoadoutAssignments(profile,rosterUnit,unitCount,profileSet=[]){
+  const groups=rosterUnit.modelLoadouts||[];
+  if(groups.length){
+    const matched=new Map();
+    for(const group of groups)for(const item of group.items)if(weaponIsEquipped(profile,item.name,profileSet)){const key=normalizeLoadoutText(group.name),prior=matched.get(key);matched.set(key,{name:group.name,models:group.models,count:(prior?.count||0)+item.count});}
+    return [...matched.values()];
+  }
+  const gear=[rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].join(" ");
+  return weaponIsEquipped(profile,gear,profileSet)?[{name:"편성 전체",models:Math.max(1,Number(unitCount)||1),count:weaponEquippedModelCount(profile,rosterUnit,unitCount,profileSet)}]:[];
+}
+function weaponProfilesLoadoutAssignments(profiles,rosterUnit,unitCount,profileSet=[]){
+  const merged=new Map();
+  for(const profile of profiles)for(const assignment of weaponLoadoutAssignments(profile,rosterUnit,unitCount,profileSet)){const key=normalizeLoadoutText(assignment.name),prior=merged.get(key);merged.set(key,{...assignment,count:Math.max(prior?.count||0,assignment.count)});}
+  return [...merged.values()];
+}
+function unmatchedRosterWeapons(rosterUnit,profiles,profileSet=[]){
+  const groups=rosterUnit.modelLoadouts||[],matched=new Set();
+  for(const profile of profiles)for(const group of groups)for(const item of group.items)if(weaponIsEquipped(profile,item.name,profileSet))matched.add(`${group.name}|${normalizeLoadoutText(item.name)}`);
+  return groups.flatMap(group=>group.items.filter(item=>!matched.has(`${group.name}|${normalizeLoadoutText(item.name)}`)).map(item=>({...item,group:group.name,models:group.models})));
+}
 function renderProfiles(profiles,modelCount=1,rosterUnit={},unitIndex=0,dataUnit={}){
   if(!profiles?.length)return '<p class="meta">이 항목에 표시할 프로필이 없습니다.</p>';
   const matchedEnhancements=(rosterUnit.enhancements||[]).map(rosterEnhancementMatch).filter(Boolean);profiles=applyEnhancementWeaponEffects(applyEnhancementUnitEffects(profiles,matchedEnhancements),matchedEnhancements);
-  const summaryStatNames=new Set(["M","Move","T","Toughness","Sv","SV","Save","W","Wounds","LD","Leadership","OC","Objective Control","InSv","InvSv","Invulnerable Save"]),summaryProfile=profiles.find(p=>["unit","model"].includes((p.typeName||"").toLowerCase())&&(p.characteristics||[]).some(c=>summaryStatNames.has(c.name))),gearText=normalizeLoadoutText([rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].join(" ")),weapons=profiles.filter(p=>/weapon/i.test(p.typeName||"")),others=profiles.filter(p=>!/weapon/i.test(p.typeName||"")&&p!==summaryProfile),equipped=weapons.filter(p=>weaponIsEquipped(p,gearText)),equippedSet=new Set(equipped),showOptionsInitially=!equipped.length;
+  const summaryStatNames=new Set(["M","Move","T","Toughness","Sv","SV","Save","W","Wounds","LD","Leadership","OC","Objective Control","InSv","InvSv","Invulnerable Save"]),summaryProfile=profiles.find(p=>["unit","model"].includes((p.typeName||"").toLowerCase())&&(p.characteristics||[]).some(c=>summaryStatNames.has(c.name))),gearText=normalizeLoadoutText([rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].join(" ")),weapons=profiles.filter(p=>/weapon/i.test(p.typeName||"")),others=profiles.filter(p=>!/weapon/i.test(p.typeName||"")&&p!==summaryProfile),equipped=weapons.filter(p=>weaponLoadoutAssignments(p,rosterUnit,modelCount,weapons).length||(!rosterUnit.modelLoadouts?.length&&weaponIsEquipped(p,gearText,weapons))),equippedSet=new Set(equipped),showOptionsInitially=!equipped.length,unmatched=unmatchedRosterWeapons(rosterUnit,weapons,weapons);
   const renderOther=p=>{const chars=p.characteristics||[],visibleChars=chars.filter(c=>!/^base(?:\s+size)?$/i.test(c.name.trim())),description=chars.find(x=>x.name==="Description")?.value,isAbility=(p.typeName||"").toLowerCase().includes("abilit")||Boolean(description),title=profileDisplayName(p);if(isAbility)return `<section class="ability-block"><div class="ability-heading"><h4 class="profile-title">${escapeHtml(title)}</h4>${description?`<details class="ability-original"><summary>EN 원문</summary><p class="ability-original-text">${escapeHtml(metadataText(description))}</p></details>`:""}</div><p class="ability-text">${richText(translateRulesText(p.name,description||"",{id:p.id,file:dataUnit.sourceFile,kind:/abilit/i.test(p.typeName||"")?"ability":"profile"}))}</p></section>`;return `<section class="profile-block"><h4 class="profile-title"><span>${escapeHtml(title)}</span><button type="button" class="profile-image-search-trigger" data-google-image-search data-search-name="${escapeHtml(p.name||title)}" aria-label="${escapeHtml(title)} 이미지 검색" title="이미지 검색">⌕</button></h4>${visibleChars.length?`<table class="profile-table"><thead><tr><th>항목</th>${visibleChars.map(c=>`<th>${escapeHtml(statTranslations.get(c.name)||tr(c.name))}</th>`).join("")}</tr></thead><tbody><tr><td>${escapeHtml(title)}</td>${visibleChars.map(c=>c.name==="Keywords"?`<td>${String(c.value).split(/,\s*/).filter(Boolean).map(renderKeywordButton).join(" ")}</td>`:`<td>${escapeHtml(translateTerms(c.value))}</td>`).join("")}</tr></tbody></table>`:""}</section>`;};
-  const categories=[{label:'원거리 무기',match:p=>/ranged/i.test(p.typeName||'')},{label:'근거리 무기',match:p=>/melee/i.test(p.typeName||'')},{label:'기타 무기',match:p=>!/ranged|melee/i.test(p.typeName||'')}];
-  const renderTable=items=>{if(!items.length)return '';const columns=['Range','A','BS','WS','S','AP','D'].filter(key=>items.some(p=>(p.characteristics||[]).some(c=>c.name===key)));return `<div class="weapon-compact-scroll"><table class="profile-table weapon-compact-table"><thead><tr><th>무기 · 장착</th>${columns.map(key=>`<th>${escapeHtml(statTranslations.get(key)||tr(key))}</th>`).join('')}</tr></thead><tbody>${items.map(p=>{const active=equippedSet.has(p),chars=new Map((p.characteristics||[]).map(c=>[c.name,c])),keywords=String(chars.get('Keywords')?.value||'').split(/,\s*/).filter(Boolean),shortName=weaponShortDisplayName(p),englishName=String(p.name||'');return `<tr class="weapon-row ${active?'is-equipped':'not-equipped'}"><td class="weapon-name-cell"><label class="weapon-choice" title="${escapeHtml(`${profileDisplayName(p)} · ${p.name||''}`)}"><input type="checkbox" data-loadout-weapon data-unit-index="${unitIndex}" data-weapon-name="${escapeHtml(p.name||'')}" data-weapon-type="${escapeHtml(p.typeName||'')}" ${active?'checked':''}><span class="weapon-name-scroll" aria-label="${escapeHtml(`${shortName}${shortName!==englishName?` · ${englishName}`:''}`)}"><span>${escapeHtml(shortName)}${shortName!==englishName?` <small>${escapeHtml(englishName)}</small>`:''}</span></span></label>${keywords.length?`<div class="weapon-keywords" aria-label="특수 규칙">${keywords.map(renderKeywordButton).join(' ')}</div>`:''}</td>${columns.map(key=>{const characteristic=chars.get(key)||{},value=characteristic.value||'',attack=key==='A'&&value,changed=characteristic.enhancementOriginal;const shown=changed?`<span class="enhancement-value"><del>${escapeHtml(changed)}</del><b>${escapeHtml(value)}</b>${characteristic.enhancementConditional?`<small>조건부</small>`:''}</span>`:escapeHtml(translateTerms(value));return `<td class="weapon-stat-cell weapon-stat-${key}">${attack?`<span class="weapon-attack-count"><b>${shown}</b><small>× ${modelCount}개체</small></span>`:shown}</td>`}).join('')}</tr>`}).join('')}</tbody></table></div>`;};
-  const groupedWeapons=categories.map(category=>({label:category.label,items:weapons.filter(category.match).sort((a,b)=>Number(equippedSet.has(b))-Number(equippedSet.has(a)))})).filter(group=>group.items.length),drawGroups=groups=>groups.map(group=>`<section class="weapon-group"><h5>${group.label}</h5>${renderTable(group.items)}</section>`).join(''),weaponHtml=weapons.length?`<section class="weapon-profile-groups" data-show-options="${showOptionsInitially}"><div class="weapon-profile-toolbar"><strong>무기 프로필</strong>${weapons.some(p=>!equippedSet.has(p))?`<button type="button" data-weapons-toggle title="${showOptionsInitially?'장착 무기만 표시':'전체 무기 표시'}">${showOptionsInitially?'☑ 장착만':'☷ 전체'}</button>`:''}<small>${equipped.length?`장착 ${equipped.length}`:'장착 확인 필요'}</small></div>${drawGroups(groupedWeapons)}</section>`:'';
+  const isPistolProfile=p=>/pistol/i.test(p.name||'')||String((p.characteristics||[]).find(c=>c.name==='Keywords')?.value||'').split(/,\s*/).some(keyword=>/pistol/i.test(keyword));
+  const categories=[{label:'원거리 주무장',match:p=>/ranged/i.test(p.typeName||'')&&!isPistolProfile(p)},{label:'원거리 보조 무장 · 권총',match:p=>/ranged/i.test(p.typeName||'')&&isPistolProfile(p)},{label:'근거리 무기',match:p=>/melee/i.test(p.typeName||'')},{label:'기타 무기',match:p=>!/ranged|melee/i.test(p.typeName||'')}];
+  const renderTable=items=>{
+    if(!items.length)return '';
+    const byBase=new Map();
+    for(const profile of items){const key=normalizeLoadoutText(weaponBaseName(profile));if(!byBase.has(key))byBase.set(key,[]);byBase.get(key).push(profile);}
+    const profileGroups=[...byBase.values()],hasModes=profileGroups.some(group=>group.length>1),hasKeywords=items.some(p=>(p.characteristics||[]).some(c=>c.name==='Keywords'&&String(c.value||'').trim())),columns=['Range','A','BS','WS','S','AP','D'].filter(key=>items.some(p=>(p.characteristics||[]).some(c=>c.name===key)));
+    const rows=profileGroups.map(group=>{
+      const base=weaponBaseName(group[0]),baseLabel=weaponShortDisplayName({...group[0],name:base}),englishName=String(base||''),representative=group[0],assignments=weaponProfilesLoadoutAssignments(group,rosterUnit,modelCount,weapons),assignmentCount=assignments.reduce((sum,item)=>sum+item.count,0),assignmentText=assignments.length?`${assignments[0].name}${assignmentCount>1?` 등 ${assignmentCount}개체`:' · 1개체'}`:'미장착 / 선택 가능',assignmentDetails=assignments.map(item=>`${item.name} · ${item.count}개체`),active=group.some(profile=>equippedSet.has(profile)),weaponCell=`<td class="weapon-name-cell" rowspan="${group.length}"><label class="weapon-choice" title="${escapeHtml(`${baseLabel} · ${englishName}`)}"><input type="checkbox" data-loadout-weapon data-unit-index="${unitIndex}" data-weapon-name="${escapeHtml(representative.name||'')}" data-weapon-type="${escapeHtml(representative.typeName||'')}" ${active?'checked':''}><span class="weapon-name-scroll"><span>${escapeHtml(baseLabel)}${baseLabel!==englishName?` <small>${escapeHtml(englishName)}</small>`:''}</span></span></label>${assignments.length?`<button type="button" class="weapon-model-assignment" data-weapon-model-list="${escapeHtml(JSON.stringify(assignmentDetails))}" aria-label="${escapeHtml(`${assignmentText} 모델 목록 보기`)}">${escapeHtml(assignmentText)}</button>`:`<small class="weapon-model-assignment">${escapeHtml(assignmentText)}</small>`}`;
+      return group.map((profile,index)=>{
+        const chars=new Map((profile.characteristics||[]).map(c=>[c.name,c])),modeName=weaponProfileModeName(profile),modeLabel=modeName?(translateTerms(modeName)!==modeName?`${translateTerms(modeName)} (${modeName})`:modeName):'—',keywords=String(chars.get('Keywords')?.value||'').split(/,\s*/).filter(Boolean),modeCell=hasModes?`<td class="weapon-mode-cell">${escapeHtml(modeLabel)}</td>`:'',keywordCell=hasKeywords?`<td class="weapon-keyword-cell">${keywords.map(renderKeywordButton).join(' ')||'—'}</td>`:'',changedStats=key=>{const characteristic=chars.get(key)||{},value=characteristic.value||'',changed=characteristic.enhancementOriginal;return changed?`<span class="enhancement-value"><del>${escapeHtml(changed)}</del><b>${escapeHtml(value)}</b>${characteristic.enhancementConditional?`<small>조건부</small>`:''}</span>`:escapeHtml(translateTerms(value));};
+        return `<tr class="weapon-row ${equippedSet.has(profile)?'is-equipped':'not-equipped'}">${index===0?weaponCell:''}${modeCell}${columns.map(key=>{const characteristic=chars.get(key)||{},value=characteristic.value||'',attack=key==='A'&&value,shown=changedStats(key);return `<td class="weapon-stat-cell weapon-stat-${key}">${attack?`<span class="weapon-attack-count"><b>${shown}</b>${assignmentCount?`<small>× ${assignmentCount}개체</small>`:''}</span>`:shown}</td>`}).join('')}${keywordCell}</tr>`;
+      }).join('');
+    }).join('');
+    return `<div class="weapon-compact-scroll"><table class="profile-table weapon-compact-table"><thead><tr><th>무기 · 장착 모델</th>${hasModes?'<th>발사 프로필</th>':''}${columns.map(key=>`<th>${escapeHtml(statTranslations.get(key)||tr(key))}</th>`).join('')}${hasKeywords?'<th>키워드</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  };
+  const unmatchedHtml=unmatched.length?`<section class="weapon-unmatched-loadout"><h5>편성표 장비 · 프로필 미연결</h5>${unmatched.map(item=>`<div><strong>${escapeHtml(item.group)}</strong> · ${escapeHtml(item.name)} <small>${item.count}개체</small></div>`).join('')}</section>`:'';
+  const equippedWeaponCount=new Set(equipped.map(profile=>normalizeLoadoutText(weaponBaseName(profile)))).size,groupedWeapons=categories.map(category=>({label:category.label,items:weapons.filter(category.match).sort((a,b)=>Number(equippedSet.has(b))-Number(equippedSet.has(a)))})).filter(group=>group.items.length),drawGroups=groups=>groups.map(group=>`<section class="weapon-group"><h5>${group.label}</h5>${renderTable(group.items)}</section>`).join(''),weaponHtml=weapons.length?`<section class="weapon-profile-groups" data-show-options="${showOptionsInitially}"><div class="weapon-profile-toolbar"><strong>무기 프로필</strong><small>${escapeHtml(dataUnit.nameKo||tr(dataUnit.name||rosterUnit.rosterName))}${rosterUnit.attachedAs?` · ${escapeHtml(rosterAttachedRoleLabel(rosterUnit.attachedAs))}`:""}</small>${weapons.some(p=>!equippedSet.has(p))?`<button type="button" data-weapons-toggle title="${showOptionsInitially?'장착 무기만 표시':'전체 무기 표시'}">${showOptionsInitially?'☑ 장착만':'☷ 전체'}</button>`:''}<small>${equippedWeaponCount?`장착 무기 ${equippedWeaponCount}종`:'장착 확인 필요'}</small></div>${drawGroups(groupedWeapons)}${unmatchedHtml}</section>`:'';
   return `<div class="profile-list">${weaponHtml}${others.map(renderOther).join('')}</div>`;
 }
 function metadataText(value=""){return String(value).replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;/gi," ").replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/\s+/g," ").trim();}
@@ -603,12 +768,11 @@ function updateUnitQuickNav(parsed){
   const nav=$("unit-quick-nav"),list=$("unit-quick-nav-list");list.replaceChildren();$("quick-assistant-content").innerHTML=renderQuickAssistant(parsed);renderQuickStratagemNav();
   const allTasks=makeAssistantTasks(parsed);$("quick-assistant-count").textContent=allTasks.filter(task=>!assistantChecked(task.id)).length?`${allTasks.filter(task=>!assistantChecked(task.id)).length}개 남음`:allTasks.length?"완료":"";
   if(!parsed.units.length){nav.hidden=true;return;}
-  const roleLabels={Leader:"리더",Bodyguard:"경호원",Support:"지원",리더:"리더",경호원:"경호원",지원:"지원"},parentByChild=new Map(),leadersByGroup=new Map();
-  parsed.units.forEach((unit,index)=>{if(unit.attachedGroup&&/^(?:Leader|리더)$/i.test(unit.attachedAs||"")&&!leadersByGroup.has(unit.attachedGroup))leadersByGroup.set(unit.attachedGroup,index);});
-  parsed.units.forEach((unit,index)=>{let parent=-1;if(unit.attachedTo){const target=normalizeMatchName(unit.attachedTo);parent=parsed.units.findIndex((candidate,i)=>i!==index&&normalizeMatchName(candidate.rosterName)===target);}if(parent<0&&unit.attachedGroup&&unit.attachedAs&&!/^(?:Leader|리더)$/i.test(unit.attachedAs))parent=leadersByGroup.get(unit.attachedGroup)??-1;if(parent>=0&&parent!==index)parentByChild.set(index,parent);});
+  const parentByChild=rosterAttachmentParents(parsed.units);
   const childrenByParent=new Map();for(const [child,parent] of parentByChild){if(!childrenByParent.has(parent))childrenByParent.set(parent,[]);childrenByParent.get(parent).push(child);}
-  const makeButton=(index,child=false)=>{const unit=parsed.units[index],found=findDataUnit(unit.rosterName),name=found&&!found.candidates?(found.unit.nameKo||tr(found.unit.name)):unit.rosterName,button=document.createElement("button"),role=roleLabels[unit.attachedAs]||unit.attachedAs;button.type="button";button.className=`unit-quick-nav-item${child?" attached-child":""}`;button.dataset.unitJump=String(index);button.textContent=`${child?"└ ":`${index+1}. `}${name}${role&&!/^(?:Leader|리더)$/i.test(unit.attachedAs)?` · ${role}`:""} · ${unit.count}개체`;button.title=unit.attachedTo?`${unit.rosterName} → ${unit.attachedTo}`:unit.rosterName;return button;};
-  parsed.units.forEach((unit,index)=>{if(parentByChild.has(index))return;list.append(makeButton(index));for(const child of childrenByParent.get(index)||[])list.append(makeButton(child,true));});
+  const makeButton=(index,child=false)=>{const unit=parsed.units[index],found=findDataUnit(unit.rosterName),name=found&&!found.candidates?(found.unit.nameKo||tr(found.unit.name)):unit.rosterName,button=document.createElement("button");button.type="button";button.className=`unit-quick-nav-item${child?" attached-child":""}`;button.dataset.unitJump=String(index);button.textContent=`${child?"└ ":`${index+1}. `}${name}${unit.attachedAs?` · ${rosterAttachedRoleLabel(unit.attachedAs)}`:""} · ${unit.count}개체`;button.title=unit.attachedTo?`${unit.rosterName} → ${unit.attachedTo}`:unit.rosterName;return button;};
+  const appendButtonTree=(index,depth=0,seen=new Set())=>{if(seen.has(index))return;seen.add(index);const button=makeButton(index,depth>0);if(depth)button.style.paddingLeft=`${12+depth*14}px`;list.append(button);for(const child of childrenByParent.get(index)||[])appendButtonTree(child,depth+1,seen);};
+  rosterUnitRenderOrder(parsed.units).forEach(index=>{if(!parentByChild.has(index))appendButtonTree(index);});
   nav.hidden=false;
 }
 function renderRosterEquipment(unit){
@@ -738,14 +902,14 @@ function render(){
   if(!parsed.units.length){currentRosterMeta={};summary.hidden=true;results.innerHTML='<div class="empty">유닛 항목을 찾지 못했습니다. NewRecruit에서 복사한 편성표 텍스트인지 확인해 주세요.</div>';updateUnitQuickNav(parsed);if(!$("assistant-page").hidden)$("assistant-page").innerHTML=renderAssistantPage(parsed);return;}
   const m=parsed.meta;currentRosterMeta=m; summary.hidden=false;
   summary.innerHTML=[m.faction&&`<span class="pill">진영 <strong>${escapeHtml(m.faction.split(" - ").map(bilingualLabel).join(" · "))}</strong></span>`,m.detachment&&`<span class="pill">편제 <strong>${escapeHtml(bilingualLabel(m.detachment))}</strong></span>`,m.mission&&`<span class="pill">미션 <strong>${escapeHtml(bilingualLabel(m.mission))}</strong></span>`,m.gameSize&&`<span class="pill">전장 규모 <strong>${escapeHtml(String(m.gameSize))}점</strong></span>`,m.disposition&&`<span class="pill">전술 <strong>${escapeHtml(bilingualLabel(m.disposition))}</strong></span>`,m.points&&`<span class="pill">총점 <strong>${escapeHtml(m.points)}점</strong></span>`,`<span class="pill">인식 유닛 <strong>${parsed.units.length}</strong></span>`].filter(Boolean).join("");
-  results.innerHTML=renderTranslationReview(parsed)+parsed.units.map((u,i)=>{const found=findDataUnit(u.rosterName);if(!found)return `<article class="unmatched" data-unit-card="${i}"><strong>${!m.faction?"진영 인식 실패":db.units.length?"이름 매칭 실패":"진영/데이터 연결 확인"} · ${escapeHtml(u.rosterName)}</strong>${u.count}개체 · ${u.points}점 ${renderRosterEquipment(u)}<div class="meta">${escapeHtml(matchFailureDetails(m))}</div>${renderUnitMatchControl(u.rosterName)}</article>`;if(found.candidates)return `<article class="unmatched" data-unit-card="${i}"><strong>이름 확인 필요 · ${escapeHtml(u.rosterName)}</strong><div class="meta">유사 후보: ${found.candidates.map(c=>`${escapeHtml(c.unit.name)} (${escapeHtml(c.unit.edition)}, ${Math.round(c.score*100)}%)`).join(" · ")}. 확정 전까지 연결하지 않습니다.</div>${renderUnitMatchControl(u.rosterName)}</article>`;const d=found.unit,key=`${i}:${norm(u.rosterName)}`,max=unitWoundMax(d,u.count),now=currentWounds(key,max),related=d.abilities?.filter(a=>ruleAppliesToRoster(a.name,m))||[];return `<article class="card" data-unit-card="${i}"><div class="card-head" role="button" tabindex="0" aria-expanded="false" data-card="${i}"><div class="card-title"><div class="card-title-text"><h3><button type="button" class="unit-image-search-trigger" data-google-image-search data-search-name="${escapeHtml(/[가-힣]/.test(u.rosterName)?d.name:u.rosterName)}" aria-label="${escapeHtml(u.rosterName)} 이미지 검색">${escapeHtml(d.nameKo||tr(d.name))}<span aria-hidden="true">⌕</span></button></h3><div class="original">${escapeHtml(d.name)} · 편성 ${u.count}개체 · ${u.points}점${d.points?` · 출처 포인트 ${d.points}`:""}</div></div></div>${renderUnitSummary({...d,profiles:applyEnhancementUnitEffects(d.profiles,(u.enhancements||[]).map(rosterEnhancementMatch).filter(Boolean))})}<div class="wound-control" aria-label="운드 추적기"><button type="button" class="wound-button" data-wound-action="minus" data-wound-key="${escapeHtml(key)}" data-wound-max="${max}" aria-label="운드 감소">−</button><span class="wound-value" data-wound-value="${escapeHtml(key)}">${max?`${now}/${max}`:"—/—"}</span><button type="button" class="wound-button" data-wound-action="plus" data-wound-key="${escapeHtml(key)}" data-wound-max="${max}" aria-label="운드 증가">+</button></div><span class="tag">${escapeHtml(found.confidence)} · ${escapeHtml(d.edition)} · ${escapeHtml(d.translationStatus||"번역 확인")}</span></div><div class="card-body" hidden><div class="meta">${escapeHtml(d.edition)} · ${d.dataSource==="40kdc-data"?"40kdc 보조 데이터":"BSData"} ${escapeHtml(d.sourceFile||"")} · ${escapeHtml(db.sourceVersion||"버전 미지정")}</div>${renderRosterEnhancements(u,d)}${renderProfiles(d.profiles,u.count,u,i,d)}${related.length?`<p class="equip"><b>관련 규칙</b> ${related.map(a=>renderKeywordButton(a.name)).join(" · ")}</p>`:""}${d.keywords?.length?`<p class="equip"><b>키워드</b> ${d.keywords.map(renderKeywordButton).join(" · ")}</p>`:""}${renderRosterEquipment(u)}${d.note?`<p class="meta">${escapeHtml(d.note)}</p>`:""}${renderRuleEffectSummary(d)}</div></article>`}).join("");
+  const attachmentParents=rosterAttachmentParents(parsed.units),renderOrder=rosterUnitRenderOrder(parsed.units),hasAttachedChildren=new Set(attachmentParents.values());results.innerHTML=renderTranslationReview(parsed)+renderOrder.map(i=>{const u=parsed.units[i],isAttachedMember=attachmentParents.has(i),hasAttachedUnits=hasAttachedChildren.has(i),attachedRole=u.attachedAs||(isAttachedMember?"합류 구성원":""),profileUnit=attachedRole===u.attachedAs?u:{...u,attachedAs:attachedRole};const found=findDataUnit(u.rosterName);if(!found)return `<article class="unmatched" data-unit-card="${i}"><strong>${!m.faction?"진영 인식 실패":db.units.length?"이름 매칭 실패":"진영/데이터 연결 확인"} · ${escapeHtml(u.rosterName)}</strong>${u.count}개체 · ${u.points}점 ${renderRosterEquipment(u)}<div class="meta">${escapeHtml(matchFailureDetails(m))}</div>${renderUnitMatchControl(u.rosterName)}</article>`;if(found.candidates)return `<article class="unmatched" data-unit-card="${i}"><strong>이름 확인 필요 · ${escapeHtml(u.rosterName)}</strong><div class="meta">유사 후보: ${found.candidates.map(c=>`${escapeHtml(c.unit.name)} (${escapeHtml(c.unit.edition)}, ${Math.round(c.score*100)}%)`).join(" · ")}. 확정 전까지 연결하지 않습니다.</div>${renderUnitMatchControl(u.rosterName)}</article>`;const d=found.unit,key=`${i}:${norm(u.rosterName)}`,max=unitWoundMax(d,u.count),now=currentWounds(key,max),related=d.abilities?.filter(a=>ruleAppliesToRoster(a.name,m))||[];return `<article class="card${hasAttachedChildren?" attachment-group-start":""}${isAttachedMember?" attachment-group-member":""}" data-unit-card="${i}">${hasAttachedChildren?`<div class="attachment-banner">합류 편성 · ${[...attachmentParents.values()].filter(parentIndex=>parentIndex===i).length+1}개 유닛</div>`:isAttachedMember?`<div class="attachment-banner member">합류 구성원 · ${escapeHtml(parsed.units[attachmentParents.get(i)]?.rosterName||"리더")}에 합류</div>`:""}<div class="card-head" role="button" tabindex="0" aria-expanded="false" data-card="${i}"><div class="card-title"><div class="card-title-text"><h3><button type="button" class="unit-image-search-trigger" data-google-image-search data-search-name="${escapeHtml(/[가-힣]/.test(u.rosterName)?d.name:u.rosterName)}" aria-label="${escapeHtml(u.rosterName)} 이미지 검색">${escapeHtml(d.nameKo||tr(d.name))}<span aria-hidden="true">⌕</span></button></h3><div class="original">${escapeHtml(d.name)}${u.attachedGroup||u.attachedTo||u.attachedAs||isAttachedMember||hasAttachedUnits?` · 합류 유닛${u.attachedGroup?` ${escapeHtml(u.attachedGroup)}`:""}${attachedRole?` · ${escapeHtml(rosterAttachedRoleLabel(attachedRole))}`:""}${u.attachedTo?` · 연결 ${escapeHtml(u.attachedTo)}`:""}`:""} · 편성 ${u.count}개체 · ${u.points}점${d.points?` · 출처 포인트 ${d.points}`:""}</div></div></div>${renderUnitSummary({...d,profiles:applyEnhancementUnitEffects(d.profiles,(u.enhancements||[]).map(rosterEnhancementMatch).filter(Boolean))})}<div class="wound-control" aria-label="운드 추적기"><button type="button" class="wound-button" data-wound-action="minus" data-wound-key="${escapeHtml(key)}" data-wound-max="${max}" aria-label="운드 감소">−</button><span class="wound-value" data-wound-value="${escapeHtml(key)}">${max?`${now}/${max}`:"—/—"}</span><button type="button" class="wound-button" data-wound-action="plus" data-wound-key="${escapeHtml(key)}" data-wound-max="${max}" aria-label="운드 증가">+</button></div><span class="tag">${escapeHtml(found.confidence)} · ${escapeHtml(d.edition)} · ${escapeHtml(d.translationStatus||"번역 확인")}</span></div><div class="card-body" hidden><div class="meta">${escapeHtml(d.edition)} · ${d.dataSource==="40kdc-data"?"40kdc 보조 데이터":"BSData"} ${escapeHtml(d.sourceFile||"")} · ${escapeHtml(db.sourceVersion||"버전 미지정")}</div>${renderRosterEnhancements(u,d)}${renderProfiles(d.profiles,u.count,profileUnit,i,d)}${related.length?`<p class="equip"><b>관련 규칙</b> ${related.map(a=>renderKeywordButton(a.name)).join(" · ")}</p>`:""}${d.keywords?.length?`<p class="equip"><b>키워드</b> ${d.keywords.map(renderKeywordButton).join(" · ")}</p>`:""}${renderRosterEquipment(u)}${d.note?`<p class="meta">${escapeHtml(d.note)}</p>`:""}${renderRuleEffectSummary(d)}</div></article>`}).join("");
   updateUnitQuickNav(parsed);
   if(!$("assistant-page").hidden)$("assistant-page").innerHTML=renderAssistantPage(parsed);
   const requestedFiles=catalogueFilesForFaction(m.faction||"").join("|");if(requestedFiles&&requestedFiles!==activeCatalogueKey)loadRulesData(m);else if(!requestedFiles&&(activeCatalogueKey||db.sourceVersion!=="진영 미확인"))loadRulesData(m);
   const nextStratContext=`11|${norm(m.faction||"")}|${norm(m.detachment||"")}`;if(nextStratContext!==stratContextKey){stratContextKey=nextStratContext;loadCoreStratagems();}
   results.querySelectorAll(".card-head").forEach(head=>{head.addEventListener("click",e=>{if(e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger"))return;const body=head.nextElementSibling,open=body.hidden;body.hidden=!open;head.setAttribute("aria-expanded",String(open));});head.addEventListener("keydown",e=>{if(e.target!==head&&e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger"))return;if(e.key==="Enter"||e.key===" "){e.preventDefault();head.click();}});});
 }
-results.addEventListener("click",event=>{const imageTrigger=event.target.closest("[data-google-image-search]");if(imageTrigger){event.preventDefault();event.stopPropagation();openGoogleImageSearch(imageTrigger.dataset.searchName);return;}const weaponToggle=event.target.closest("[data-weapons-toggle]");if(weaponToggle){const groups=weaponToggle.closest(".weapon-profile-groups"),showOptions=groups.dataset.showOptions!=="true";groups.dataset.showOptions=String(showOptions);weaponToggle.textContent=showOptions?"☑ 장착만":"☷ 전체";weaponToggle.title=showOptions?"장착 무기만 표시":"전체 무기 표시";return;}});
+results.addEventListener("click",event=>{const imageTrigger=event.target.closest("[data-google-image-search]");if(imageTrigger){event.preventDefault();event.stopPropagation();openGoogleImageSearch(imageTrigger.dataset.searchName);return;}const modelList=event.target.closest("[data-weapon-model-list]");if(modelList){event.preventDefault();event.stopPropagation();let names=[];try{names=JSON.parse(modelList.dataset.weaponModelList||"[]");}catch{}const toast=$("toast");$("toast-title").textContent="장착 모델 목록";$("toast-description").textContent=names.join("\n")||"장착 모델 정보를 찾지 못했습니다.";toast.classList.add("show");toast.setAttribute("aria-hidden","false");clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},5000);return;}const weaponToggle=event.target.closest("[data-weapons-toggle]");if(weaponToggle){const groups=weaponToggle.closest(".weapon-profile-groups"),showOptions=groups.dataset.showOptions!=="true";groups.dataset.showOptions=String(showOptions);weaponToggle.textContent=showOptions?"☑ 장착만":"☷ 전체";weaponToggle.title=showOptions?"장착 무기만 표시":"전체 무기 표시";return;}});
 function finishWeaponReplacement(result,unitIndex){
   const toast=$("toast"),ok=Boolean(result.ok);$("toast-title").textContent=ok?"무장 변경 완료":"편성표 원문은 유지했습니다";$("toast-description").textContent=ok?`${result.message} 입력란에서 변경 내용을 확인할 수 있습니다.`:result.message;toast.classList.add("show");toast.setAttribute("aria-hidden","false");clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},4500);
   if(ok){
