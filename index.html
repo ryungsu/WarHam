@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261026-3">
+  <link rel="stylesheet" href="styles.css?v=20261026-11">
 </head>
 <body>
   <header class="topbar">
@@ -40,7 +40,7 @@
       <button type="button" class="view-tab active" data-view="datasheets">데이터시트</button>
       <button type="button" class="view-tab" data-view="assistant">전투 보조</button>
       <button type="button" class="view-tab" data-view="game">미션 · 라운드 점수</button>
-      <button type="button" class="view-tab" data-view="stratagems">스트라타젬</button>
+      <button type="button" class="view-tab" data-view="stratagems">디테치 스트라타젬</button>
     </nav>
     <section id="summary" class="summary" hidden></section>
     <section id="results" class="results" aria-live="polite"></section>
@@ -48,6 +48,8 @@
     <section id="game-page" class="game-page" hidden aria-live="polite"></section>
     <section id="stratagem-page" class="stratagem-page" hidden aria-live="polite"></section>
     <aside id="unit-quick-nav" class="unit-quick-nav" hidden aria-label="전투 도구 및 분대 바로가기">
+      <button id="unit-quick-nav-collapse" class="unit-quick-nav-collapse" type="button" aria-expanded="false" aria-controls="unit-quick-nav-body" aria-label="전투 메뉴 펼치기"><span aria-hidden="true">☰</span><b>전투 메뉴</b></button>
+      <div id="unit-quick-nav-body" class="unit-quick-nav-body" hidden>
       <details id="quick-assistant" class="quick-assistant">
         <summary>전투 보조 <small id="quick-assistant-count"></small></summary>
         <div id="quick-assistant-content" class="quick-assistant-content"></div>
@@ -58,6 +60,7 @@
       </details>
       <div id="unit-quick-nav-list" class="unit-quick-nav-list" hidden></div>
       <button id="unit-quick-nav-toggle" class="unit-quick-nav-toggle" type="button" aria-expanded="false" aria-controls="unit-quick-nav-list">분대 바로가기</button>
+      </div>
     </aside>
     <aside id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true"><strong id="toast-title"></strong><p id="toast-description"></p></aside>
     <details class="translation-feed-settings">
@@ -77,6 +80,6 @@
   <script src="workbook-glossary.js"></script>
   <script defer src="approved-translations.js?v=20261024-1"></script>
   <script defer src="stratagem-translations.js?v=20261026-2"></script>
-  <script defer src="app.js?v=20261026-5"></script>
+  <script defer src="app.js?v=20261026-13"></script>
 </body>
 </html>
