@@ -1678,6 +1678,141 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       "restrictions": ""
     },
     {
+      "id": "core11-command-reroll",
+      "name": "지휘 재굴림",
+      "source": {
+        "name": "COMMAND RE-ROLL",
+        "when": "Any phase, just after you make one of the following rolls for a friendly unit or model:<br>▪ Advance roll<br>▪ Charge roll<br>▪ Damage roll<br>▪ Hazard roll<br>▪ Hit roll<br>▪ Save roll<br>▪ Wound roll<br>▪ A roll to determine the number of attacks generated with a weapon.",
+        "target": "That unit or model.",
+        "effect": "You re-roll that roll. If you are rolling more than one dice together, select one of those dice to re-roll (excluding <b>charge rolls</b>, which you must re-roll in full).",
+        "restrictions": ""
+      },
+      "when": "모든 페이즈에서, 아군 유닛 또는 모델의 다음 주사위 굴림 중 하나를 마친 직후: <b>전진 굴림</b>, <b>돌격 굴림</b>, <b>피해 굴림</b>, <b>위험 굴림</b>, <b>명중 굴림</b>, <b>방어 굴림</b>, <b>운드 굴림</b>, 무기의 공격 횟수를 결정하는 굴림.",
+      "target": "해당 아군 유닛 또는 모델.",
+      "effect": "그 굴림을 다시 굴립니다. 여러 개의 주사위를 함께 굴렸다면 그중 하나를 선택해 다시 굴립니다. 단, <b>돌격 굴림</b>은 주사위 전체를 다시 굴려야 합니다.",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-epic-challenge",
+      "name": "영웅적 결투",
+      "source": {
+        "name": "EPIC CHALLENGE",
+        "when": "Fight phase, just after a friendly <b>CHARACTER</b> unit is <b>selected to fight</b>.",
+        "target": "That <b>CHARACTER</b> unit.",
+        "effect": "Select one <b>CHARACTER</b> model in your unit. Until the end of the phase, that model’s melee weapons have the [PRECISION] ability.",
+        "restrictions": ""
+      },
+      "when": "백병전 페이즈에 아군 <b>캐릭터</b> 유닛을 <b>전투할 유닛으로 선택</b>한 직후.",
+      "target": "해당 아군 <b>캐릭터</b> 유닛.",
+      "effect": "이 유닛의 <b>캐릭터</b> 모델 하나를 선택합니다. 페이즈가 끝날 때까지 해당 모델의 근접 무기는 <b>[정밀 타격]</b> 능력을 얻습니다.",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-insane-bravery",
+      "name": "불굴의 용기",
+      "source": {
+        "name": "INSANE BRAVERY",
+        "when": "Battle-shock step of your Command phase, just before you make a <b>battle-shock roll</b> for a friendly unit.",
+        "target": "That unit.",
+        "effect": "That <b>battle-shock roll</b> is automatically successful.",
+        "restrictions": "You cannot use this stratagem more than once per battle."
+      },
+      "when": "지휘 페이즈의 <b>배틀쇼크 단계</b>에 아군 유닛의 <b>배틀쇼크 굴림</b>을 하기 직전.",
+      "target": "해당 아군 유닛.",
+      "effect": "해당 <b>배틀쇼크 굴림</b>은 자동으로 성공합니다.",
+      "restrictions": "전투당 이 스트라타젬은 한 번만 사용할 수 있습니다."
+    },
+    {
+      "id": "core11-explosives",
+      "name": "폭발물",
+      "source": {
+        "name": "EXPLOSIVES",
+        "when": "Your Shooting phase.",
+        "target": "One friendly <b>unengaged</b> <b>EXPLOSIVES/GRENADES</b> unit that is <b>eligible to shoot</b> and did not make an <b>advance move</b> this turn.",
+        "effect": "Resolve the following sequence:<br>1. Select one <b>EXPLOSIVES/GRENADES</b> model in your unit.<br>2. Select one <b>unengaged</b> enemy unit within 8\" of and <b>visible</b> to that model.<br>3. Roll six D6: for each 4+, that enemy unit suffers 1 <b>mortal wound</b> (06.02).",
+        "restrictions": ""
+      },
+      "when": "당신의 사격 페이즈.",
+      "target": "이번 턴에 <b>전진 이동</b>을 하지 않았고 <b>사격 가능</b>하며 <b>교전 상태가 아닌</b> 아군 <b>폭발물/수류탄</b> 유닛 하나.",
+      "effect": "다음 순서로 해결합니다:<br>1. 이 유닛의 <b>폭발물/수류탄</b> 모델 하나를 선택합니다.<br>2. 그 모델의 8\" 이내에 있고 <b>시야에 들어오는</b> <b>교전 상태가 아닌</b> 적 유닛 하나를 선택합니다.<br>3. D6 여섯 개를 굴립니다. 각 주사위 결과가 4+일 때마다 해당 적 유닛은 <b>모탈 운드</b> 1개를 입습니다(06.02).",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-rapid-ingress",
+      "name": "신속 투입",
+      "source": {
+        "name": "RAPID INGRESS",
+        "when": "End of your opponent’s Movement phase.",
+        "target": "One friendly unit that is in <b>strategic reserves</b> (excluding <b>AIRCRAFT</b>).",
+        "effect": "Your unit makes an <b>ingress move</b> (20.04).",
+        "restrictions": "You cannot use this stratagem during the first battle round."
+      },
+      "when": "상대의 이동 페이즈 종료 시.",
+      "target": "<b>전략 예비대</b>에 있는 아군 유닛 하나(<b>항공기</b> 제외).",
+      "effect": "해당 유닛이 <b>투입 이동</b>(20.04)을 수행합니다.",
+      "restrictions": "첫 번째 전투 라운드에는 이 스트라타젬을 사용할 수 없습니다."
+    },
+    {
+      "id": "core11-fire-overwatch",
+      "name": "경계 사격",
+      "source": {
+        "name": "FIRE OVERWATCH",
+        "when": "End of your opponent’s Movement phase.",
+        "target": "One friendly <b>unengaged</b> unit (excluding <b>TITANIC</b> units).",
+        "effect": "Your unit shoots using <b>snap shooting</b> (see below).",
+        "restrictions": ""
+      },
+      "when": "상대의 이동 페이즈 종료 시.",
+      "target": "아군 <b>교전 상태가 아닌</b> 유닛 하나(<b>타이타닉</b> 유닛 제외).",
+      "effect": "해당 유닛이 <b>속사 사격</b>을 수행합니다. 적 유닛 하나만을 대상으로 지정할 수 있으며, 해당 유닛은 사격 모델의 24\" 이내에 있고 시야에 들어와야 합니다. 공격은 수정 전 명중 굴림 6에서만 명중하며, 명중 굴림을 다시 굴릴 수 없습니다. 사격 후 페이즈 종료까지 해당 유닛은 <b>행동을 시작할 수 없습니다</b>.",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-smokescreen",
+      "name": "연막",
+      "source": {
+        "name": "SMOKESCREEN",
+        "when": "Start of your opponent’s Shooting phase.",
+        "target": "One friendly <b>SMOKE</b> unit.",
+        "effect": "Until the end of the phase, each time an attack targets either your <b>SMOKE</b> unit, or a unit that is not <b>fully visible</b> to the attacking model because of one or more models in your <b>SMOKE</b> unit, the target has the <b>benefit of cover</b> against that attack (13.08).",
+        "restrictions": ""
+      },
+      "when": "상대의 사격 페이즈 시작 시.",
+      "target": "아군 <b>연막</b> 유닛 하나.",
+      "effect": "페이즈가 끝날 때까지, <b>연막</b> 유닛 또는 아군 연막 유닛의 모델 하나 이상 때문에 공격 모델에게 <b>완전히 보이지 않는</b> 유닛이 공격 대상으로 지정될 때마다, 해당 공격에 대해 <b>엄폐의 이점</b>을 얻습니다(13.08).",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-heroic-intervention",
+      "name": "영웅적 개입",
+      "source": {
+        "name": "HEROIC INTERVENTION",
+        "when": "End of your opponent’s Charge phase.",
+        "target": "One friendly <b>unengaged</b> unit within 12\" of one or more enemy units. You can only select a <b>VEHICLE</b> unit if it is a <b>CHARACTER/WALKER</b> unit.",
+        "effect": "Resolve a charge with your unit (11.02). While doing so, before making the <b>charge roll</b>, you must select one of the following modes: Leap to Defend: When selecting <b>charge targets</b>, you can only select enemy units that made a <b>charge move</b> this phase and are within the <b>maximum distance</b>. Into the Fray (+1 CP): When making the <b>charge roll</b>, if the result is greater than 6 (after modifiers), change it to 6. When selecting <b>charge targets</b>, you can select any enemy units that are within 6\" of your unit and within the <b>maximum distance</b>.",
+        "restrictions": ""
+      },
+      "when": "상대의 돌격 페이즈 종료 시.",
+      "target": "적 유닛 하나 이상의 12\" 이내에 있는 아군 <b>교전 상태가 아닌</b> 유닛 하나. <b>차량</b> 유닛은 <b>캐릭터/워커</b> 유닛일 때만 선택할 수 있습니다.",
+      "effect": "해당 유닛으로 돌격을 해결합니다(11.02). <b>돌격 굴림</b> 전에 다음 방식 중 하나를 선택합니다:<br><b>수호를 향해 도약:</b> 이번 페이즈에 <b>돌격 이동</b>을 수행했고 최대 거리에 들어오는 적 유닛만 돌격 대상으로 선택할 수 있습니다.<br><b>전장으로 돌입</b>(추가 1 CP): 수정 후 돌격 굴림이 6보다 높으면 6으로 변경합니다. 돌격 대상을 선택할 때, 해당 유닛에서 6\" 이내이면서 최대 거리에 들어오는 적 유닛을 선택할 수 있습니다.",
+      "restrictions": ""
+    },
+    {
+      "id": "core11-counteroffensive",
+      "name": "역습",
+      "source": {
+        "name": "COUNTEROFFENSIVE",
+        "when": "Fight step of your opponent’s Fight phase, just after an enemy unit has resolved its attacks.",
+        "target": "One friendly unit that is <b>eligible to fight</b>.",
+        "effect": "Until the end of the phase, your unit has the <b>Fights First</b> ability and it must be the next unit you <b>select to fight</b> (12.04).",
+        "restrictions": ""
+      },
+      "when": "상대의 백병전 페이즈 중 전투 단계에서 적 유닛이 공격을 해결한 직후.",
+      "target": "<b>전투 가능</b>한 아군 유닛 하나.",
+      "effect": "페이즈가 끝날 때까지 해당 유닛은 <b>선제 공격</b> 능력을 얻으며, 다음에 <b>전투할 유닛으로 선택</b>해야 합니다(12.04).",
+      "restrictions": ""
+    },
+    {
       "id": "core11-crushing-impact",
       "name": "분쇄 충격",
       "source": {
