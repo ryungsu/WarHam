@@ -1816,6 +1816,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       "id": "core11-crushing-impact",
       "name": "분쇄 충격",
       "source": {
+        "name": "CRUSHING IMPACT",
         "when": "Your Charge phase, just after a friendly <b>MONSTER/VEHICLE</b> unit ends a <b>charge move</b>.",
         "target": "That <b>MONSTER/VEHICLE</b> unit.",
         "effect": "Resolve the following sequence:<br>1. Select one enemy unit <b>engaged</b> with your unit.<br>2. Select one model in your unit <b>engaged</b> with that enemy unit.<br>3. Roll a number of D6 equal to the T characteristic of that model: for each 1, your unit suffers 1 <b>mortal wound</b>; for each 5+, that enemy unit suffers 1 <b>mortal wound</b> (to a maximum of 6 <b>mortal wounds</b> per unit)."
