@@ -1824,6 +1824,19 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       "when": "당신의 돌격 단계에 아군 몬스터/차량 유닛이 돌격 이동을 마친 직후.",
       "target": "해당 몬스터/차량 유닛.",
       "effect": "다음 순서로 해결합니다:\\n1. 당신의 유닛과 교전 중인 적 유닛 하나를 선택합니다.\\n2. 그 적 유닛과 교전 중인 당신의 유닛 내 모델 하나를 선택합니다.\\n3. 해당 모델의 내구력(T) 수치와 같은 수의 D6을 굴립니다. 결과가 1인 주사위마다 당신의 유닛은 모탈 운드 1개를 입습니다. 결과가 5+인 주사위마다 해당 적 유닛은 모탈 운드 1개를 입습니다(유닛당 모탈 운드 최대 6개)."
+    },
+    {
+      "id": "board11-explosive-clearance",
+      "name": "폭발물 제거",
+      "source": {
+        "name": "EXPLOSIVE CLEARANCE",
+        "when": "Your Shooting phase.",
+        "target": "One unit from your army that has not been selected to shoot this phase.",
+        "effect": "Select one model in your unit that is equipped with a weapon with the <b>Blast</b> ability. Until the end of the phase, when determining how many models are in the target unit for the purpose of that ability, include models that are not visible to the attacking model. In addition, attacks made with that weapon can be allocated to models that are not visible to the attacking model."
+      },
+      "when": "당신의 사격 페이즈.",
+      "target": "이번 페이즈에 아직 사격 대상으로 선택되지 않은 아군 유닛 하나.",
+      "effect": "대상 유닛에서 <b>[폭발]</b> 능력을 가진 무기를 장비한 모델 하나를 선택합니다. 페이즈가 끝날 때까지, 해당 무기의 <b>[폭발]</b> 능력에 따른 공격 횟수를 결정할 때 표적 유닛의 모델 수에 공격 모델에게 보이지 않는 모델도 포함합니다. 또한 해당 무기의 공격을 공격 모델에게 보이지 않는 모델에도 할당할 수 있습니다."
     }
   ]
 };
