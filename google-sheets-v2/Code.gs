@@ -7,11 +7,15 @@ const V2 = {
   edition: "11",
   repo: "https://raw.githubusercontent.com/BSData/wh40k-11e/main/",
   maxSourcesPerRun: 1,
-  aiBatchesPerRun: 3,
+  // Drain existing backlog before doing catalogue work. At 8 rows per request,
+  // eight batches process up to 64 translations per trigger execution.
+  aiBatchesPerRun: 8,
   rowsPerAiBatch: 8,
   softRunLimitMs: 240000,
   reserveRunTimeMs: 45000,
   maxSheetRowsPerRequest: 250,
+  pendingScanWindowRows: 5000,
+  maxPendingScanRowsPerRun: 25000,
   sourceSheet: "Sources",
   translationSheet: "Translations",
   glossarySheet: "Glossary",
@@ -47,6 +51,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu("40K 번역 V2")
     .addItem("시트 준비", "setupSheets")
     .addItem("BSData 동기화 + AI 번역", "runV2Pipeline")
+    .addItem("번역 우선 대상 선택", "showTranslationPriorityDialog")
+    .addItem("번역 검색 시작 행 지정", "setTranslationSearchStartRow")
     .addItem("선택 행 검수 완료", "approveSelectedRows")
     .addItem("검수 완료 JSON 내보내기", "exportApprovedJson")
     .addItem("웹 앱 번역 저장 키 표시/생성", "showWebWriteToken")
@@ -77,6 +83,82 @@ function setupSheets() {
   SpreadsheetApp.getUi().alert("시트 준비 완료. Script Properties에 GEMINI_API_KEY를 입력한 다음 ‘BSData 동기화 + AI 번역’을 실행하세요.");
 }
 
+function showTranslationPriorityDialog() {
+  const sources = getTranslationSourceChoices_();
+  if (!sources.length) throw new Error("Sources 시트에 원문 파일이 없습니다. 먼저 시트 준비를 실행하세요.");
+  let selected = [];
+  try { selected = JSON.parse(PropertiesService.getScriptProperties().getProperty("V2_PRIORITY_SOURCE_FILES") || "[]"); } catch (_) {}
+  const options = sources.map(source => {
+    const label = `${escapeHtml_(source.file)}${source.enabled ? "" : " · 동기화 꺼짐"}`;
+    const isChecked = selected.includes(source.file) ? " checked" : "";
+    return `<label class="choice"><input type="checkbox" name="sourceFile" value="${escapeHtml_(source.file)}"${isChecked}> <span>${label}</span></label>`;
+  }).join("");
+  const html = HtmlService.createHtmlOutput(`<!doctype html><html><head><base target="_top"><style>
+    body{font:14px Arial,sans-serif;padding:16px;color:#202124}.list{box-sizing:border-box;height:170px;overflow:auto;border:1px solid #dadce0;border-radius:4px;padding:6px 10px}.choice{display:flex;align-items:flex-start;gap:7px;padding:5px 0;font-weight:400}.choice input{margin-top:2px}.choice span{overflow-wrap:anywhere}p{color:#5f6368;line-height:1.45}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}button{padding:8px 14px;cursor:pointer}#status{min-height:18px;color:#1a73e8}
+    </style></head><body><strong>우선 번역할 원문 파일</strong><div class="list">${options}</div><p>선택한 파일들의 11판 대기 번역을 먼저 처리합니다. 선택하지 않으면 전체 대기열 순서로 처리합니다.</p><div id="status"></div><div class="actions"><button onclick="google.script.host.close()">취소</button><button id="save">선택 저장</button></div><script>
+    document.getElementById("save").addEventListener("click",function(){
+      const button=this;button.disabled=true;document.getElementById("status").textContent="저장 중…";
+      const files=Array.from(document.querySelectorAll('input[name="sourceFile"]:checked')).map(function(input){return input.value;});
+      google.script.run.withSuccessHandler(function(message){document.getElementById("status").textContent=message;setTimeout(function(){google.script.host.close();},700);})
+        .withFailureHandler(function(error){document.getElementById("status").textContent=error.message||String(error);button.disabled=false;})
+        .saveTranslationPrioritySourceFiles(files);
+    });
+    </script></body></html>`).setWidth(520).setHeight(390);
+  SpreadsheetApp.getUi().showModalDialog(html, "번역 우선 대상");
+}
+
+function saveTranslationPrioritySourceFiles(files) {
+  files = Array.isArray(files) ? [...new Set(files.map(file => String(file || "").trim()).filter(Boolean))] : [];
+  const sources = getTranslationSourceChoices_();
+  const knownFiles = new Set(sources.map(source => source.file));
+  if (files.some(file => !knownFiles.has(file))) throw new Error("Sources 시트에서 파일을 찾지 못했습니다. 목록을 새로 열어 선택해 주세요.");
+  const props = PropertiesService.getScriptProperties();
+  if (files.length) props.setProperty("V2_PRIORITY_SOURCE_FILES", JSON.stringify(files));
+  else props.deleteProperty("V2_PRIORITY_SOURCE_FILES");
+  props.deleteProperty("V2_PRIORITY_SCAN_CURSOR");
+  props.deleteProperty("V2_PRIORITY_SCAN_PROGRESS");
+  props.deleteProperty("V2_PRIORITY_SCAN_TOTAL");
+  props.deleteProperty("V2_PRIORITY_CLEAR_FILES");
+  props.deleteProperty("V2_PRIORITY_CLEAR_LAST_ROW");
+  return files.length ? `우선 대상 ${files.length}개 저장` : "우선 대상 해제: 전체 대기열 순서로 처리합니다.";
+}
+
+function setTranslationSearchStartRow() {
+  const ui = SpreadsheetApp.getUi(), sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
+  if (!sheet || sheet.getLastRow() < 2) throw new Error("Translations 시트에 검색할 데이터가 없습니다.");
+  const response = ui.prompt(
+    "번역 검색 시작 행 지정",
+    `Translations 시트의 행 번호를 입력하세요 (2~${sheet.getLastRow()}). 이 행부터 대기 번역을 검색합니다.`,
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const raw = response.getResponseText().trim();
+  if (!/^\d+$/.test(raw)) throw new Error("행 번호는 숫자로 입력해 주세요.");
+  const row = Number(raw);
+  if (!Number.isSafeInteger(row) || row < 2 || row > sheet.getLastRow()) throw new Error(`행 번호는 2~${sheet.getLastRow()} 사이여야 합니다.`);
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty("V2_PENDING_SCAN_CURSOR", String(row));
+  props.setProperty("V2_PRIORITY_SCAN_CURSOR", String(row));
+  props.deleteProperty("V2_PRIORITY_SCAN_PROGRESS");
+  props.deleteProperty("V2_PRIORITY_SCAN_TOTAL");
+  props.deleteProperty("V2_PRIORITY_CLEAR_FILES");
+  props.deleteProperty("V2_PRIORITY_CLEAR_LAST_ROW");
+  log_("translate", "검색 위치 변경", `Translations ${row}행부터 검색하도록 지정`);
+  ui.alert(`다음 실행부터 ${row}행에서 대기 번역 검색을 시작합니다.`);
+}
+
+function getTranslationSourceChoices_() {
+  const sheet = getSpreadsheet_().getSheetByName(V2.sourceSheet);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getDisplayValues()
+    .filter(row => String(row[0] || "").trim())
+    .map(row => ({ file: String(row[0]).trim(), enabled: !["false", "0", "no"].includes(String(row[1]).trim().toLowerCase()) }));
+}
+
+function escapeHtml_(value) {
+  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 function ensureSheet_(ss, name, headers, seedRows) {
   const sheet = ss.getSheetByName(name) || ss.insertSheet(name);
   if (sheet.getLastRow() === 0) {
@@ -102,18 +184,29 @@ function runV2Pipeline() {
   if (!lock.tryLock(1000)) return log_("pipeline", "skipped", "다른 실행이 진행 중입니다.");
   const startedAt = Date.now(), deadline = startedAt + V2.softRunLimitMs;
   try {
-    log_("pipeline", "시작", `원문 파일 최대 ${V2.maxSourcesPerRun}개 · 번역 배치 최대 ${V2.aiBatchesPerRun}개`);
+    log_("pipeline", "시작", `번역 배치 최대 ${V2.aiBatchesPerRun}개 · 원문 파일 최대 ${V2.maxSourcesPerRun}개`);
+
+    // Translation backlog is the user's current priority. Process and persist it
+    // before fetching/parsing a potentially large catalogue, so a slow sync
+    // cannot consume the whole execution before any translations are written.
+    const translation = Date.now() < deadline - V2.reserveRunTimeMs
+      ? translatePendingBatch_(deadline)
+      : { done: 0, selected: 0, scanned: 0 };
+    log_("translate", "실행 결과", `번역 ${translation.done}개 · 대상 ${translation.selected}개 · ${translation.queue || "대기열"} 검색 ${translation.startRow || "-"}~${translation.endRow || "-"}행 (${translation.scanned}행 확인, 다음 시작 ${translation.nextRow || "-"}행)`);
+
     let synced = { files: 0, added: 0 }, syncError = "";
-    try {
-      synced = syncSourceBatch_();
-      log_("sync", "완료", `원문 파일 ${synced.files}개 확인 · 신규/변경 문장 ${synced.added}개`);
-    } catch (err) {
-      syncError = String(err && err.message || err);
-      log_("sync", "오류 · 번역은 계속", syncError);
+    if (Date.now() < deadline - V2.reserveRunTimeMs) {
+      try {
+        synced = syncSourceBatch_();
+        log_("sync", "완료", `원문 파일 ${synced.files}개 확인 · 신규/변경 문장 ${synced.added}개`);
+      } catch (err) {
+        syncError = String(err && err.message || err);
+        log_("sync", "오류 · 번역은 저장됨", syncError);
+      }
+    } else {
+      log_("sync", "다음 실행으로 이월", "번역 대기열 처리를 우선 완료해 원문 동기화를 다음 실행으로 넘겼습니다.");
     }
-    const translated = Date.now() < deadline - V2.reserveRunTimeMs ? translatePendingBatch_(deadline) : 0;
-    if (!translated && Date.now() >= deadline - V2.reserveRunTimeMs) log_("translate", "다음 실행으로 이월", "원문 동기화에 시간이 걸려 번역은 다음 실행에서 이어갑니다.");
-    log_("pipeline", syncError ? "부분 완료" : "완료", `원문 파일 ${synced.files}개 확인, 신규/변경 문장 ${synced.added}개, AI 번역 ${translated}개${syncError ? ` · 동기화 오류: ${syncError}` : ""}`);
+    log_("pipeline", syncError ? "부분 완료" : "완료", `AI 번역 ${translation.done}개 · 확인 대상 ${translation.selected}개 · 스캔 ${translation.scanned}행 · 원문 파일 ${synced.files}개 확인, 신규/변경 문장 ${synced.added}개${syncError ? ` · 동기화 오류: ${syncError}` : ""}`);
   } catch (err) {
     log_("pipeline", "오류", String(err && err.stack || err));
     throw err;
@@ -136,6 +229,7 @@ function syncSourceBatch_() {
   batch.forEach(configRow => {
     const file = String(configRow.values[0]);
     try {
+      log_("sync", "파일 동기화 시작", `${file} · Sources ${configRow.rowNumber}행`);
       const response = UrlFetchApp.fetch(V2.repo + encodeURIComponent(file), { muteHttpExceptions: true, followRedirects: true });
       if (response.getResponseCode() !== 200) throw new Error(`HTTP ${response.getResponseCode()}`);
       const fileAdded = syncOneSourceFile_(response, file, configRow, transSheet, sourceSheet, now);
@@ -162,7 +256,10 @@ function syncOneSourceFile_(response, file, configRow, transSheet, sourceSheet, 
     return 0;
   }
 
-  const records = collectRecords_(data, file), existing = readExistingSourceRows_(transSheet, [file]);
+  const records = collectRecords_(data, file);
+  log_("sync", "기존 행 대조 시작", `${file} · 원문 레코드 ${records.length}개 · Translations ${transSheet.getLastRow()}행 대상`);
+  const existing = readExistingSourceRows_(transSheet, [file]);
+  log_("sync", "기존 행 대조 완료", `${file} · 기존 레코드 ${existing.length}개`);
   const current = new Map(), duplicates = [];
   existing.forEach(candidate => {
     if (!candidate.key || candidate.status === "SUPERSEDED") return;
@@ -222,23 +319,31 @@ function collectRecords_(root, file) {
 
 function translatePendingBatch_(deadline) {
   const apiKey = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
-  if (!apiKey) { log_("translate", "건너뜀", "Script Properties에 GEMINI_API_KEY가 없습니다."); return 0; }
+  if (!apiKey) {
+    log_("translate", "건너뜀", "Script Properties에 GEMINI_API_KEY가 없습니다.");
+    return { done: 0, selected: 0, scanned: 0 };
+  }
   const sheet = getSpreadsheet_().getSheetByName(V2.translationSheet);
   const limit = V2.aiBatchesPerRun * V2.rowsPerAiBatch;
-  const pending = findPendingTranslationRows_(sheet, limit);
-  if (!pending.length) return 0;
+  const scan = findPendingTranslationRows_(sheet, limit);
+  const pending = scan.items;
+  if (!pending.length) return { done: 0, selected: 0, scanned: scan.scanned, startRow: scan.startRow, endRow: scan.endRow, nextRow: scan.nextRow, queue: scan.queue };
   let done = 0;
   for (let offset = 0; offset < pending.length; offset += V2.rowsPerAiBatch) {
     if (deadline && Date.now() >= deadline - V2.reserveRunTimeMs) break;
     const batch = pending.slice(offset, offset + V2.rowsPerAiBatch);
     try {
+      const itemNames = batch.map(item => String(item.name || "").replace(/\s+/g, " ").slice(0, 70)).join(" · ");
+      log_("translate", "Gemini 배치 시작", `${offset + 1}~${offset + batch.length}/${pending.length}개 · ${batch[0].row}~${batch[batch.length - 1].row}행 · ${itemNames}`);
       const outputs = callGeminiWithRetry_(batch, apiKey), byIndex = new Map(outputs.map(x => [Number(x.i), x.ko]));
       const model = PropertiesService.getScriptProperties().getProperty("GEMINI_MODEL") || "gemini-3.8-flash", now = new Date(), writes = batch.map((item, i) => ({ row: item.row, values: [String(byIndex.get(i) || "").trim(), "AI_DRAFT", model, now, "검수 후 APPROVED로 변경"] })).filter(item => item.values[0]);
-      writeTranslationDrafts_(sheet, writes, col("Translation KO") + 1);
+      const translationStartColumn = V2.translationHeaders.indexOf("Translation KO") + 1;
+      writeTranslationDrafts_(sheet, writes, translationStartColumn);
       done += writes.length;
+      log_("translate", "Gemini 배치 완료", `${writes.length}/${batch.length}개 저장 · ${batch[0].row}~${batch[batch.length - 1].row}행`);
     } catch (err) { log_("translate", "배치 오류 · 대기 유지", String(err.message || err)); break; }
   }
-  return done;
+  return { done, selected: pending.length, scanned: scan.scanned, startRow: scan.startRow, endRow: scan.endRow, nextRow: scan.nextRow, queue: scan.queue };
 }
 
 function writeTranslationDrafts_(sheet, writes, startColumn) {
@@ -251,19 +356,114 @@ function writeTranslationDrafts_(sheet, writes, startColumn) {
   }
 }
 
-// TextFinder searches only the Status column on Google's side. It avoids
-// transferring hundreds of thousands of Translation rows into Apps Script.
-function findPendingTranslationRows_(sheet, limit) {
-  if (!sheet || sheet.getLastRow() < 2) return [];
+// Prefer the user-selected source file. When that queue has been scanned once
+// without a PENDING row, skip the priority scan until the sheet grows or the
+// user changes the selection.
+function findPriorityTranslationRows_(sheet, limit) {
+  const props = PropertiesService.getScriptProperties();
+  let selectedFiles = [];
+  try { selectedFiles = JSON.parse(props.getProperty("V2_PRIORITY_SOURCE_FILES") || "[]"); } catch (_) {}
+  if (!Array.isArray(selectedFiles) || !selectedFiles.length || !sheet || sheet.getLastRow() < 2) return { items: [], scanned: 0, completeCycle: true };
+  selectedFiles = [...new Set(selectedFiles.map(file => String(file || "").trim()).filter(Boolean))];
+  if (!selectedFiles.length) return { items: [], scanned: 0, completeCycle: true };
+  const selectedFilesKey = JSON.stringify(selectedFiles);
+  const lastRow = sheet.getLastRow(), totalRows = lastRow - 1;
+  const fileCol = V2.translationHeaders.indexOf("Source file") + 1;
+  const editionCol = V2.translationHeaders.indexOf("Edition") + 1;
+  const kindCol = V2.translationHeaders.indexOf("Kind") + 1;
   const statusCol = V2.translationHeaders.indexOf("Status") + 1;
-  const finder = sheet.getRange(2, statusCol, sheet.getLastRow() - 1, 1)
-    .createTextFinder("PENDING").matchCase(true).matchEntireCell(true);
-  const rowNumbers = [];
-  let match;
-  while (rowNumbers.length < limit && (match = finder.findNext())) rowNumbers.push(match.getRow());
-  return readTranslationWindows_(sheet, rowNumbers, 2, 9).map(({ row, values }) => ({
+  if (props.getProperty("V2_PRIORITY_CLEAR_FILES") === selectedFilesKey && Number(props.getProperty("V2_PRIORITY_CLEAR_LAST_ROW")) === lastRow) {
+    return { items: [], scanned: 0, completeCycle: true };
+  }
+  const priorityFiles = new Set(selectedFiles);
+  let cursor = Number(props.getProperty("V2_PRIORITY_SCAN_CURSOR") || 2);
+  if (!Number.isFinite(cursor) || cursor < 2 || cursor > lastRow) cursor = 2;
+  const startRow = cursor, scanBudget = Math.min(V2.maxPendingScanRowsPerRun, totalRows);
+  const savedTotal = Number(props.getProperty("V2_PRIORITY_SCAN_TOTAL") || 0);
+  let cycleProgress = savedTotal === totalRows ? Number(props.getProperty("V2_PRIORITY_SCAN_PROGRESS") || 0) : 0;
+  const selectedNonLabelRows = [], selectedLabelRows = [];
+  let scanned = 0;
+  while (scanned < scanBudget && selectedNonLabelRows.length < limit) {
+    const count = Math.min(V2.pendingScanWindowRows, lastRow - cursor + 1, scanBudget - scanned);
+    if (count <= 0) { cursor = 2; continue; }
+    const editions = sheet.getRange(cursor, editionCol, count, 1).getDisplayValues();
+    const files = sheet.getRange(cursor, fileCol, count, 1).getDisplayValues();
+    const kinds = sheet.getRange(cursor, kindCol, count, 1).getDisplayValues();
+    const statuses = sheet.getRange(cursor, statusCol, count, 1).getDisplayValues();
+    let consumed = 0;
+    for (let i = 0; i < count; i++) {
+      consumed = i + 1;
+      if (String(editions[i][0]).trim() === String(V2.edition) && priorityFiles.has(String(files[i][0]).trim()) && String(statuses[i][0]).trim() === "PENDING") {
+        const rowNumber = cursor + i;
+        if (String(kinds[i][0]).trim().toLowerCase() === "label") selectedLabelRows.push(rowNumber);
+        else selectedNonLabelRows.push(rowNumber);
+      }
+      if (selectedNonLabelRows.length >= limit) break;
+    }
+    scanned += consumed;
+    cursor += consumed;
+    if (cursor > lastRow) cursor = 2;
+  }
+  const selectedRows = selectedNonLabelRows.concat(selectedLabelRows).slice(0, limit);
+  cycleProgress += scanned;
+  const completeCycle = cycleProgress >= totalRows;
+  if (completeCycle) cycleProgress -= totalRows;
+  props.setProperty("V2_PRIORITY_SCAN_CURSOR", String(cursor));
+  props.setProperty("V2_PRIORITY_SCAN_PROGRESS", String(cycleProgress));
+  props.setProperty("V2_PRIORITY_SCAN_TOTAL", String(totalRows));
+  if (completeCycle && !selectedRows.length) {
+    props.setProperty("V2_PRIORITY_CLEAR_FILES", selectedFilesKey);
+    props.setProperty("V2_PRIORITY_CLEAR_LAST_ROW", String(lastRow));
+  }
+  const items = readTranslationWindows_(sheet, selectedRows, 2, 9).map(({ row, values }) => ({
     row, edition: String(values[0] || ""), faction: values[1], kind: values[4], name: values[5], source: values[6]
   })).filter(item => item.edition === String(V2.edition) && item.source);
+  return { items, scanned, completeCycle, startRow, endRow: scanned ? (cursor === 2 ? lastRow : cursor - 1) : 0, nextRow: cursor, queue: "선택 파일" };
+}
+
+// Scan bounded Edition and Status columns with a saved cursor. A TextFinder
+// limited to the first N PENDING cells can repeatedly hit old-edition rows and
+// report zero eligible 11e translations even when thousands remain below.
+function findPendingTranslationRows_(sheet, limit) {
+  const priority = findPriorityTranslationRows_(sheet, limit);
+  if (priority.items.length || !priority.completeCycle) return priority;
+  if (!sheet || sheet.getLastRow() < 2) return { items: [], scanned: 0 };
+  const lastRow = sheet.getLastRow();
+  const props = PropertiesService.getScriptProperties();
+  let cursor = Number(props.getProperty("V2_PENDING_SCAN_CURSOR") || 2);
+  if (!Number.isFinite(cursor) || cursor < 2 || cursor > lastRow) cursor = 2;
+  const startRow = cursor;
+  const statusCol = V2.translationHeaders.indexOf("Status") + 1;
+  const kindCol = V2.translationHeaders.indexOf("Kind") + 1;
+  const nonLabelRows = [], labelRows = [];
+  let scanned = 0;
+  const scanBudget = Math.min(V2.maxPendingScanRowsPerRun, lastRow - 1);
+  while (scanned < scanBudget && nonLabelRows.length < limit) {
+    const count = Math.min(V2.pendingScanWindowRows, lastRow - cursor + 1, scanBudget - scanned);
+    if (count <= 0) { cursor = 2; continue; }
+    const editions = sheet.getRange(cursor, 2, count, 1).getDisplayValues();
+    const kinds = sheet.getRange(cursor, kindCol, count, 1).getDisplayValues();
+    const statuses = sheet.getRange(cursor, statusCol, count, 1).getDisplayValues();
+    let consumed = 0;
+    for (let i = 0; i < count; i++) {
+      consumed = i + 1;
+      if (String(editions[i][0]).trim() === String(V2.edition) && String(statuses[i][0]).trim() === "PENDING") {
+        const rowNumber = cursor + i;
+        if (String(kinds[i][0]).trim().toLowerCase() === "label") labelRows.push(rowNumber);
+        else nonLabelRows.push(rowNumber);
+      }
+      if (nonLabelRows.length >= limit) break;
+    }
+    scanned += consumed;
+    cursor += consumed;
+    if (cursor > lastRow) cursor = 2;
+  }
+  const rowNumbers = nonLabelRows.concat(labelRows).slice(0, limit);
+  props.setProperty("V2_PENDING_SCAN_CURSOR", String(cursor));
+  const items = readTranslationWindows_(sheet, rowNumbers, 2, 9).map(({ row, values }) => ({
+    row, edition: String(values[0] || ""), faction: values[1], kind: values[4], name: values[5], source: values[6]
+  })).filter(item => item.edition === String(V2.edition) && item.source);
+  return { items, scanned, startRow, endRow: scanned ? (cursor === 2 ? lastRow : cursor - 1) : 0, nextRow: cursor, queue: "전체" };
 }
 
 function readExistingSourceRows_(sheet, files) {
@@ -566,7 +766,7 @@ function installDailyTrigger() {
 function installFrequentTrigger() {
   removeDailyTrigger();
   ScriptApp.newTrigger("runV2Pipeline").timeBased().everyMinutes(15).create();
-  SpreadsheetApp.getUi().alert("대기 중인 번역을 15분마다 최대 24개씩 처리하도록 설정했습니다. 실행 시간이 길어지면 다음 회차로 이어 처리합니다. Gemini 사용량/한도에 따라 속도가 달라질 수 있으며, 메뉴에서 자동 실행을 끌 수 있습니다.");
+  SpreadsheetApp.getUi().alert(`대기 중인 11판 번역을 15분마다 최대 ${V2.aiBatchesPerRun * V2.rowsPerAiBatch}개씩 처리하도록 설정했습니다. 기존 번역을 먼저 저장하고, 남은 실행 시간에 BSData 동기화를 진행합니다. Gemini 사용량/한도에 따라 실제 처리량은 달라질 수 있으며, 메뉴에서 자동 실행을 끌 수 있습니다.`);
 }
 
 function removeDailyTrigger() {

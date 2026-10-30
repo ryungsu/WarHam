@@ -342,7 +342,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>아뎁투스 아스타르테스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 부여합니다.<ul><li><k>[살상타]</k></li><li><u>또는</u>, <k>[연타 1]</k></li><li><u>또는</u>, 이 유닛이 <b>참호화됐다면</b>, <k>[살상타]</k> 및 <k>[연타 1]</k></li></ul>",
+      "effect": "이 유닛의 공격에 다음을 부여합니다.<ul><li><k>[치명타 명중]</k></li><li><u>또는</u>, <k>[지속 명중 1]</k></li><li><u>또는</u>, 이 유닛이 <b>참호화됐다면</b>, <k>[치명타 명중]</k> 및 <k>[지속 명중 1]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -437,7 +437,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>드레드노트</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>드레드노트</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[살상타]</k></li>\r<li><u>또는</u>, <k>[연타 1]</k></li></ul>",
+      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[치명타 명중]</k></li>\r<li><u>또는</u>, <k>[지속 명중 1]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -447,7 +447,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       "name": "막을 수 없는 전진",
       "detachment": "Ironclad Champions",
       "source": {
-        "name": "Upstoppable Advance",
+        "name": "Unstoppable Advance",
         "when": "Your Movement/Charge phase, when a friendly <k>Dreadnought</k> unit is <b>selected to move</b> or <b>declares a charge</b>.",
         "target": "That <k>Dreadnought</k> unit.",
         "effect": "Your unit has <k>Mobile</k>.",
@@ -570,7 +570,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "백병전 페이즈, 아군 <k>아뎁투스 아스타르테스 보병</k> 유닛이 <b>백병전 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스 보병</k> 유닛.",
-      "effect": "이 유닛의 백병전 공격에 <k>[정밀]</k>을 부여합니다.",
+      "effect": "이 유닛의 백병전 공격에 <k>[정밀 타격]</k>을 부여합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -646,7 +646,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>그라비스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>그라비스</k> 유닛.",
-      "effect": "이 유닛의 공격에 <k>[살상타]</k>를 부여합니다.",
+      "effect": "이 유닛의 공격에 <k>[치명타 명중]</k>를 부여합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -760,7 +760,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈, 아군 <k>아뎁투스 아스타르테스 터미네이터</k> 유닛이 <b>사격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스 터미네이터</k>  유닛.",
-      "effect": "이 유닛의 원거리 공격에 다음을 부여합니다.\n<ul><li><k>[살상타]</k></li>\n<li><k>[연타 1]</k></li></ul>",
+      "effect": "이 유닛의 원거리 공격에 다음을 부여합니다.\n<ul><li><k>[치명타 명중]</k></li>\n<li><k>[지속 명중 1]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -811,13 +811,13 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
         "name": "Relentless Assault",
         "when": "Your Shooting phase or the Fight phase, when a friendly <k>Tacticus</k> unit is <b>selected to attack</b>.",
         "target": "That <k>Tacticus</k> unit.",
-        "effect": "Your unit’s attacks have:\r<ul><li><k>[Sustained Hits 1:</k> <b>non-</b><k>Monster/Vehicle]</k>.</li>\r<li><u>Or:</u> <k>[Lethal Hits: Monster/Vehicle]</k>.</li></ul>",
+        "effect": "Your unit’s attacks have:\r<ul><li><k>[Sustained Hits 1: non-Monster/Vehicle]</k>.</li>\r<li><u>Or:</u> <k>[Lethal Hits: Monster/Vehicle]</k>.</li></ul>",
         "secondaryEffect": "",
         "restrictions": ""
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>택티쿠스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>택티쿠스</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[연타 1: 괴수/기체</k> 제외<k>]</k></li>\r<li><u>또는</u>, <k>[살상타: 괴수/기체]</k></li></ul>",
+      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[지속 명중 1: 괴수/기체 제외]</k></li>\r<li><u>또는</u>, <k>[치명타 명중: 괴수/기체]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -874,7 +874,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈, <b>교전 상태</b>인 아군 <k>아뎁투스 아스타르테스</k> 유닛이 <b>사격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스</k> 유닛.",
-      "effect": "이 유닛의 <k>방사</k> 무기에 다음을 적용합니다.<ul><li><k>[폭발]</k> 제거</li><li> <k>[근접 사격]</k> 부여</li><li> <b>공격</b> +1</li></ul>",
+      "effect": "이 유닛의 <k>분사</k> 무기에 다음을 적용합니다.<ul><li><k>[폭발]</k> 제거</li><li> <k>[근접 사격]</k> 부여</li><li> <b>공격</b> +1</li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -893,7 +893,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈, 아군 <k>아뎁투스 아스타르테스 보병</k> 유닛이 <b>사격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스 보병</k> 유닛.",
-      "effect": "<li>이 유닛의 원거리 <k>[방사]</k> 공격에 <b>관통</b> +1을 적용합니다.",
+      "effect": "<li>이 유닛의 원거리 <k>[분사]</k> 공격에 <b>관통</b> +1을 적용합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1007,7 +1007,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈, <k>킬 팀</k> 유닛이 사격 수행을 위해 지정됐을 때.",
       "target": "그 <k>킬 팀</k> 유닛.",
-      "effect": "이 유닛의 원거리 공격(<k>[궤멸적 피해]</k> 공격 제외)에 <k>[기체 <b>제외</b> 특화 4+]</k>를 부여합니다.",
+      "effect": "이 유닛의 원거리 공격(<k>[치명적인 상처]</k> 공격 제외)에 <k>[Anti-non-Vehicle 4+]</k>를 부여합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1045,7 +1045,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, <b>은폐 상태</b>인 아군 <k>포보스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>포보스</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 적용합니다.\r<ul><li><b>위력</b> +1</li>\r<li><k>[살상타]</k> 부여</li></ul>",
+      "effect": "이 유닛의 공격에 다음을 적용합니다.\r<ul><li><b>위력</b> +1</li>\r<li><k>[치명타 명중]</k> 부여</li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1102,7 +1102,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 이동 페이즈, 아군 <k>아뎁투스 아스타르테스</k> 유닛이 <b>급속/후퇴 이동</b> 수행을 위해 지정됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스</k> 유닛.",
-      "effect": "<ul><li>그 <b>후퇴 이동</b>에도 불구하고 이 유닛은 <b>사격 수행이 가능</b>합니다.</li><li> 이 유닛의 원거리 공격에 <k>[기동 사격]</k>을 부여합니다.</li></ul>",
+      "effect": "<ul><li>그 <b>후퇴 이동</b>에도 불구하고 이 유닛은 <b>사격 수행이 가능</b>합니다.</li><li> 이 유닛의 원거리 공격에 <k>[강습]</k>을 부여합니다.</li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1140,7 +1140,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "백병전 페이즈, 아군 <k>아뎁투스 아스타르테스</k> 유닛이 <b>백병전 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스</k> 유닛.",
-      "effect": "이 유닛의 백병전 공격에 다음을 부여합니다.<ul><li><k>[살상타]</k></li><li><u>또는</u>, <k>[랜스]</k></li><li><u>또는</u>, 이 유닛이 <k>기승</k>이라면, <k>[살상타]</k> 및 <k>[랜스]</k></li></ul>",
+      "effect": "이 유닛의 백병전 공격에 다음을 부여합니다.<ul><li><k>[치명타 명중]</k></li><li><u>또는</u>, <k>[랜스]</k></li><li><u>또는</u>, 이 유닛이 <k>기승</k>이라면, <k>[치명타 명중]</k> 및 <k>[랜스]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1311,7 +1311,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>아뎁투스 아스타르테스</k> 유닛이 공격 수행을 위해 지정됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스</k> 유닛.",
-      "effect": "이 유닛의 공격에 <k>[연타 1]</k>을 부여합니다.",
+      "effect": "이 유닛의 공격에 <k>[지속 명중 1]</k>을 부여합니다.",
       "secondaryEffect": "이 유닛이 <k>기체</k> 유닛이라면, 그 공격에 <b>타격 굴림</b> +1을 적용합니다.</li></ul>",
       "secondaryEffectCost": 0,
       "restrictions": ""
@@ -1406,7 +1406,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, <b>은폐 상태</b>인 아군 <k>포보스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>포보스</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 적용합니다.\r<ul><li><b>위력</b> +1</li>\r<li><k>[살상타]</k> 부여</li></ul>",
+      "effect": "이 유닛의 공격에 다음을 적용합니다.\r<ul><li><b>위력</b> +1</li>\r<li><k>[치명타 명중]</k> 부여</li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1463,7 +1463,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈, 아군 <k>아뎁투스 아스타르테스 기체</k> 유닛(<k>전속 수송/비행/보행체</k> 유닛 제외)이 <b>사격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>아뎁투스 아스타르테스 기체</k> 유닛.",
-      "effect": "이 유닛의 원거리 공격에 <k>[살상타: 괴수/기체]</k>를 부여합니다.",
+      "effect": "이 유닛의 원거리 공격에 <k>[치명타 명중: 괴수/기체]</k>를 부여합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1520,7 +1520,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>그라비스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>그라비스</k> 유닛.",
-      "effect": "이 유닛의 공격에 <k>[살상타]</k>를 부여합니다.",
+      "effect": "이 유닛의 공격에 <k>[치명타 명중]</k>를 부여합니다.",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1628,13 +1628,13 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
         "name": "Relentless Assault",
         "when": "Your Shooting phase or the Fight phase, when a friendly <k>Tacticus</k> unit is <b>selected to attack</b>.",
         "target": "That <k>Tacticus</k> unit.",
-        "effect": "Your unit’s attacks have:\r<ul><li><k>[Sustained Hits 1:</k> <b>non-</b><k>Monster/Vehicle]</k>.</li>\r<li><u>Or:</u> <k>[Lethal Hits: Monster/Vehicle]</k>.</li></ul>",
+        "effect": "Your unit’s attacks have:\r<ul><li><k>[Sustained Hits 1: non-Monster/Vehicle]</k>.</li>\r<li><u>Or:</u> <k>[Lethal Hits: Monster/Vehicle]</k>.</li></ul>",
         "secondaryEffect": "",
         "restrictions": ""
       },
       "when": "플레이어의 사격 페이즈 또는 백병전 페이즈, 아군 <k>택티쿠스</k> 유닛이 <b>공격 수행을 위해 지정</b>됐을 때.",
       "target": "그 <k>택티쿠스</k> 유닛.",
-      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[연타 1: 괴수/기체</k> 제외<k>]</k></li>\r<li><u>또는</u>, <k>[살상타: 괴수/기체]</k></li></ul>",
+      "effect": "이 유닛의 공격에 다음을 부여합니다.\r<ul><li><k>[지속 명중 1: 괴수/기체 제외]</k></li>\r<li><u>또는</u>, <k>[치명타 명중: 괴수/기체]</k></li></ul>",
       "secondaryEffect": "",
       "secondaryEffectCost": null,
       "restrictions": ""
@@ -1823,7 +1823,7 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       },
       "when": "당신의 돌격 단계에 아군 몬스터/차량 유닛이 돌격 이동을 마친 직후.",
       "target": "해당 몬스터/차량 유닛.",
-      "effect": "다음 순서로 해결합니다:\\n1. 당신의 유닛과 교전 중인 적 유닛 하나를 선택합니다.\\n2. 그 적 유닛과 교전 중인 당신의 유닛 내 모델 하나를 선택합니다.\\n3. 해당 모델의 내구력(T) 수치와 같은 수의 D6을 굴립니다. 결과가 1인 주사위마다 당신의 유닛은 모탈 운드 1개를 입습니다. 결과가 5+인 주사위마다 해당 적 유닛은 모탈 운드 1개를 입습니다(유닛당 모탈 운드 최대 6개)."
+      "effect": "다음 순서로 해결합니다:<br>1. 당신의 유닛과 교전 중인 적 유닛 하나를 선택합니다.<br>2. 그 적 유닛과 교전 중인 당신의 유닛 내 모델 하나를 선택합니다.<br>3. 해당 모델의 내구력(T) 수치와 같은 수의 D6을 굴립니다. 결과가 1인 주사위마다 당신의 유닛은 모탈 운드 1개를 입습니다. 결과가 5+인 주사위마다 해당 적 유닛은 모탈 운드 1개를 입습니다(유닛당 모탈 운드 최대 6개)."
     },
     {
       "id": "board11-explosive-clearance",
@@ -1837,6 +1837,19 @@ window.WARHAMMER_STRATAGEM_TRANSLATIONS = {
       "when": "당신의 사격 페이즈.",
       "target": "이번 페이즈에 아직 사격 대상으로 선택되지 않은 아군 유닛 하나.",
       "effect": "대상 유닛에서 <b>[폭발]</b> 능력을 가진 무기를 장비한 모델 하나를 선택합니다. 페이즈가 끝날 때까지, 해당 무기의 <b>[폭발]</b> 능력에 따른 공격 횟수를 결정할 때 표적 유닛의 모델 수에 공격 모델에게 보이지 않는 모델도 포함합니다. 또한 해당 무기의 공격을 공격 모델에게 보이지 않는 모델에도 할당할 수 있습니다."
+    },
+    {
+      "id": "challenger-burst-of-speed",
+      "name": "전력 질주",
+      "source": {
+        "name": "BURST OF SPEED",
+        "when": "End of your Shooting phase.",
+        "target": "One unit from your army (excluding units that made a move this phase).",
+        "effect": "Your unit can make a Normal move of up to D6\", and then cannot move again this phase."
+      },
+      "when": "당신의 사격 페이즈 종료 시.",
+      "target": "이번 페이즈에 이동하지 않은 아군 유닛 하나.",
+      "effect": "해당 유닛은 최대 D6\"까지 <b>일반 이동</b>을 할 수 있습니다. 이후 이번 페이즈에 다시 이동할 수 없습니다."
     }
   ]
 };
