@@ -105,10 +105,10 @@ function renderBuilderUnitDetail() {
       const selected = item.attachedTo === index;
       html += '<button type="button" class="builder-attachment-target' + (selected ? ' is-selected' : '') +
         '" data-builder-attach-card="' + index + '"><b>' + escapeHtml(tr(target.unit.name)) + '</b><small>' +
-        escapeHtml(target.unit.name) + ' · ' + target.models + '개체 · ' + target.points + '점</small><span>' +
+        escapeHtml(target.unit.name) + ' · #' + (index+1) + ' · ' + target.models + '개체 · ' + target.points + '점</small><span>' +
         (selected ? '선택됨' : '합류') + '</span></button>';
     });
-    if (role !== "support") html += '<button type="button" class="quiet" data-builder-attach-card="">합류 없이 편성</button>';
+    html += '<button type="button" class="quiet" data-builder-attach-card="">합류 없이 편성</button>';
     if (role === "support" && !Number.isInteger(item.attachedTo)) html += '<small>서포트 모델은 합류 대상을 선택해야 합니다.</small>';
     html += '</div></section>';
   }

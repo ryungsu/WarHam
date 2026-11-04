@@ -405,7 +405,8 @@ $("builder-apply").addEventListener("click", event => {
     if (Number.isInteger(item.attachedTo)) {
       const target = rosterBuilderUnits[item.attachedTo];
       if (target) lines.push("• Attached to: " + target.unit.name,
-        "• Attached as: " + (item.unit.attachmentRole === "support" ? "Support" : "Leader"));
+        "• Attached as: " + (item.unit.attachmentRole === "support" ? "Support" : "Leader"),
+        "• Attached to index: " + (item.attachedTo + 1));
     }
   });
   $("roster").value = lines.join("\n");
@@ -469,15 +470,15 @@ renderRosterBuilderList = function () {
         const attachedMembers = rosterBuilderUnits.map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
           .filter(({ candidate, candidateIndex }) => candidate.attachedTo === index && candidateIndex !== index);
         const ownSummary = ownTarget ? '<small class="builder-attachment-summary">합류 대상 → ' + escapeHtml(tr(ownTarget.unit.name)) + '</small>' : '';
-        const incomingSummary = attachedMembers.length ? '<small class="builder-attachment-summary">합류 유닛 · ' +
-          attachedMembers.map(({ candidate }) => escapeHtml(tr(candidate.unit.name)) + ' (' + (candidate.unit.attachmentRole === 'support' ? '서포트' : '리더') + ')').join(' · ') + '</small>' : '';
+        const incomingSummary = attachedMembers.length ? '<div class="builder-attached-children">' + attachedMembers.map(({candidate,candidateIndex})=>
+          '<button type="button" class="builder-attached-child" data-builder-select-unit="'+candidateIndex+'"><span>↳ '+escapeHtml(tr(candidate.unit.name))+'</span><small>'+ (candidate.unit.attachmentRole==='support'?'서포트':'리더')+' · '+candidate.models+'모델</small></button>').join('')+'</div>' : '';
         return '<article class="builder-roster-row' + (index === rosterBuilderSelectedIndex ? " is-selected" : "") + '">' +
         '<button type="button" class="builder-roster-pick" data-builder-select-unit="' + index + '">' +
         '<b>' + escapeHtml(tr(entry.unit.name)) + '</b><small>' + escapeHtml(entry.unit.name) + '</small>' +
         '<span>' + (entry.models || entry.unit.modelCount?.min || 1) + '모델 · ' +
-        (entry.points + builderEnhancementCost(entry.enhancement)) + '점</span>' + ownSummary + incomingSummary + '</button>' +
+        (entry.points + builderEnhancementCost(entry.enhancement)) + '점</span>' + ownSummary + '</button>' +
         '<button type="button" class="quiet builder-roster-remove" data-builder-remove="' + index +
-        '" aria-label="' + escapeHtml(entry.unit.name) + ' 삭제">×</button></article>';
+        '" aria-label="' + escapeHtml(entry.unit.name) + ' 삭제">×</button>' + incomingSummary + '</article>';
       })()
     ).join("") + '</section>'
   ).join("") : '<p class="phase-empty">카테고리의 ＋를 눌러 유닛을 채용하세요.</p>';
@@ -504,7 +505,9 @@ rosterList.addEventListener("click", event => {
   }
   const remove = event.target.closest("[data-builder-remove]");
   if (remove) {
-    rosterBuilderUnits.splice(Number(remove.dataset.builderRemove), 1);
+    const removedIndex=Number(remove.dataset.builderRemove);
+    rosterBuilderUnits.splice(removedIndex, 1);
+    rosterBuilderUnits.forEach(entry=>{if(entry.attachedTo===removedIndex)entry.attachedTo=null;else if(Number.isInteger(entry.attachedTo)&&entry.attachedTo>removedIndex)entry.attachedTo--;});
     rosterBuilderSelectedIndex = -1;
     renderRosterBuilderList();
   }
@@ -535,7 +538,9 @@ $("builder-unit-catalog").addEventListener("click", event => {
 // Re-render the selected unit as a dedicated, back-to-roster management view.
 const detail = $("builder-unit-detail");
 const detailBaseRender = renderBuilderUnitDetail;
+let builderDetailRenderedIndex=-1;
 renderBuilderUnitDetail = function () {
+  const previousScroll=builderDetailRenderedIndex===rosterBuilderSelectedIndex?detail.scrollTop:0;
   detailBaseRender();
   if (!detail.hidden && rosterBuilderSelectedIndex >= 0) {
     const entry = rosterBuilderUnits[rosterBuilderSelectedIndex];
@@ -546,6 +551,9 @@ renderBuilderUnitDetail = function () {
       const back = heading.querySelector("[data-builder-detail-close]");
       if (back) back.textContent = "← 로스터";
     }
+    const navigation=document.createElement('nav');navigation.className='builder-editor-nav';navigation.setAttribute('aria-label','유닛 설정 항목');
+    navigation.innerHTML='<button type="button" data-builder-section="models">인원 · 무장</button><button type="button" data-builder-section="enhancements">인헨스</button><button type="button" data-builder-section="attachments">합류</button>';
+    heading?.after(navigation);
     const modelInput = detail.querySelector("[data-builder-models]");
     const modelGroups = entry.unit.modelGroups || [];
     const modelSection = detail.querySelector(".builder-model-detail");
@@ -561,8 +569,7 @@ renderBuilderUnitDetail = function () {
           .filter(option => norm(option.modelConstraint?.model_name || "") === norm(group.name))
           .flatMap(option => option.replaces || []);
         const fixedGear = (group.defaultWeapons || []).map(weapon =>
-          '<label class="builder-fixed-gear"><input type="checkbox" checked disabled><span><b>' + escapeHtml(tr(weapon)) +
-          '</b><small>' + escapeHtml(weapon) + ' · ' + (replaceableGear.some(name => norm(name) === norm(weapon)) ? '기본 장비 · 교체 가능' : '고정 장비') + '</small></span></label>'
+          '<button type="button" class="builder-fixed-chip" data-builder-weapon-profile-detail="'+escapeHtml(weapon)+'"><span>'+escapeHtml(tr(weapon))+'</span><small>ⓘ</small></button>'
         ).join("");
         return '<section class="builder-model-group-card"><div class="builder-model-group-row"><span>' + escapeHtml(tr(group.name)) +
           '<small><b class="builder-model-role">' + modelRole + '</b> · ' + escapeHtml(group.name) + ' · ' + (group.min || 0) + '–' + (group.max ?? "—") +
@@ -572,9 +579,9 @@ renderBuilderUnitDetail = function () {
           escapeHtml(key) + '" aria-label="' + escapeHtml(group.name) + ' 수량 감소">−</button><output>' + count +
           '</output><button type="button" data-model-group-step="1" data-model-group-id="' + escapeHtml(key) +
           '" aria-label="' + escapeHtml(group.name) + ' 수량 증가">＋</button></div></div>' +
-          (fixedGear ? '<div class="builder-model-fixed-gear-list">' + fixedGear + '</div>' : '') + '</section>' +
+          (fixedGear ? '<details class="builder-default-loadout"><summary>기본 장비 · ' + group.defaultWeapons.length + '종</summary><div class="builder-model-fixed-gear-list">' + fixedGear + '</div></details>' : '') +
           (groupOptions.length ? '<div class="builder-model-specific-wargear"><b>' + modelRole + ' 무장 변경</b>' +
-            builderWargearOptionsMarkup(entry, option => groupOptions.includes(option)) + '</div>' : '');
+            builderWargearOptionsMarkup(entry, option => groupOptions.includes(option)) + '</div>' : '') + '</section>';
       }).join("");
       modelSection.innerHTML = '<b>모델 유형별 인원 · 합계 ' + entry.models + '</b>' + rows +
         '<small>' + (entry.unit.compositionSource ? '모델 유형과 기본 무장은 40kdc 편성 데이터 기준입니다.' : '모델 유형은 BSData 선택 조건 기준입니다. 기본 무장 편성 데이터가 없을 수 있습니다.') + '</small>';
@@ -618,6 +625,8 @@ renderBuilderUnitDetail = function () {
     detail.classList.remove("is-open");
     detail.removeAttribute("aria-modal");
   }
+  builderDetailRenderedIndex=rosterBuilderSelectedIndex;
+  detail.scrollTop=previousScroll;
 };
 
 detail.addEventListener("click", event => {
@@ -629,6 +638,8 @@ detail.addEventListener("click", event => {
   const enhancementDetail = event.target.closest("[data-builder-enhancement-detail]");
   const enhancementCardDetail = event.target.closest("[data-builder-enhancement-card-detail]");
   const enhancementCardSelect = event.target.closest("[data-builder-enhancement-card-select]");
+  const sectionJump=event.target.closest('[data-builder-section]');
+  if(sectionJump){const key=sectionJump.dataset.builderSection;const section=key==='models'?detail.querySelector('.builder-model-detail'):key==='enhancements'?detail.querySelector('.builder-enhancement-section'):detail.querySelector('.builder-attachment-targets')?.closest('.builder-detail-section');section?.scrollIntoView({behavior:'smooth',block:'start'});return;}
   const attachmentCard = event.target.closest("[data-builder-attach-card]");
   const activeEntry = rosterBuilderUnits[rosterBuilderSelectedIndex];
   if (clearWargear && activeEntry) {
@@ -964,15 +975,13 @@ async function editSavedRosterInBuilder(savedId) {
       entry._savedParsedIndex = parsedIndex;
       rosterBuilderUnits.push(entry);
     });
+    const savedParents=rosterAttachmentParents(parsed.units);
     rosterBuilderUnits.forEach(entry => {
-      if (!entry._savedAttachName) return;
-      entry.attachedTo = rosterBuilderUnits.findIndex(target =>
-        normalizeMatchName(target.unit.name) === normalizeMatchName(entry._savedAttachName) ||
-        normalizeMatchName(target.unit.nameKo || "") === normalizeMatchName(entry._savedAttachName)
-      );
-      delete entry._savedAttachName;
-      delete entry._savedParsedIndex;
+      const parent=savedParents.get(entry._savedParsedIndex);
+      const target=rosterBuilderUnits.findIndex(candidate=>candidate._savedParsedIndex===parent);
+      entry.attachedTo=target>=0?target:null;
     });
+    rosterBuilderUnits.forEach(entry=>{delete entry._savedAttachName;delete entry._savedParsedIndex;});
     rosterBuilderSelectedIndex = rosterBuilderUnits.length ? 0 : -1;
     $("builder-unit-step").hidden = false;
     $("builder-data-status").textContent = [
