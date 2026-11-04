@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261030-12">
+  <link rel="stylesheet" href="styles.css?v=20261102-15">
 </head>
 <body>
   <header class="topbar">
@@ -17,33 +17,48 @@
       <progress id="connection-progress" max="100" value="0" aria-label="BSData 연결 진행률"></progress>
       <div id="data-status" class="data-status" role="status">편성표를 불러오면 BSData와 공통 규칙 연결을 시작합니다.</div>
     </section>
-    <section class="input-panel">
-      <div class="section-heading"><div><p class="eyebrow">1 · 입력</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
-      <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
-      <div class="roster-presets" aria-label="편성표 프리셋">
-        <section class="roster-library-group" aria-label="내 프리셋 슬롯">
-          <label for="roster-preset-select">내 프리셋 · 최대 30개</label>
-          <div class="roster-library-controls"><select id="roster-preset-select"><option value="">저장한 프리셋 없음</option></select><button id="load-roster-preset" class="quiet" type="button">프리셋 불러오기</button><button id="delete-roster-preset" class="quiet" type="button" disabled>삭제</button></div>
-        </section>
-        <section class="roster-library-group" aria-label="최근 편성표">
-          <label for="roster-recent-select">최근 편성표 · 자동 보관 6개</label>
-          <div class="roster-library-controls"><select id="roster-recent-select"><option value="">최근 편성표 없음</option></select><button id="load-roster-recent" class="quiet" type="button">최근 편성표 불러오기</button></div>
-        </section>
-        <div class="roster-preset-save"><input id="roster-preset-name" type="text" maxlength="48" placeholder="저장할 프리셋 이름 (예: 소로리타스 1000점)"><button id="save-roster-preset" class="quiet" type="button">내 프리셋에 저장</button></div>
-        <button id="load-preferred-roster" class="primary roster-default-load" type="button" disabled>기본 편성표 불러오기</button>
-      </div>
-      <div class="actions"><button id="clear-roster" class="quiet" type="button">입력 초기화</button><button id="parse" class="primary">편성표 분석</button></div>
-      <p id="roster-preset-status" class="hint" role="status"></p>
-      <p class="hint">NewRecruit 편성표를 붙여넣거나 기본 편성표를 불러오세요. 기본 불러오기는 내 프리셋을 우선하고, 없으면 최근 편성표를 선택합니다. 모든 데이터는 이 브라우저에 저장됩니다.</p>
-    </section>
     <nav class="view-tabs" aria-label="도구 페이지">
-      <button type="button" class="view-tab active" data-view="datasheets">데이터</button>
+      <button type="button" class="view-tab active" data-view="roster">로스터</button>
+      <button type="button" class="view-tab" data-view="datasheets">데이터</button>
       <button type="button" class="view-tab" data-view="assistant">전투</button>
       <button type="button" class="view-tab" data-view="game">미션</button>
       <button type="button" class="view-tab" data-view="stratagems">스트라타젬</button>
     </nav>
+    <section id="roster-page" class="input-panel roster-page">
+      <section class="roster-library" aria-label="저장된 로스터">
+        <div class="roster-library-heading"><div><b>저장된 로스터</b><small>이 기기에 저장</small></div><button id="open-roster-builder" class="primary" type="button">＋ 로스터 만들기</button></div>
+        <div class="roster-preset-save"><input id="roster-preset-name" type="text" maxlength="48" placeholder="로스터 이름 (예: 스페이스 마린 1000점)"><button id="save-roster-preset" class="quiet" type="button">현재 편성 저장</button></div>
+        <div id="roster-saved-list" class="roster-saved-list"></div>
+      </section>
+      <p id="roster-preset-status" class="hint roster-status" role="status"></p>
+      <details id="roster-import-panel" class="roster-import-panel">
+        <summary>편성표 가져오기 · 붙여넣기 / 직접 편집 <small>NewRecruit 텍스트를 가져오거나 원문을 수정합니다</small></summary>
+        <div class="roster-import-content">
+          <div class="section-heading"><div><p class="eyebrow">ROSTER IMPORT</p><h2>편성표 붙여넣기</h2></div><button id="load-example" class="quiet">예시 불러오기</button></div>
+          <textarea id="roster" spellcheck="false" aria-label="NewRecruit 편성표 텍스트" placeholder="NewRecruit에서 복사한 편성표 텍스트를 여기에 붙여넣으세요"></textarea>
+          <div class="roster-presets" aria-label="편성표 프리셋">
+            <section class="roster-library-group" aria-label="내 프리셋 슬롯"><label for="roster-preset-select">저장 로스터 · 최대 30개</label><div class="roster-library-controls"><select id="roster-preset-select"><option value="">저장한 프리셋 없음</option></select><button id="load-roster-preset" class="quiet" type="button">프리셋 불러오기</button><button id="delete-roster-preset" class="quiet" type="button" disabled>삭제</button></div></section>
+            <section class="roster-library-group" aria-label="최근 편성표"><label for="roster-recent-select">최근 편성표 · 자동 보관 6개</label><div class="roster-library-controls"><select id="roster-recent-select"><option value="">최근 편성표 없음</option></select><button id="load-roster-recent" class="quiet" type="button">최근 편성표 불러오기</button></div></section>
+            <button id="load-preferred-roster" class="primary roster-default-load" type="button" disabled>기본 편성표 불러오기</button>
+          </div>
+          <div class="actions"><button id="clear-roster" class="quiet" type="button">입력 초기화</button><button id="parse" class="primary" type="button">편성표 분석</button></div>
+          <p class="hint">NewRecruit 편성표를 붙여넣고 분석하세요. 최근 편성표는 이 기기에 자동 보관됩니다.</p>
+        </div>
+      </details>
+      <details id="roster-builder" class="roster-builder">
+        <summary>직접 로스터 만들기 <small>진영 → 디테치먼트 → 유닛 순서로 편성</small></summary>
+        <div class="roster-builder-content">
+          <div class="roster-builder-fields"><label>진영<select id="builder-faction"><option value="">진영 선택</option></select></label><label>전장 규모<select id="builder-limit"><option value="500">500점 · 1 DP</option><option value="1000" selected>1000점 · 2 DP</option><option value="1500">1500점 · 3 DP</option><option value="2000">2000점 · 4 DP</option></select></label><button id="builder-load-faction" class="primary" type="button" disabled>진영 자료 불러오기</button></div>
+          <p id="builder-data-status" class="hint" role="status">진영과 전장 규모를 선택한 뒤 자료 불러오기를 누르세요.</p>
+          <section id="builder-detachment-step" class="builder-step" hidden><div class="builder-step-heading"><div><b>1 · 디테치먼트 선택</b><small>전장 규모의 DP 한도 안에서 여러 디테치먼트를 고를 수 있습니다.</small></div></div><div id="builder-detachment-list" class="builder-detachment-list"></div><label id="builder-detachment-manual-wrap" class="builder-manual-detachment" hidden>목록에 없으면 직접 입력<input id="builder-detachment-manual" type="text" placeholder="디테치먼트 이름"></label><div id="builder-detachment-description" class="builder-detachment-description" hidden></div></section>
+          <section id="builder-unit-step" class="builder-step" hidden><div class="builder-step-heading"><div><b>2 · 유닛 추가</b><small>역할별 ＋로 유닛을 채용하고, 편성 항목을 눌러 유닛 관리 화면을 여세요.</small></div></div><div class="builder-workspace"><section class="builder-catalog-pane"><div class="builder-pane-heading"><b>유닛 선택</b><span id="builder-unit-count"></span></div><div class="builder-unit-filters"><input id="builder-unit-search" type="search" placeholder="유닛 이름 또는 키워드 검색" autocomplete="off"><select id="builder-unit-category" aria-label="유닛 역할 필터"><option value="all">모든 역할</option><option value="epicHero">에픽 히어로</option><option value="character">캐릭터</option><option value="battleline">전열</option><option value="transport">전용 수송</option><option value="infantry">보병</option><option value="mounted">기승</option><option value="vehicle">차량</option><option value="monster">몬스터</option><option value="beast">야수</option><option value="swarm">군집</option><option value="aircraft">항공기</option><option value="fortification">요새화</option><option value="other">기타 데이터시트</option></select></div><div id="builder-unit-catalog" class="builder-unit-catalog"></div></section><section class="builder-roster-pane"><div class="builder-pane-heading"><b>채용한 유닛</b><span id="builder-roster-count">0개</span></div><div id="builder-unit-list" class="roster-builder-list"></div></section></div><section id="builder-unit-detail" class="builder-unit-detail" hidden></section></section>
+          <div class="roster-builder-footer"><strong id="builder-total">0 / 1000점 · DP 0 / 2</strong><button id="builder-apply" class="primary" type="button" disabled>초안 만들고 데이터 보기</button></div>
+          <p class="hint">지원 데이터가 있는 유닛은 모델 수를 바꾸면 포인트 구간을 자동 반영합니다. 무장·인핸스먼트·리더/서포트 합류를 편집해 초안에 기록할 수 있습니다. 일부 장비 선택의 인원별 합법성은 원본 데이터가 제한적이므로 데이터시트와 최종 대조가 필요합니다.</p>
+        </div>
+      </details>
+    </section>
     <section id="summary" class="summary" hidden></section>
-    <section id="results" class="results" aria-live="polite"></section>
+    <section id="results" class="results" aria-live="polite" hidden></section>
     <section id="assistant-page" class="assistant-page" hidden aria-live="polite"></section>
     <section id="game-page" class="game-page" hidden aria-live="polite"></section>
     <section id="stratagem-page" class="stratagem-page" hidden aria-live="polite"></section>
@@ -80,6 +95,9 @@
   <script src="workbook-glossary.js"></script>
   <script defer src="approved-translations.js?v=20261024-1"></script>
   <script defer src="stratagem-translations.js?v=20261030-3"></script>
-  <script defer src="app.js?v=20261030-21"></script>
+  <script defer src="roster-builder-wargear-policy.js?v=20261102-6"></script>
+  <script defer src="app.js?v=20261104-1"></script>
+  <script defer src="roster-builder-ui.js?v=20261102-8"></script>
+  <script defer src="roster-builder-official-ui.js?v=20261102-8"></script>
 </body>
 </html>
