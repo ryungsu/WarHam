@@ -505,9 +505,7 @@ rosterList.addEventListener("click", event => {
   }
   const remove = event.target.closest("[data-builder-remove]");
   if (remove) {
-    const removedIndex=Number(remove.dataset.builderRemove);
-    rosterBuilderUnits.splice(removedIndex, 1);
-    rosterBuilderUnits.forEach(entry=>{if(entry.attachedTo===removedIndex)entry.attachedTo=null;else if(Number.isInteger(entry.attachedTo)&&entry.attachedTo>removedIndex)entry.attachedTo--;});
+    rosterBuilderWargearPolicy.removeUnitAndRepairAttachments(rosterBuilderUnits, Number(remove.dataset.builderRemove));
     rosterBuilderSelectedIndex = -1;
     renderRosterBuilderList();
   }

@@ -140,9 +140,10 @@ let appStateRestorePending=false;
 let appStateSaveTimer=0;
 let appScrollSaveTimer=0;
 function validAppState(value){return Boolean(value&&typeof value==="object"&&value.version===1&&typeof value.rosterText==="string"&&value.rosterText.length<=1_500_000);}
+function normalizeAppState(value){return {...value,openCards:Array.isArray(value.openCards)?value.openCards.filter(item=>Number.isInteger(item?.index)&&item.index>=0&&typeof item.name==='string'):[],stratagemDetails:Array.isArray(value.stratagemDetails)?value.stratagemDetails.filter(Number.isInteger):[],activeCard:Number.isInteger(value.activeCard?.index)&&value.activeCard.index>=0&&typeof value.activeCard.name==='string'?value.activeCard:null,scrollY:Number.isFinite(Number(value.scrollY))?Math.max(0,Number(value.scrollY)):0};}
 function readAppState(){
-  for(const key of [APP_STATE_KEY,APP_STATE_BACKUP_KEY])try{const raw=localStorage.getItem(key);if(!raw)continue;const value=JSON.parse(raw);if(validAppState(value))return value;}catch{}
-  try{const fallback=JSON.parse(sessionStorage.getItem(APP_STATE_KEY)||"null");if(validAppState(fallback))return fallback;}catch{}
+  for(const key of [APP_STATE_KEY,APP_STATE_BACKUP_KEY])try{const raw=localStorage.getItem(key);if(!raw)continue;const value=JSON.parse(raw);if(validAppState(value))return normalizeAppState(value);}catch{}
+  try{const fallback=JSON.parse(sessionStorage.getItem(APP_STATE_KEY)||"null");if(validAppState(fallback))return normalizeAppState(fallback);}catch{}
   const empty={version:1,rosterText:"",view:"roster",openCards:[],activeCard:null,scrollY:0,assistantPhase:"",stratagemCategory:"common",stratagemDetachment:"",stratagemDetails:[],quickAssistantOpen:false,quickStratagemOpen:false,rosterImportOpen:false,rosterBuilderOpen:false};
   try{const recent=readRosterPresets().recent.find(item=>typeof item.text==="string"&&item.text.trim());if(recent)return {...empty,rosterText:recent.text,view:"datasheets"};}catch{}
   return empty;
@@ -155,7 +156,7 @@ function captureAppState(){
 }
 function persistAppStateNow(){try{const next=captureAppState(),old=localStorage.getItem(APP_STATE_KEY);if(old)localStorage.setItem(APP_STATE_BACKUP_KEY,old);localStorage.setItem(APP_STATE_KEY,JSON.stringify(next));restoredAppState=next;}catch{try{sessionStorage.setItem(APP_STATE_KEY,JSON.stringify(captureAppState()));}catch{}}}
 function scheduleAppStateSave(){clearTimeout(appStateSaveTimer);appStateSaveTimer=setTimeout(persistAppStateNow,120);}
-function restoreStoredScrollPosition(){const state=restoredAppState;if(!state||!appStateRestorePending)return;requestAnimationFrame(()=>{if(!appStateRestorePending)return;const anchor=state.activeCard,card=anchor&&$("results").querySelector(`[data-unit-card="${anchor.index}"]`);if(card&&(!anchor.name||parseRoster($("roster").value).units[anchor.index]?.rosterName===anchor.name)){const delta=card.getBoundingClientRect().top-(Number(anchor.top)||0);if(Math.abs(delta)>1)window.scrollTo({top:Math.max(0,window.scrollY+delta),behavior:"instant"});}else if(!anchor)window.scrollTo({top:Math.max(0,Number(state.scrollY)||0),behavior:"instant"});});}
+function restoreStoredScrollPosition(){const state=restoredAppState;if(!state||!appStateRestorePending)return;requestAnimationFrame(()=>{if(!appStateRestorePending)return;if(state.view!=="datasheets"){window.scrollTo({top:state.scrollY,behavior:"instant"});return;}const anchor=state.activeCard,card=anchor&&$("results").querySelector(`[data-unit-card="${anchor.index}"]`);if(card&&(!anchor.name||parseRoster($("roster").value).units[anchor.index]?.rosterName===anchor.name)){const delta=card.getBoundingClientRect().top-(Number(anchor.top)||0);if(Math.abs(delta)>1)window.scrollTo({top:Math.max(0,window.scrollY+delta),behavior:"instant"});}else if(!anchor)window.scrollTo({top:Math.max(0,Number(state.scrollY)||0),behavior:"instant"});});}
 function restoreAppStateView(){
   const state=restoredAppState;if(!state)return;
   quickStratagemCategory=["common","faction","mission"].includes(state.stratagemCategory)?state.stratagemCategory:"common";quickStratagemDetachment=typeof state.stratagemDetachment==="string"?state.stratagemDetachment:"";

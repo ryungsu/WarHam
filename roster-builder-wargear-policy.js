@@ -142,7 +142,17 @@
     return existed;
   }
 
-  const api = { selectableOptions, optionsForModel, optionsForGeneralModels, orderModelGroups, modelGroupOffset, normalizeUnitWargearOptions, modelHasConflictingSelection, maxModelsForOption, clearWargearSelection, weaponNameKeys, matchWeaponProfiles };
+  function removeUnitAndRepairAttachments(units, index) {
+    if (!Array.isArray(units) || !Number.isInteger(index) || index < 0 || index >= units.length) return false;
+    units.splice(index, 1);
+    for (const entry of units) {
+      if (entry.attachedTo === index) entry.attachedTo = null;
+      else if (Number.isInteger(entry.attachedTo) && entry.attachedTo > index) entry.attachedTo--;
+    }
+    return true;
+  }
+
+  const api = { selectableOptions, optionsForModel, optionsForGeneralModels, orderModelGroups, modelGroupOffset, normalizeUnitWargearOptions, modelHasConflictingSelection, maxModelsForOption, clearWargearSelection, removeUnitAndRepairAttachments, weaponNameKeys, matchWeaponProfiles };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.rosterBuilderWargearPolicy = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
