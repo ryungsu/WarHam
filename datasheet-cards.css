@@ -1,0 +1,152 @@
+/* Compact datasheet header inspired by the Kill Team operative card. */
+#results .card {
+  border: 1px solid #5a6166;
+  border-bottom: 3px solid #e6783c;
+  border-radius: 16px 16px 5px 5px;
+}
+#results .card-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-rows: auto auto;
+  gap: 3px 7px;
+  align-items: stretch;
+  padding: 6px 10px 9px;
+  border-bottom: 0;
+  background: repeating-linear-gradient(0deg, #fff1 0 1px, transparent 1px 4px), #202124;
+}
+#results .card-head .card-title {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 50px;
+  padding-left: 8px;
+  border-left: 3px solid #e6783c;
+}
+#results .card-head:not(:has(.datasheet-portrait)) { grid-template-columns: minmax(0, 1fr); }
+#results .card-head:not(:has(.datasheet-portrait)) .card-title { padding-right: 18px; }
+#results .card-head .card-title-text { min-width: 0; }
+#results .card-head .datasheet-role {
+  display: block;
+  color: #f4a679;
+  font-size: 9px;
+  line-height: 1.25;
+  letter-spacing: .03em;
+}
+#results .card-head .card-title-text h3 { margin: 2px 0; font-size: clamp(15px, 4vw, 19px); }
+#results .card-head .card-title-text .original {
+  margin: 0;
+  color: #c8c9cb;
+  font-size: 10px;
+  line-height: 1.25;
+}
+#results .card-head .unit-image-search-trigger { display: inline; }
+#results .card-head .unit-image-search-trigger span {
+  display: inline;
+  margin-left: 4px;
+  border: 0;
+  color: #e5a079;
+  font-size: 15px;
+}
+#results .card-head .datasheet-portrait {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 39px;
+  height: 40px;
+  justify-self: end;
+  align-self: end;
+  margin-right: 9px;
+  margin-bottom: 3px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #657787;
+  border-radius: 5px;
+  background: #20272d;
+  cursor: zoom-in;
+}
+#results .card-head .datasheet-portrait img { display: block; width: 100%; height: 100%; object-fit: contain; }
+#results .card-head .datasheet-portrait.remote-photo img,
+#results .card-body .model-profile-photo.remote-photo img { filter: invert(1) hue-rotate(180deg) saturate(1.15); mix-blend-mode: screen; }
+#results .card-head::after {
+  content: "+";
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  grid-column: auto;
+  grid-row: auto;
+  color: #e7f0f6;
+  font-size: 15px;
+}
+#results .card-head[aria-expanded="true"]::after { content: "−"; }
+#results .card-head .card-stat-summary {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3px;
+  margin-top: 2px;
+  min-width: 0;
+}
+#results .card-head .summary-label { display: none; }
+#results .card-head .stat-pill {
+  flex: 1 1 0;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  width: auto;
+  min-width: 0;
+  height: 47px;
+  padding: 4px 1px;
+  border: 1px solid #555658;
+  border-radius: 0;
+  background: #262628;
+}
+#results .card-head .stat-pill b {
+  display: block;
+  color: #f4f4f5;
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+}
+#results .card-head .stat-pill b span { color: #b7b8ba; font-size: 8px; }
+#results .card-head .card-stat-summary:has(> .stat-pill:nth-of-type(8)) .stat-pill b { font-size: 0; }
+#results .card-head .card-stat-summary:has(> .stat-pill:nth-of-type(8)) .stat-pill b span { font-size: 9px; }
+#results .card-head .stat-pill-value {
+  justify-content: center;
+  justify-self: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+#results .card-head .stat-pill-value .stat-icon { width: 12px; height: 12px; stroke: #ed7840; }
+#results .card-head .stat-pill strong { color: #fff; font-size: 17px; }
+#results .card-head .tag { display: none; }
+.datasheet-portrait-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(420px, calc(100vw - 28px));
+  padding: 14px;
+  border: 1px solid #e6783c;
+  border-radius: 12px;
+  background: #1b1d20;
+  color: #f5f6f8;
+}
+.datasheet-portrait-dialog::backdrop { background: #000b; }
+.datasheet-portrait-dialog form { float: right; }
+.datasheet-portrait-dialog form button { padding: 3px 9px; }
+.datasheet-portrait-dialog h2 { margin: 0 36px 10px 0; font-size: 18px; }
+.datasheet-portrait-dialog img { display: block; width: 100%; max-height: 70dvh; object-fit: contain; }
+#results .card-body .model-profile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#results .card-body .model-profile-head .profile-title { min-width: 0; margin: 0; }
+#results .card-body .model-profile-photo { flex: 0 0 38px; width: 38px; height: 38px; padding: 0; overflow: hidden; border: 1px solid #657787; border-radius: 5px; background: #20272d; cursor: zoom-in; }
+#results .card-body .model-profile-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+@media(max-width:420px) {
+  #results .card-head .stat-pill b { font-size: 8px; }
+  #results .card-head .stat-pill b span { font-size: 7px; }
+  #results .card-head .stat-pill strong { font-size: 15px; }
+}

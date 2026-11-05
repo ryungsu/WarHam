@@ -1,0 +1,22 @@
+.app-loading-screen {
+  position: fixed;
+  inset: 0;
+  width: min(420px, calc(100vw - 32px));
+  max-width: none;
+  margin: auto;
+  padding: 26px 24px;
+  border: 1px solid var(--faction-accent, #4b97ee);
+  border-radius: 16px;
+  background: #171f27;
+  color: var(--text, #f4f7fa);
+  box-shadow: 0 24px 64px #0009;
+  text-align: center;
+}
+.app-loading-screen::backdrop { background: #080c11d9; }
+.app-loading-screen h2 { margin: 13px 0 8px; font-size: 19px; line-height: 1.35; }
+.app-loading-screen p { min-height: 2.5em; margin: 0 0 16px; color: var(--muted, #b3bfca); font-size: 13px; line-height: 1.55; }
+.app-loading-screen progress { display: block; width: 100%; height: 8px; accent-color: var(--faction-accent, #4b97ee); }
+.app-loading-screen small { display: block; margin-top: 13px; color: var(--muted, #b3bfca); font-size: 11px; }
+.app-loading-mark { width: 29px; height: 29px; margin: 0 auto; border: 3px solid #ffffff38; border-top-color: var(--faction-accent, #4b97ee); border-radius: 50%; animation: app-loading-turn .85s linear infinite; }
+@keyframes app-loading-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .app-loading-mark { animation: none; } }

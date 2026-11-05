@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261104-1">
+  <link rel="stylesheet" href="styles.css?v=20261105-1">
+  <link rel="stylesheet" href="app-loading.css?v=20261105-1">
+  <link rel="stylesheet" href="datasheet-cards.css?v=20261105-4">
 </head>
 <body>
   <header class="topbar">
@@ -91,13 +93,22 @@
       </section>
     </details>
   </main>
+  <dialog id="app-loading-screen" class="app-loading-screen" aria-labelledby="app-loading-title" aria-describedby="app-loading-message">
+    <div class="app-loading-mark" aria-hidden="true"></div>
+    <h2 id="app-loading-title">전투 자료를 준비하고 있습니다</h2>
+    <p id="app-loading-message" role="status">로스터와 규칙을 연결하는 중입니다.</p>
+    <progress id="app-loading-progress" max="100" aria-label="자료 연결 진행률"></progress>
+    <small>연결이 끝나면 자동으로 화면이 열립니다.</small>
+  </dialog>
   <footer>원문 데이터와 번역은 분리해 관리합니다. <a href="https://github.com/BSData/wh40k-11e" target="_blank" rel="noreferrer">11판 BSData</a> · <a href="https://github.com/wn-mitch/40kdc-data" target="_blank" rel="noreferrer">Powered by 40kdc-data</a> · <a href="https://github.com/Locequen/40k-Data-Card" target="_blank" rel="noreferrer">40k Data Card 아이콘 참고</a> · 판본을 확인한 뒤 사용하세요.</footer>
   <script src="workbook-glossary.js"></script>
   <script defer src="approved-translations.js?v=20261024-1"></script>
   <script defer src="stratagem-translations.js?v=20261030-3"></script>
   <script defer src="roster-builder-wargear-policy.js?v=20261104-1"></script>
   <script defer src="app-data-cache.js?v=20261104-3"></script>
-  <script defer src="app.js?v=20261104-3"></script>
+  <script defer src="datasheet-images.generated.js?v=20261105-1"></script>
+  <script defer src="datasheet-images.js?v=20261105-2"></script>
+  <script defer src="app.js?v=20261105-8"></script>
   <script defer src="roster-builder-ui.js?v=20261104-1"></script>
   <script defer src="roster-builder-official-ui.js?v=20261104-2"></script>
 </body>
