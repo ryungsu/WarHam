@@ -3,7 +3,45 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');const vm=require('node:vm');
 const {createCache}=require('../app-data-cache.js');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
-function parser(){const context=vm.createContext({FACTION_ALIASES:[],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase(),normalizeMatchName:s=>String(s).toLowerCase().trim(),normalizeLoadoutText:s=>String(s).toLowerCase(),splitEnhancementNames:s=>[s],parseRosterModelLoadoutLine:()=>null,findDataUnit:()=>null});vm.runInContext(source.slice(source.indexOf('function parseRoster(text)'),source.indexOf('const sessionUnitMatches='))+source.slice(source.indexOf('function rosterAttachmentParents('),source.indexOf('function rosterUnitRenderOrder(')),context);return context;}
+function parser(){const context=vm.createContext({FACTION_ALIASES:[],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase().replace(/[^\p{L}\p{N}]/gu,''),normalizeMatchName:s=>String(s).toLowerCase().trim(),normalizeLoadoutText:s=>String(s).toLowerCase(),splitEnhancementNames:s=>[s],parseRosterModelLoadoutLine:()=>null,findDataUnit:()=>null});vm.runInContext(source.slice(source.indexOf('function parseRoster(text)'),source.indexOf('const sessionUnitMatches='))+source.slice(source.indexOf('function rosterAttachmentParents('),source.indexOf('function rosterUnitRenderOrder(')),context);return context;}
+test('roster import preserves Scout specialists and enhancements',()=>{
+  const context=vm.createContext({FACTION_ALIASES:[['Space Marines','Imperium - Space Marines.json']],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,''),normalizeLoadoutText:s=>String(s).toLowerCase()});
+  vm.runInContext(source.slice(source.indexOf('function splitEnhancementNames('),source.indexOf('const sessionUnitMatches=')),context);
+  const roster='FACTION KEYWORD: Space Marines\n1x Ballistus Dreadnought (190 points)\nEnhancement: Artificer Sarcophagus (Upgrade) (+40 points)\n5x Scout Squad (65 points)\n• 1x Scout Sergeant: Bolt pistol, Chainsword, Boltgun\n• 4x Scout\n    1 with Bolt pistol, Combat Knife, Missile Launcher\n    1 with Bolt pistol, Combat Knife, Sniper Rifle\n    2 with Bolt pistol, Combat Knife, Shotgun';
+  const parsed=context.parseRoster(roster);
+  assert.deepEqual(Array.from(parsed.units[0].enhancements),['Artificer Sarcophagus (Upgrade) (+40 points)']);
+  assert.equal(parsed.units[1].modelLoadouts.length,4);
+  assert.deepEqual(Array.from(parsed.units[1].modelLoadouts.slice(1),group=>[group.models,group.items.at(-1).name]),[[1,'Missile Launcher'],[1,'Sniper Rifle'],[2,'Shotgun']]);
+});
+test('Space Marine roster keeps faction with a bulleted header or a Scout-only excerpt',()=>{
+  const c=parser();
+  assert.equal(c.parseRoster('- FACTION KEYWORD: Imperium - Adeptus Astartes - Ultramarines\n5x Scout Squad (65 points)').meta.faction,'Imperium - Adeptus Astartes - Ultramarines');
+  assert.equal(c.parseRoster('5x Scout Squad (65 points)\n• 1x Scout Sergeant: Bolt pistol, Chainsword, Boltgun').meta.faction,'Adeptus Astartes');
+});
+test('generic Space Marines roster loads Ultramarines epic heroes from chapter catalogue',()=>{
+  const context=vm.createContext({FACTION_ALIASES:[['Space Marines','Imperium - Space Marines.json']],CATALOGUE_FILES:[],norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'')});
+  vm.runInContext(source.slice(source.indexOf('function rosterChapterFile('),source.indexOf('function fetchBsDataFile(')),context);
+  assert.deepEqual(Array.from(context.catalogueFilesForFaction('Space Marines',[{rosterName:'Captain Titus'},{rosterName:'Infernus Squad'}])),['Imperium - Space Marines.json','Imperium - Ultramarines.json']);
+  assert.deepEqual(Array.from(context.catalogueFilesForFaction('Space Marines',[{rosterName:'Scout Squad'}])),['Imperium - Space Marines.json']);
+});
+test('saved enhancement point suffix does not prevent matching its rule',()=>{
+  const context=vm.createContext({norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'')});
+  vm.runInContext(source.slice(source.indexOf('function stripRosterEnhancementSuffixes('),source.indexOf('function rosterEnhancementMatch(')),context);
+  assert.equal(context.normalizeRosterEnhancementName('Artificer Sarcophagus (Upgrade) (+40 points)'),context.normalizeRosterEnhancementName('Artificer Sarcophagus (Upgrade)'));
+});
+test('model weapons match whole names and keep Sergeant melee choices separate',()=>{
+  const context=vm.createContext({weaponName:s=>s,translateTerms:s=>s,profileDisplayName:p=>p.name});
+  vm.runInContext(source.slice(source.indexOf('function normalizeLoadoutText('),source.indexOf('function replaceRosterWeaponChoice('))+source.slice(source.indexOf('function weaponLoadoutAssignments('),source.indexOf('function rosterUnitAttackBuffs(')),context);
+  const chainsword={name:'Astartes Chainsword',typeName:'Melee Weapons'};
+  const crafted={name:'Master-crafted Chainsword',typeName:'Melee Weapons'};
+  const hammer={name:'Thunder Hammer',typeName:'Melee Weapons'};
+  const profiles=[chainsword,crafted,hammer];
+  assert.equal(context.weaponRosterItemMatches(crafted,'명장제조 체인소드',profiles),true);
+  assert.equal(context.weaponRosterItemMatches(chainsword,'명장제조 체인소드',profiles),false);
+  const roster={modelLoadouts:[{name:'Assault Intercessor Sergeant',models:1,items:[{name:'Thunder Hammer',count:1}]},{name:'Assault Intercessors',models:4,items:[{name:'Astartes Chainsword',count:4}]}]};
+  assert.equal(context.weaponLoadoutAssignments(hammer,roster,5,profiles)[0].name,'Assault Intercessor Sergeant');
+  assert.equal(context.weaponLoadoutAssignments(chainsword,roster,5,profiles)[0].name,'Assault Intercessors');
+});
 test('Leading and Supporting imports produce character-to-squad links',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Captain Titus (115 points)\nLeading Infernus Squad\n1x Lieutenant (50 points)\nSupporting Assault Intercessor Squad\n5x Infernus Squad (95 points)\n5x Assault Intercessor Squad (85 points)');const links=c.rosterAttachmentParents(parsed.units);assert.equal(links.get(0),2);assert.equal(links.get(1),3);});
 test('explicit target index distinguishes identical squads',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached to: Intercessor Squad\n• Attached as: Support\n• Attached to index: 3\n5x Intercessor Squad (85 points)\n5x Intercessor Squad (85 points)');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),2);});
 test('reverse Attached to character keeps squad as host',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached as: Support\n5x Intercessor Squad (85 points)\nAttached to Lieutenant');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),1);});

@@ -841,11 +841,19 @@ function builderFindDetachmentIndex(name) {
 function builderRestoreLoadout(entry, parsedUnit) {
   initializeBuilderModelGroups(entry);
   if (entry.unit.modelGroups?.length && parsedUnit.modelLoadouts?.length) {
-    const records = parsedUnit.modelLoadouts.map(loadout => ({ loadout, group: entry.unit.modelGroups.find(model =>
-        normalizeMatchName(model.name) === normalizeMatchName(loadout.name) ||
-        normalizeMatchName(model.name).includes(normalizeMatchName(loadout.name)) ||
-        normalizeMatchName(loadout.name).includes(normalizeMatchName(model.name))
-      ) })).filter(record => record.group);
+    const records = parsedUnit.modelLoadouts.map(loadout => {
+      // Variant labels include their weapons ("Scout · Bolt pistol + ...").
+      // Resolve the model name before matching so "Scout" never consumes a
+      // Sergeant's loadout merely because both names contain "Scout".
+      const baseName = String(loadout.name || "").split(/\s+·\s+/)[0].trim();
+      const baseKey = normalizeMatchName(baseName);
+      const exact = entry.unit.modelGroups.find(model => normalizeMatchName(model.name) === baseKey);
+      const group = exact || entry.unit.modelGroups.find(model =>
+        /sergeant|sergent|서전트/i.test(model.name) === /sergeant|sergent|서전트/i.test(baseName) &&
+        normalizeMatchName(baseName).includes(normalizeMatchName(model.name))
+      );
+      return { loadout, group };
+    }).filter(record => record.group);
     const counts = Object.fromEntries(entry.unit.modelGroups.map(group => [String(group.id || group.name), Number(group.min) || 0]));
     const recordedCounts = {};
     records.forEach(({ loadout, group }) => {
@@ -930,7 +938,7 @@ async function editSavedRosterInBuilder(savedId) {
   $("builder-data-status").textContent = "저장 로스터 자료를 불러오는 중입니다…";
   $("roster-builder").open = true;
   try {
-    await loadRulesData({ faction });
+    await loadRulesData({ faction, rosterUnits: parsed.units });
     rosterBuilderDetachments = await loadBuilderDetachments(faction);
     const detachmentText = String(parsed.meta.detachment || "").replace(/^\s*DETACHMENT\s*:\s*/i, "")
       .replace(/\s*\(\s*\d+\s*(?:detachment\s*points?|DPs?|디테치먼트\s*포인트)\s*\)\s*$/i, "");
@@ -965,8 +973,8 @@ async function editSavedRosterInBuilder(savedId) {
       if (enhancementName) {
         const enhancementOptions = builderOptionsForEnhancement(entry);
         entry.enhancement = enhancementOptions.find(option =>
-          normalizeMatchName(localizedRuleValue(option.name, "en") || "") === normalizeMatchName(enhancementName) ||
-          normalizeMatchName(localizedRuleValue(option.name, "ko") || "") === normalizeMatchName(enhancementName)
+          normalizeRosterEnhancementName(localizedRuleValue(option.name, "en") || "") === normalizeRosterEnhancementName(enhancementName) ||
+          normalizeRosterEnhancementName(localizedRuleValue(option.name, "ko") || "") === normalizeRosterEnhancementName(enhancementName)
         ) || null;
       }
       entry._savedAttachName = parsedUnit.attachedTo || "";

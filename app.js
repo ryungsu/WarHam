@@ -219,7 +219,8 @@ function parseRoster(text) {
     const attachedToLine=line.match(/^(?:[•●▪*◦○◆-]\s*)?Attached to\s*:?\s*(.+)$/i);if(attachedToLine&&currentUnit){currentUnit.attachedTo=attachedToLine[1].trim();continue;}
     const attachedRoleLine=line.match(/^(?:[•●▪*◦○◆-]\s*)?Attached as\s*:?\s*(Leader|Bodyguard|Support|리더|경호원|지원)\b/i);if(attachedRoleLine&&currentUnit){currentUnit.attachedAs=attachedRoleLine[1];continue;}
     const unbulletedWithLine=line.match(/^(\d+)\s+with\s+(.+)$/i);if(currentUnit&&currentModelLoadout&&unbulletedWithLine){currentModelLoadout.withVariants||=[];currentModelLoadout.withVariants.push({models:Math.min(currentModelLoadout.models,Number(unbulletedWithLine[1])||1),items:parseRosterEquipmentItems(unbulletedWithLine[2],Number(unbulletedWithLine[1])||1)});continue;}
-    for (const [re,key] of headerRules) { const m=line.match(re); if(m) meta[key]=m[1].trim(); }
+    const headerLine=line.replace(/^[-•●▪*◦○◆]\s*/,"");
+    for (const [re,key] of headerRules) { const m=headerLine.match(re); if(m) meta[key]=m[1].trim(); }
     const detachmentLine=line.match(/^(.+?)\s*\(\s*\d+\s*(?:디태치먼트\s*포인트|detachment\s*points?)\s*\)$/i);if(detachmentLine&&!meta.detachment)meta.detachment=detachmentLine[1].trim();
     const totalLine=line.match(/^\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)$/i);if(totalLine&&!meta.points)meta.points=totalLine[1];
     const gameSizeLine=line.match(/^(.+?)\s*\(\s*(\d+)\s*(?:포인트|points?|pts?)\s*\)$/i);if(gameSizeLine&&/^(?:급습|대규모|incursion|strike\s*force|onslaught)$/i.test(gameSizeLine[1].trim()))meta.gameSize=Number(gameSizeLine[2]);
@@ -241,6 +242,11 @@ function parseRoster(text) {
     }
   }
   for(const unit of units){if(!unit.count){const inferred=unit.modelCounts.reduce((sum,n)=>sum+n,0),fallback=Math.max(0,...unit.equipmentLines.map(x=>Number(x.match(/^(\d+)x\s+/i)?.[1]||0)));unit.count=inferred||fallback||1;}delete unit.modelCounts;if(!unit.modelLoadouts.length){unit.modelLoadouts=(unit.equipmentLines||[]).map(line=>parseRosterModelLoadoutLine(line,unit.count)).filter(group=>group?.items?.length);}const expanded=[];for(const group of unit.modelLoadouts){if(!group.withVariants?.length){expanded.push(group);continue;}const variantSets=group.withVariants.map(variant=>new Set(variant.items.map(item=>normalizeLoadoutText(item.name)))),common=new Set([...variantSets[0]].filter(name=>variantSets.every(set=>set.has(name))));group.withVariants.forEach((variant,index)=>{const unique=variant.items.filter(item=>!common.has(normalizeLoadoutText(item.name))).map(item=>item.name),label=unique.length?unique.join(" + "): `장비 구성 ${index+1}`,name=`${group.name} · ${label}`;expanded.push({name,models:variant.models,items:variant.items});});const assigned=group.withVariants.reduce((sum,variant)=>sum+variant.models,0),remaining=Math.max(0,group.models-assigned);if(remaining)expanded.push({name:group.name,models:remaining,items:group.items||[]});}unit.modelLoadouts=expanded;}
+  if(!meta.faction){
+    const names=units.map(unit=>norm(unit.rosterName));
+    if(names.some(name=>/^(?:captaintitus|wardensofultramar|robouteguilliman)$/.test(name)))meta.faction="Ultramarines";
+    else if(names.some(name=>/^(?:scoutsquad|infernussquad|intercessorsquad|assaultintercessorsquad|ballistusdreadnought|brutalisdreadnought)$/.test(name)))meta.faction="Adeptus Astartes";
+  }
   if(!meta.points&&units.length)meta.points=String(units.reduce((sum,unit)=>sum+unit.points,0));
   return {meta, units};
 }
@@ -310,16 +316,24 @@ function approvedRuleTranslation(name,source,identity={}){
   if(unique.size!==1)return "";
   return unique.values().next().value.translation;
 }
+let termTranslationRevision=0,compiledTermTranslationRevision=-1,compiledTermTranslations=[];
+const translatedTermResults=new Map();
 function translateTerms(s=""){
+  if(compiledTermTranslationRevision===termTranslationRevision&&translatedTermResults.has(s))return translatedTermResults.get(s);
   let out=s.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");
-  const curatedKeys=new Set([...translations,...abilityTranslations,...termTranslations].map(([en])=>textKey(en)));
-  const reviewedWorkbookTerms=[...workbook40kTranslations].filter(([en])=>!curatedKeys.has(textKey(en)));
-  const pairs=[...new Map([...reviewedWorkbookTerms,...translations,...abilityTranslations,...termTranslations,...v2LabelTranslations].map(([en,ko])=>[textKey(en),[en,ko]])).values()].sort((a,b)=>b[0].length-a[0].length);
-  for(const [en,ko] of pairs){
-    const escaped=en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s+").replace(/-/g,"[-‐‑‒–—]").replace(/'/g,"['’‘]");
-    const bounded=new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`,"giu");
-    out=out.replace(bounded,(_,prefix)=>`${prefix}${ko}`);
+  if(compiledTermTranslationRevision!==termTranslationRevision){
+    translatedTermResults.clear();
+    const curatedKeys=new Set([...translations,...abilityTranslations,...termTranslations].map(([en])=>textKey(en)));
+    const reviewedWorkbookTerms=[...workbook40kTranslations].filter(([en])=>!curatedKeys.has(textKey(en)));
+    const pairs=[...new Map([...reviewedWorkbookTerms,...translations,...abilityTranslations,...termTranslations,...v2LabelTranslations].map(([en,ko])=>[textKey(en),[en,ko]])).values()].sort((a,b)=>b[0].length-a[0].length);
+    compiledTermTranslations=pairs.map(([en,ko])=>{
+      const escaped=en.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/ /g,"\\s+").replace(/-/g,"[-‐‑‒–—]").replace(/'/g,"['’‘]");
+      return [new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`,"giu"),ko];
+    });
+    compiledTermTranslationRevision=termTranslationRevision;
   }
+  for(const [bounded,ko] of compiledTermTranslations)out=out.replace(bounded,(_,prefix)=>`${prefix}${ko}`);
+  if(translatedTermResults.size<10000)translatedTermResults.set(s,out);
   return out;
 }
 function bilingualLabel(s=""){const ko=translateTerms(s);return ko!==s?`${ko} (${s})`:s;}
@@ -645,10 +659,17 @@ function adaptBsData(raw,edition="11판",file="",relatedRaw=[]){
   });
   return {edition,source:`BSData · ${file}`,sourceVersion:`저장소 revision ${c.revision??"현재"}`,units};
 }
-function catalogueFilesForFaction(faction=""){
+function rosterChapterFile(faction="",rosterUnits=[]){
+  const key=norm(faction),generic=/adeptusastartes|spacemarines/.test(key)&&!/ultramarines|bloodangels|darkangels|blacktemplars|spacewolves|deathwatch|imperialfists|ironhands|ravenguard|salamanders|whitescars/.test(key);
+  if(!generic)return "";
+  const names=(rosterUnits||[]).map(unit=>norm(unit.rosterName||unit.name||""));
+  const ultramarines=new Set(["captaintitus","lieutenanttitus","wardensofultramar","marneuscalgar","robouteguilliman","catosicarius","urielventris","tigurius","chieflibrariantigurius","캡틴타이투스","루테넌트타이투스","로부테길리먼","마르네우스칼가","우리엘벤트리스","카토시카리우스"]);
+  return names.some(name=>ultramarines.has(name))?"Imperium - Ultramarines.json":"";
+}
+function catalogueFilesForFaction(faction="",rosterUnits=[]){
   const key=norm(faction),matched=FACTION_ALIASES.find(([alias])=>key.includes(norm(alias)));
   if(/티라니드|타이라니드/.test(faction))return ["Tyranids.json"];
-  if(matched)return matched.slice(1);
+  if(matched)return [...new Set([...matched.slice(1),rosterChapterFile(faction,rosterUnits)].filter(Boolean))];
   const fallback=CATALOGUE_FILES.find(file=>key.includes(norm(file.replace(/\.json$/i,"").replace(/^(Imperium|Chaos|Aeldari)\s*-\s*/i,""))));
   return fallback?[fallback]:[];
 }
@@ -694,7 +715,7 @@ function updateDataConnectionProgress(value,message,state="loading"){
   if(rulesLoadingToken&&appLoadingTasks.has(rulesLoadingToken))refreshAppLoadingScreen();
 }
 async function loadRulesData(meta=parseRoster($("roster").value).meta){
-  const files=catalogueFilesForFaction(meta.faction||"");
+  const files=catalogueFilesForFaction(meta.faction||"",meta.rosterUnits||[]);
   if(!files.length){currentConnectionProgress=0;const requestToken=++catalogueLoadToken;activeCatalogueKey="";db={edition:"11판",source:"BSData 공개 저장소",sourceVersion:"진영 미확인",units:[]};updateDataConnectionProgress(8,`진영 데이터 파일을 특정하지 못했습니다: ${meta.faction||"진영 정보 없음"}. 공통 규칙 연결 중…`);try{const coreRaw=await loadCoreRulesFile();if(requestToken!==catalogueLoadToken)return;sourceRuleDescriptions.clear();sourceRuleDescriptionsById.clear();indexRuleDescriptions(coreRaw);updateDataConnectionProgress(100,"공통 규칙 연결됨 · 진영 편성표를 불러오면 카탈로그를 연결합니다.","ready");}catch(error){if(requestToken!==catalogueLoadToken)return;updateDataConnectionProgress(100,`진영 식별 실패 · 공통 규칙 연결도 실패 (${error?.message||"네트워크 오류"})`,"error");}render();return;}
   const key=files.join("|");if(key===activeCatalogueKey)return;currentConnectionProgress=0;activeCatalogueKey=key;const requestToken=++catalogueLoadToken;db={edition:"11판",source:`BSData · ${files.map(x=>x.replace(/\.json$/i,"")).join(" + ")}`,sourceVersion:"불러오는 중",units:[]};updateDataConnectionProgress(4,`11판 BSData 카탈로그 ${files.length}개와 공통 규칙 연결을 시작합니다…`);render();
   let rootDone=0;const rootResults=await Promise.all(files.map(async file=>{try{return {file,raw:await fetchBsDataFile(file)}}catch(error){return {file,error}}finally{rootDone++;updateDataConnectionProgress(8+Math.round(10*rootDone/files.length),`진영 카탈로그 확인 중 · ${rootDone}/${files.length}개 완료`);}}));if(requestToken!==catalogueLoadToken)return;
@@ -708,7 +729,7 @@ async function loadRulesData(meta=parseRoster($("roster").value).meta){
 }
 const loadRulesDataBase=loadRulesData;let pendingRulesLoad=null;
 loadRulesData=function(meta=parseRoster($("roster").value).meta){
-  const key=catalogueFilesForFaction(meta.faction||"").join('|');
+  const key=catalogueFilesForFaction(meta.faction||"",meta.rosterUnits||[]).join('|');
   if(pendingRulesLoad?.key===key)return pendingRulesLoad.promise;
   if(key===activeCatalogueKey&&db.units.length)return loadRulesDataBase(meta);
   if(key===activeCatalogueKey&&!db.units.length)activeCatalogueKey='';
@@ -754,6 +775,7 @@ async function loadCoreStratagems(){
     coreStratagems=Array.from(new Map(all.filter(x=>!x.noCp&&x.name).map(x=>[x.id?`${x.isCore?"core":"faction"}|${x.id}`:`${norm(localizedRuleValue(x.name,"en")||x.name)}|${x.cp??x.cost}`,{...x,name:localizedRuleValue(x.name,"en")||x.name,nameKo:x.nameKo||localizedRuleValue(x.name,"ko"),cp:x.cp??x.cost}])).values());
     stratagemLoadStatus=coreStratagems.length?`연결 완료 · ${coreStratagems.filter(isCommonStratagem).length}개 공통${factionStratagemCount?` + 선택 편제 ${factionStratagemCount}개`:""}`:commonSourceCount?"연결 실패 · 공용 Core 항목에서 표시할 CP 스트라타젬을 찾지 못했습니다.":`연결 실패 · ${lastError?.message||"공용 Core 데이터가 비어 있습니다. 다시 연결해 주세요."}`;
     renderQuickStratagemNav();if($("stratagem-page")&&!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();if($("assistant-page")&&!$("assistant-page").hidden)$("assistant-page").innerHTML=renderAssistantPage(parseRoster($("roster").value));
+    if($("results").querySelector('.card-head[aria-expanded="true"]')&&parseRoster($("roster").value).units.some(unit=>unit.enhancements.length))render();
   }catch(error){
     if(requestToken!==stratLoadToken)return;coreStratagems=[];factionStratagemCount=0;factionDatasets=[];factionArmyRules=[];factionDetachmentCatalog=[];factionEnhancements=[];detachmentRules=[];detachmentRulesStatus=error?.message||"네트워크 또는 데이터 형식 오류";stratagemLoadStatus=`연결 실패 · ${error?.message||"네트워크 또는 데이터 형식 오류"}`;console.warn("Stratagem data load failed",error);renderQuickStratagemNav();if($("stratagem-page")&&!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();
   }
@@ -771,6 +793,7 @@ function applyV2TranslationPayload(payload,replace=false){
       const idKey=ruleIdentityKey(item.id);if(idKey){const records=v2RuleTranslationsById.get(idKey)||[],recordKey=entry=>`${sourceFileKey(entry.file)}|${textKey(entry.kind)}|${ruleFeedKey(entry.name,entry.source)}`,existing=records.findIndex(entry=>recordKey(entry)===recordKey(item));if(existing>=0)records[existing]=item;else records.push(item);v2RuleTranslationsById.set(idKey,records);}
     }
   }
+  termTranslationRevision++;
   return payload.translations.length;
 }
 const bundledTranslationCount=applyV2TranslationPayload(window.WARHAMMER_APPROVED_TRANSLATIONS,true);
@@ -813,10 +836,17 @@ function weaponRosterAliases(name=""){
     "pyreblaster":["파이어블래스터","파이어 블래스터","파이어블라스터","파이어 블라스터","파이어 블래스터"],
     "close combat weapon":["근접 무기","근접전 무기"]
   };
-  return aliases[key]||[];
+  return Object.entries(aliases).find(([name])=>normalizeLoadoutText(name)===key)?.[1]||[];
 }
 function weaponLabels(profile){const names=[profile?.name,weaponBaseName(profile),weaponName(profile?.name||""),weaponName(weaponBaseName(profile)),weaponName(profile?.name||"").match(/^(.+?)\s+\([^)]+\)$/)?.[1],weaponName(weaponBaseName(profile)).match(/^(.+?)\s+\([^)]+\)$/)?.[1],translateTerms(profile?.name||""),translateTerms(weaponBaseName(profile)),profileDisplayName(profile),...weaponRosterAliases(profile?.name||"")];return [...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);}
 function loadoutHasWeaponLabels(loadout,labels){const padded=` ${normalizeLoadoutText(loadout)} `;return labels.map(normalizeLoadoutText).filter(label=>/[가-힣]/.test(label)?label.replace(/\s/g,"").length>=2:label.length>=4).some(label=>padded.includes(` ${label} `));}
+function weaponRosterItemMatches(profile,item,profileSet=[]){
+  const value=normalizeLoadoutText(item);
+  if(!value)return false;
+  const variants=[profile,...profileSet.filter(candidate=>candidate!==profile&&normalizeLoadoutText(weaponBaseName(candidate))===normalizeLoadoutText(weaponBaseName(profile)))];
+  const names=[...weaponLabels(profile),...weaponRosterAliases(weaponBaseName(profile)),...variants.map(weaponBaseName)];
+  return names.some(name=>normalizeLoadoutText(name)===value);
+}
 function weaponIsEquipped(profile,loadout,profileSet=[]){
   if(!loadout)return false;
   const variant=String(profile?.name||"").match(/^(.+?)\s+-\s+(.+)$/),base=weaponBaseName(profile);
@@ -899,7 +929,7 @@ function rosterUnitRenderOrder(units){
   return order;
 }
 function weaponEquippedModelCount(profile,rosterUnit,unitCount,profileSet=[]){
-  const assignments=(rosterUnit.modelLoadouts||[]).flatMap(group=>group.items.filter(item=>weaponIsEquipped(profile,item.name,profileSet)).map(item=>({group,count:item.count})));
+  const assignments=(rosterUnit.modelLoadouts||[]).flatMap(group=>group.items.filter(item=>weaponRosterItemMatches(profile,item.name,profileSet)).map(item=>({group,count:item.count})));
   if(assignments.length)return Math.min(Math.max(1,Number(unitCount)||1),assignments.reduce((sum,item)=>sum+item.count,0));
   const lines=[rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].map(line=>String(line||"").trim()).filter(Boolean);
   const uniqueLines=[...new Set(lines)],matching=uniqueLines.filter(line=>weaponIsEquipped(profile,line,profileSet));
@@ -928,7 +958,7 @@ function weaponLoadoutAssignments(profile,rosterUnit,unitCount,profileSet=[]){
   const groups=rosterUnit.modelLoadouts||[];
   if(groups.length){
     const matched=new Map();
-    for(const group of groups)for(const item of group.items)if(weaponIsEquipped(profile,item.name,profileSet)){const key=normalizeLoadoutText(group.name),prior=matched.get(key);matched.set(key,{name:group.name,models:group.models,count:(prior?.count||0)+item.count});}
+    for(const group of groups)for(const item of group.items)if(weaponRosterItemMatches(profile,item.name,profileSet)){const key=normalizeLoadoutText(group.name),prior=matched.get(key);matched.set(key,{name:group.name,models:group.models,count:(prior?.count||0)+item.count});}
     return [...matched.values()];
   }
   const gear=[rosterUnit.equipment||"",...(rosterUnit.equipmentLines||[])].join(" ");
@@ -941,7 +971,7 @@ function weaponProfilesLoadoutAssignments(profiles,rosterUnit,unitCount,profileS
 }
 function unmatchedRosterWeapons(rosterUnit,profiles,profileSet=[]){
   const groups=rosterUnit.modelLoadouts||[],matched=new Set();
-  for(const profile of profiles)for(const group of groups)for(const item of group.items)if(weaponIsEquipped(profile,item.name,profileSet))matched.add(`${group.name}|${normalizeLoadoutText(item.name)}`);
+  for(const profile of profiles)for(const group of groups)for(const item of group.items)if(weaponRosterItemMatches(profile,item.name,profileSet))matched.add(`${group.name}|${normalizeLoadoutText(item.name)}`);
   return groups.flatMap(group=>group.items.filter(item=>!matched.has(`${group.name}|${normalizeLoadoutText(item.name)}`)).map(item=>({...item,group:group.name,models:group.models})));
 }
 function rosterUnitAttackBuffs(units,attachmentParents,unitIndex){
@@ -996,9 +1026,9 @@ function renderRuleEffectSummary(unit){
   return `<section class="effect-summary"><h4>효과 빠른 확인</h4>${effects.map(x=>`<article><strong>${escapeHtml(x.title)}</strong><p>${escapeHtml(x.detail)}</p><small>원문: ${escapeHtml(x.source)}</small></article>`).join("")}</section>`;
 }
 function updateUnitQuickNav(parsed){
-  const nav=$("unit-quick-nav"),list=$("unit-quick-nav-list");list.replaceChildren();$("quick-assistant-content").innerHTML=renderQuickAssistant(parsed);renderQuickStratagemNav();
+  const nav=$("unit-quick-nav"),list=$("unit-quick-nav-list");list.replaceChildren();if($("quick-assistant").open)$("quick-assistant-content").innerHTML=renderQuickAssistant(parsed);if($("quick-stratagem-nav").open)renderQuickStratagemNav();
   const navBody=$("unit-quick-nav-body"),collapseButton=$("unit-quick-nav-collapse");navBody.hidden=quickNavCollapsed;nav.classList.toggle("is-collapsed",quickNavCollapsed);collapseButton.setAttribute("aria-expanded",String(!quickNavCollapsed));collapseButton.setAttribute("aria-label",quickNavCollapsed?"전투 메뉴 펼치기":"전투 메뉴 접기");collapseButton.querySelector("span").textContent=quickNavCollapsed?"☰":"×";
-  const allTasks=makeAssistantTasks(parsed);$("quick-assistant-count").textContent=allTasks.length?`${allTasks.length}개 규칙`:"";
+  $("quick-assistant-count").textContent=$("quick-assistant").open?$("quick-assistant-count").textContent:"";
   if(!parsed.units.length){nav.hidden=true;return;}
   const parentByChild=rosterAttachmentParents(parsed.units);
   const childrenByParent=new Map();for(const [child,parent] of parentByChild){if(!childrenByParent.has(parent))childrenByParent.set(parent,[]);childrenByParent.get(parent).push(child);}
@@ -1009,7 +1039,9 @@ function updateUnitQuickNav(parsed){
 }
 function renderRosterEquipment(unit){
   const items=[...(unit.equipment?unit.equipment.split(/,(?![^()]*\))/).map(s=>s.trim()).filter(Boolean):[]),...(unit.equipmentLines||[])];
-  return `<section class="roster-gear"><b>편성 장비</b>${items.length?`<ul>${items.map(x=>`<li>${escapeHtml(bilingualLabel(x))}</li>`).join("")}</ul>`:"<div>목록에 장비 정보 없음</div>"}</section>`;
+  const models=(unit.modelLoadouts||[]).filter(group=>group.items?.length);
+  const modelList=models.map(group=>`<li><strong>${escapeHtml(group.name)} · ${group.models}개체</strong><small>${group.items.map(item=>`${escapeHtml(bilingualLabel(item.name))}${item.count!==group.models?` ${item.count}개체`:""}`).join(" · ")}</small></li>`).join("");
+  return `<section class="roster-gear"><b>편성 모델 · 장비</b>${models.length?`<ul class="roster-model-loadouts">${modelList}</ul>`:items.length?`<ul>${items.map(x=>`<li>${escapeHtml(bilingualLabel(x))}</li>`).join("")}</ul>`:"<div>목록에 장비 정보 없음</div>"}</section>`;
 }
 const ENHANCEMENT_CHARACTERISTICS={attacks:"A",attack:"A",strength:"S",damage:"D",range:"Range",ap:"AP","armour penetration":"AP","armor penetration":"AP","weapon skill":"WS","ballistic skill":"BS",move:"M",movement:"M",toughness:"T",wound:"W",wounds:"W",save:"Sv","invulnerable save":"InSv",invs:"InSv",leadership:"Ld","objective control":"OC"};
 function stripRosterEnhancementSuffixes(value){return String(value||"").replace(/\s*\(\s*\+?\s*\d+\s*(?:points?|pts?|포인트)\s*\)\s*$/i,"").replace(/\s*\(\s*upgrade\s*\)\s*$/i,"").trim();}
@@ -1049,7 +1081,8 @@ function residualEnglishPhrases(text=""){
   const matches=plain.match(/\b[A-Za-z][A-Za-z’'-]*(?:\s+[A-Za-z][A-Za-z’'-]*){1,7}\b/g)||[];
   return [...new Set(matches.map(x=>x.trim()).filter(x=>x.split(/\s+/).some(word=>signals.has(word.toLowerCase()))))];
 }
-function renderTranslationReview(parsed){
+function renderTranslationReview(parsed,expanded=false){
+  if(!expanded)return '<details class="translation-review"><summary>규칙 설명 번역 검수</summary></details>';
   const candidates=[],seen=new Set();
   parsed.units.forEach(unit=>{
     const found=findDataUnit(unit.rosterName);if(!found||found.candidates)return;
@@ -1060,9 +1093,9 @@ function renderTranslationReview(parsed){
       candidates.push({key,unit:found.unit.nameKo||tr(found.unit.name),profile:profile.name,source,translated,residual,file:found.unit.sourceFile||"",id:profile.id||profile.name,faction:currentRosterMeta.faction||"",draft});
     }
   });
-  if(!candidates.length)return "";
+  if(!candidates.length)return '<details class="translation-review" data-review-ready="true" open><summary>규칙 설명 번역 검수</summary><p>검수할 문장을 찾지 못했습니다.</p></details>';
   activeTranslationCandidates=candidates.slice(0,40);
-  return `<details class="translation-review"><summary>규칙 설명 번역 ${candidates.length}건 <span>직접 수정하거나 AI 초안을 만든 뒤 저장하세요</span></summary><div class="translation-review-tools"><button type="button" class="primary" data-translate-all ${translationReviewBusy?"disabled":""}>미번역 후보 AI 초안 생성</button><span data-translation-progress role="status">${translationReviewBusy?"번역 중…":""}</span></div><div class="translation-review-list">${activeTranslationCandidates.map((item,index)=>`<details class="translation-review-item"><summary><b>${escapeHtml(item.unit)} › ${escapeHtml(item.profile)}</b><span>${item.draft?"저장된 초안 · 수정 가능":escapeHtml(item.residual.slice(0,3).join(" · "))}</span></summary><p><b>BSData 원문</b>${escapeHtml(metadataText(item.source))}</p><label class="translation-edit-label" for="translation-edit-${index}">한국어 번역 직접 입력 / 수정</label><textarea id="translation-edit-${index}" data-translation-edit="${index}" rows="4" placeholder="여기에 자연스러운 한국어 규칙 설명을 입력하세요">${escapeHtml(metadataText(item.translated))}</textarea><div class="translation-save-row">${!item.draft?`<button type="button" class="quiet" data-translate-candidate="${index}" ${translationReviewBusy?"disabled":""}>AI 초안 생성</button>`:""}<button type="button" class="primary" data-save-translation="${index}">번역 저장</button><span data-translation-row-status="${index}" role="status"></span></div></details>`).join("")}</div>${candidates.length>40?`<p class="translation-review-more">화면에는 먼저 40건을 표시합니다.</p>`:""}<p class="translation-review-note">번역 저장을 누르면 Google Sheets의 Translations 탭에 AI_DRAFT로 기록됩니다. 저장된 번역은 그 시트에서 행을 선택한 뒤 ‘40K 번역 V2 → 선택 행 검수 완료’를 눌러야 앱에 정식 배포됩니다.</p></details>`;
+  return `<details class="translation-review" open><summary>규칙 설명 번역 ${candidates.length}건 <span>직접 수정하거나 AI 초안을 만든 뒤 저장하세요</span></summary><div class="translation-review-tools"><button type="button" class="primary" data-translate-all ${translationReviewBusy?"disabled":""}>미번역 후보 AI 초안 생성</button><span data-translation-progress role="status">${translationReviewBusy?"번역 중…":""}</span></div><div class="translation-review-list">${activeTranslationCandidates.map((item,index)=>`<details class="translation-review-item"><summary><b>${escapeHtml(item.unit)} › ${escapeHtml(item.profile)}</b><span>${item.draft?"저장된 초안 · 수정 가능":escapeHtml(item.residual.slice(0,3).join(" · "))}</span></summary><p><b>BSData 원문</b>${escapeHtml(metadataText(item.source))}</p><label class="translation-edit-label" for="translation-edit-${index}">한국어 번역 직접 입력 / 수정</label><textarea id="translation-edit-${index}" data-translation-edit="${index}" rows="4" placeholder="여기에 자연스러운 한국어 규칙 설명을 입력하세요">${escapeHtml(metadataText(item.translated))}</textarea><div class="translation-save-row">${!item.draft?`<button type="button" class="quiet" data-translate-candidate="${index}" ${translationReviewBusy?"disabled":""}>AI 초안 생성</button>`:""}<button type="button" class="primary" data-save-translation="${index}">번역 저장</button><span data-translation-row-status="${index}" role="status"></span></div></details>`).join("")}</div>${candidates.length>40?`<p class="translation-review-more">화면에는 먼저 40건을 표시합니다.</p>`:""}<p class="translation-review-note">번역 저장을 누르면 Google Sheets의 Translations 탭에 AI_DRAFT로 기록됩니다. 저장된 번역은 그 시트에서 행을 선택한 뒤 ‘40K 번역 V2 → 선택 행 검수 완료’를 눌러야 앱에 정식 배포됩니다.</p></details>`;
 }
 let activeTranslationCandidates=[],translationReviewBusy=false;
 function requestRuleDraft(candidate){
@@ -1149,21 +1182,23 @@ function showKeywordToast(raw){
 }
 function render(){
   const parsed=parseRoster($("roster").value),summary=$("summary"),results=$("results");
-  const oldOpenCards=[...results.querySelectorAll(".card-head[aria-expanded='true']")].map(head=>({index:Number(head.dataset.card),name:parsed.units[Number(head.dataset.card)]?.rosterName||""}));
+  const translationReviewExpanded=Boolean(results.querySelector(".translation-review[open]"));
+  const oldOpenCards=[...results.querySelectorAll(".card-head[aria-expanded='true']")].map(head=>({index:Number(head.dataset.card),name:head.dataset.rosterName||""})).filter(card=>card.name&&parsed.units[card.index]?.rosterName===card.name);
+  const detailIndices=new Set((oldOpenCards.length?oldOpenCards:(appStateRestorePending&&restoredAppState?.openCards||[])).filter(card=>!card.name||parsed.units[card.index]?.rosterName===card.name).map(card=>card.index));
   applyFactionTheme(parsed.meta.faction||"");
   $("game-page").innerHTML=renderGameTracker(parsed.meta);
   if(!parsed.units.length){currentRosterMeta={};summary.hidden=true;results.innerHTML='<div class="empty">유닛 항목을 찾지 못했습니다. NewRecruit에서 복사한 편성표 텍스트인지 확인해 주세요.</div>';updateUnitQuickNav(parsed);if(!$("assistant-page").hidden)$("assistant-page").innerHTML=renderAssistantPage(parsed);if(!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();return;}
   const m=parsed.meta;currentRosterMeta=m; summary.hidden=false;
   summary.innerHTML=[m.faction&&`<span class="pill">진영 <strong>${escapeHtml(m.faction.split(" - ").map(bilingualLabel).join(" · "))}</strong></span>`,m.detachment&&`<span class="pill">편제 <strong>${escapeHtml(bilingualLabel(detachmentLabel(m.detachment)))}</strong></span>`,m.mission&&`<span class="pill">미션 <strong>${escapeHtml(bilingualLabel(m.mission))}</strong></span>`,m.gameSize&&`<span class="pill">전장 규모 <strong>${escapeHtml(String(m.gameSize))}점</strong></span>`,m.disposition&&`<span class="pill">전술 <strong>${escapeHtml(bilingualLabel(m.disposition))}</strong></span>`,m.points&&`<span class="pill">총점 <strong>${escapeHtml(m.points)}점</strong></span>`,`<span class="pill">인식 유닛 <strong>${parsed.units.length}</strong></span>`].filter(Boolean).join("");
-  const attachmentParents=rosterAttachmentParents(parsed.units),renderOrder=rosterUnitRenderOrder(parsed.units),hasAttachedChildren=new Set(attachmentParents.values());results.innerHTML=renderTranslationReview(parsed)+renderOrder.map(i=>{const u=parsed.units[i],isAttachedMember=attachmentParents.has(i),hasAttachedUnits=hasAttachedChildren.has(i),attachedRole=u.attachedAs||(isAttachedMember?"합류 구성원":""),profileUnit=attachedRole===u.attachedAs?u:{...u,attachedAs:attachedRole};const found=findDataUnit(u.rosterName);if(!found)return `<article class="unmatched" data-unit-card="${i}"><strong>${!m.faction?"진영 인식 실패":db.units.length?"이름 매칭 실패":"진영/데이터 연결 확인"} · ${escapeHtml(u.rosterName)}</strong>${u.count}개체 · ${u.points}점 ${renderRosterEquipment(u)}<div class="meta">${escapeHtml(matchFailureDetails(m))}</div>${renderUnitMatchControl(u.rosterName)}</article>`;if(found.candidates)return `<article class="unmatched" data-unit-card="${i}"><strong>이름 확인 필요 · ${escapeHtml(u.rosterName)}</strong><div class="meta">유사 후보: ${found.candidates.map(c=>`${escapeHtml(c.unit.name)} (${escapeHtml(c.unit.edition)}, ${Math.round(c.score*100)}%)`).join(" · ")}. 확정 전까지 연결하지 않습니다.</div>${renderUnitMatchControl(u.rosterName)}</article>`;const d=found.unit,key=`${i}:${norm(u.rosterName)}`,max=unitWoundMax(d,u.count),now=currentWounds(key,max),related=d.abilities?.filter(a=>ruleAppliesToRoster(a.name,m))||[],attackBuffs=rosterUnitAttackBuffs(parsed.units,attachmentParents,i);return `<article class="card${hasAttachedChildren?" attachment-group-start":""}${isAttachedMember?" attachment-group-member":""}" data-unit-card="${i}">${hasAttachedChildren?`<div class="attachment-banner">합류 묶음 · ${[...attachmentParents.values()].filter(parentIndex=>parentIndex===i).length+1}개 유닛</div>`:isAttachedMember?`<div class="attachment-banner member">합류 · ${escapeHtml(parsed.units[attachmentParents.get(i)]?.rosterName||"리더")}</div>`:""}<div class="card-head" role="button" tabindex="0" aria-expanded="false" data-card="${i}"><div class="card-title"><div class="card-title-text"><small class="datasheet-role">${escapeHtml(datasheetRoleLabel(d))}</small><h3><button type="button" class="unit-image-search-trigger" data-google-image-search data-search-name="${escapeHtml(/[가-힣]/.test(u.rosterName)?d.name:u.rosterName)}" aria-label="${escapeHtml(u.rosterName)} 이미지 검색">${escapeHtml(d.nameKo||tr(d.name))}<span aria-hidden="true">⌕</span></button></h3><div class="original">${escapeHtml(d.name)} · 편성 ${u.count}개체 · ${u.points}점${d.points?` · 출처 포인트 ${d.points}`:""}</div></div></div>${renderDatasheetPortrait(d)}${renderUnitSummary({...d,profiles:applyEnhancementUnitEffects(d.profiles,(u.enhancements||[]).map(rosterEnhancementMatch).filter(Boolean))})}${renderWoundControl(key,max,now)}<span class="tag">${escapeHtml(found.confidence)} · ${escapeHtml(d.edition)} · ${escapeHtml(d.translationStatus||"번역 확인")}</span></div><div class="card-body" hidden><div class="meta">${escapeHtml(d.edition)} · ${d.dataSource==="40kdc-data"?"40kdc 보조 데이터":"BSData"} ${escapeHtml(d.sourceFile||"")} · ${escapeHtml(db.sourceVersion||"버전 미지정")}</div>${renderRosterEnhancements(u,d)}${renderProfiles(d.profiles,u.count,profileUnit,i,d,attackBuffs)}${related.length?`<p class="equip"><b>관련 규칙</b> ${related.map(a=>renderKeywordButton(a.name)).join(" · ")}</p>`:""}${d.keywords?.length?`<p class="equip"><b>키워드</b> ${d.keywords.map(renderKeywordButton).join(" · ")}</p>`:""}${renderRosterEquipment(u)}${d.note?`<p class="meta">${escapeHtml(d.note)}</p>`:""}${renderRuleEffectSummary(d)}</div></article>`}).join("");
+  const attachmentParents=rosterAttachmentParents(parsed.units),renderOrder=rosterUnitRenderOrder(parsed.units),hasAttachedChildren=new Set(attachmentParents.values());results.innerHTML=renderTranslationReview(parsed,translationReviewExpanded)+renderOrder.map(i=>{const u=parsed.units[i],isAttachedMember=attachmentParents.has(i),hasAttachedUnits=hasAttachedChildren.has(i),attachedRole=u.attachedAs||(isAttachedMember?"합류 구성원":""),profileUnit=attachedRole===u.attachedAs?u:{...u,attachedAs:attachedRole};const found=findDataUnit(u.rosterName);if(!found)return `<article class="unmatched" data-unit-card="${i}"><strong>${!m.faction?"진영 인식 실패":db.units.length?"이름 매칭 실패":"진영/데이터 연결 확인"} · ${escapeHtml(u.rosterName)}</strong>${u.count}개체 · ${u.points}점 ${renderRosterEquipment(u)}<div class="meta">${escapeHtml(matchFailureDetails(m))}</div>${renderUnitMatchControl(u.rosterName)}</article>`;if(found.candidates)return `<article class="unmatched" data-unit-card="${i}"><strong>이름 확인 필요 · ${escapeHtml(u.rosterName)}</strong><div class="meta">유사 후보: ${found.candidates.map(c=>`${escapeHtml(c.unit.name)} (${escapeHtml(c.unit.edition)}, ${Math.round(c.score*100)}%)`).join(" · ")}. 확정 전까지 연결하지 않습니다.</div>${renderUnitMatchControl(u.rosterName)}</article>`;const d=found.unit,detail=detailIndices.has(i),key=`${i}:${norm(u.rosterName)}`,max=unitWoundMax(d,u.count),now=currentWounds(key,max),related=d.abilities?.filter(a=>ruleAppliesToRoster(a.name,m))||[],attackBuffs=rosterUnitAttackBuffs(parsed.units,attachmentParents,i);return `<article class="card${hasAttachedChildren?" attachment-group-start":""}${isAttachedMember?" attachment-group-member":""}" data-unit-card="${i}">${hasAttachedChildren?`<div class="attachment-banner">합류 묶음 · ${[...attachmentParents.values()].filter(parentIndex=>parentIndex===i).length+1}개 유닛</div>`:isAttachedMember?`<div class="attachment-banner member">합류 · ${escapeHtml(parsed.units[attachmentParents.get(i)]?.rosterName||"리더")}</div>`:""}<div class="card-head" role="button" tabindex="0" aria-expanded="false" data-card="${i}" data-roster-name="${escapeHtml(u.rosterName)}"><div class="card-title"><div class="card-title-text"><small class="datasheet-role">${escapeHtml(datasheetRoleLabel(d))}</small><h3><button type="button" class="unit-image-search-trigger" data-google-image-search data-search-name="${escapeHtml(/[가-힣]/.test(u.rosterName)?d.name:u.rosterName)}" aria-label="${escapeHtml(u.rosterName)} 이미지 검색">${escapeHtml(d.nameKo||tr(d.name))}<span aria-hidden="true">⌕</span></button></h3><div class="original">${escapeHtml(d.name)} · 편성 ${u.count}개체 · ${u.points}점${d.points?` · 출처 포인트 ${d.points}`:""}</div></div></div>${renderDatasheetPortrait(d)}${renderUnitSummary({...d,profiles:applyEnhancementUnitEffects(d.profiles,(u.enhancements||[]).map(rosterEnhancementMatch).filter(Boolean))})}${renderWoundControl(key,max,now)}<span class="tag">${escapeHtml(found.confidence)} · ${escapeHtml(d.edition)} · ${escapeHtml(d.translationStatus||"번역 확인")}</span></div><div class="card-body" hidden>${detail?`<div class="meta">${escapeHtml(d.edition)} · ${d.dataSource==="40kdc-data"?"40kdc 보조 데이터":"BSData"} ${escapeHtml(d.sourceFile||"")} · ${escapeHtml(db.sourceVersion||"버전 미지정")}</div>${renderRosterEnhancements(u,d)}${renderProfiles(d.profiles,u.count,profileUnit,i,d,attackBuffs)}${related.length?`<p class="equip"><b>관련 규칙</b> ${related.map(a=>renderKeywordButton(a.name)).join(" · ")}</p>`:""}${d.keywords?.length?`<p class="equip"><b>키워드</b> ${d.keywords.map(renderKeywordButton).join(" · ")}</p>`:""}${renderRosterEquipment(u)}${d.note?`<p class="meta">${escapeHtml(d.note)}</p>`:""}${renderRuleEffectSummary(d)}`:""}</div></article>`}).join("");
    const openCards=oldOpenCards.length?oldOpenCards:(appStateRestorePending&&restoredAppState?.openCards||[]);for(const saved of openCards){const unit=parsed.units[saved.index],head=results.querySelector(`.card-head[data-card="${CSS.escape(String(saved.index))}"]`);if(head&&(!saved.name||unit?.rosterName===saved.name)){head.nextElementSibling.hidden=false;head.setAttribute("aria-expanded","true");}}
    restoreStoredScrollPosition();
    updateUnitQuickNav(parsed);
   if(!$("assistant-page").hidden)$("assistant-page").innerHTML=renderAssistantPage(parsed);
   if(!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();
-  const requestedFiles=catalogueFilesForFaction(m.faction||"").join("|");const builderIsEditing=$("roster-builder").open&&rosterBuilderFaction;if(!builderIsEditing&&requestedFiles&&requestedFiles!==activeCatalogueKey)loadRulesData(m);else if(!builderIsEditing&&!requestedFiles&&(activeCatalogueKey||db.sourceVersion!=="진영 미확인"))loadRulesData(m);
+  const rosterMeta={...m,rosterUnits:parsed.units},requestedFiles=catalogueFilesForFaction(m.faction||"",parsed.units).join("|");const builderIsEditing=$("roster-builder").open&&rosterBuilderFaction;if(!builderIsEditing&&requestedFiles&&requestedFiles!==activeCatalogueKey)loadRulesData(rosterMeta);else if(!builderIsEditing&&!requestedFiles&&(activeCatalogueKey||db.sourceVersion!=="진영 미확인"))loadRulesData(rosterMeta);
   const nextStratContext=`11|${norm(m.faction||"")}|${norm(m.detachment||"")}`;if(nextStratContext!==stratContextKey){stratContextKey=nextStratContext;loadCoreStratagems();}
-  results.querySelectorAll(".card-head").forEach(head=>{head.addEventListener("click",e=>{if(e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger,.datasheet-portrait"))return;const body=head.nextElementSibling,open=body.hidden;body.hidden=!open;head.setAttribute("aria-expanded",String(open));});head.addEventListener("keydown",e=>{if(e.target!==head&&e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger,.datasheet-portrait"))return;if(e.key==="Enter"||e.key===" "){e.preventDefault();head.click();}});});
+  results.querySelectorAll(".card-head").forEach(head=>{head.addEventListener("click",e=>{if(e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger,.datasheet-portrait"))return;const body=head.nextElementSibling,open=body.hidden;body.hidden=!open;head.setAttribute("aria-expanded",String(open));if(open&&!body.hasChildNodes()){const top=window.scrollY;render();window.scrollTo({top,behavior:"instant"});}});head.addEventListener("keydown",e=>{if(e.target!==head&&e.target.closest(".wound-control,.unit-head-image-source,[data-head-image-search],.unit-image-search-trigger,.datasheet-portrait"))return;if(e.key==="Enter"||e.key===" "){e.preventDefault();head.click();}});});
 }
 results.addEventListener("click",event=>{const portrait=event.target.closest("[data-unit-photo]");if(portrait){event.preventDefault();event.stopPropagation();showDatasheetPortrait(portrait.dataset.unitPhoto,portrait.dataset.unitPhotoName);return;}const imageTrigger=event.target.closest("[data-google-image-search]");if(imageTrigger){event.preventDefault();event.stopPropagation();openGoogleImageSearch(imageTrigger.dataset.searchName);return;}const modelList=event.target.closest("[data-weapon-model-list]");if(modelList){event.preventDefault();event.stopPropagation();let names=[];try{names=JSON.parse(modelList.dataset.weaponModelList||"[]");}catch{}const toast=$("toast");$("toast-title").textContent="장착 모델 목록";clearToastOriginal();$("toast-description").textContent=names.join("\n")||"장착 모델 정보를 찾지 못했습니다.";toast.classList.add("show");toast.setAttribute("aria-hidden","false");clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove("show");toast.setAttribute("aria-hidden","true");},5000);return;}const weaponToggle=event.target.closest("[data-weapons-toggle]");if(weaponToggle){const groups=weaponToggle.closest(".weapon-profile-groups"),showOptions=groups.dataset.showOptions!=="true";groups.dataset.showOptions=String(showOptions);weaponToggle.textContent=showOptions?"☑ 장착만":"☷ 전체";weaponToggle.title=showOptions?"장착 무기만 표시":"전체 무기 표시";return;}});
 function finishWeaponReplacement(result,unitIndex){
@@ -1270,7 +1305,7 @@ $("builder-apply").addEventListener("click",()=>{$("roster-builder").open=false;
 $("results").addEventListener("click",e=>{const save=e.target.closest("[data-save-translation]");if(save){e.preventDefault();saveManualRuleTranslation(Number(save.dataset.saveTranslation));return;}const all=e.target.closest("[data-translate-all]");if(all){e.preventDefault();runTranslationReview(activeTranslationCandidates.map((_,i)=>i));return;}const one=e.target.closest("[data-translate-candidate]");if(one){e.preventDefault();runTranslationReview([Number(one.dataset.translateCandidate)]);return;}const wound=e.target.closest("[data-wound-action]");if(wound){e.preventDefault();e.stopPropagation();const key=wound.dataset.woundKey,max=Number(wound.dataset.woundMax)||0;if(!max)return;let value=currentWounds(key,max);value=Math.max(0,Math.min(max,value+(wound.dataset.woundAction==="plus"?1:-1)));woundState.set(key,value);const output=document.querySelector(`[data-wound-value="${CSS.escape(key)}"]`);if(output)output.textContent=`${value}/${max}`;return;}const button=e.target.closest(".keyword-chip");if(button)showKeywordToast(button.dataset.keyword);});
 $("results").addEventListener("change",e=>{const select=e.target.closest("[data-unit-match]");if(!select)return;const key=unitMatchKey(select.dataset.unitMatch);if(select.value)sessionUnitMatches.set(key,select.value);else sessionUnitMatches.delete(key);render();});
 $("unit-quick-nav").addEventListener("click",e=>{const collapse=e.target.closest("#unit-quick-nav-collapse");if(!collapse)return;quickNavCollapsed=!quickNavCollapsed;$("unit-quick-nav-body").hidden=quickNavCollapsed;$("unit-quick-nav").classList.toggle("is-collapsed",quickNavCollapsed);collapse.setAttribute("aria-expanded",String(!quickNavCollapsed));collapse.setAttribute("aria-label",quickNavCollapsed?"전투 메뉴 펼치기":"전투 메뉴 접기");collapse.querySelector("span").textContent=quickNavCollapsed?"☰":"×";try{localStorage.setItem("40k-quick-nav-collapsed",quickNavCollapsed?"1":"0");}catch{}});
-$("unit-quick-nav").addEventListener("click",e=>{const toggle=e.target.closest("#unit-quick-nav-toggle");if(toggle){const list=$("unit-quick-nav-list"),open=list.hidden;if(open){$("quick-assistant").open=false;$("quick-stratagem-nav").open=false;}list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));return;}const closeList=()=>{$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");};if(e.target.closest("[data-assistant-jump]")){document.querySelector('[data-view="assistant"]').click();closeList();requestAnimationFrame(()=>$("assistant-page").scrollIntoView({behavior:"smooth",block:"start"}));return;}const item=e.target.closest("[data-unit-jump]");if(!item)return;if(document.body.classList.contains("assistant-mode")||document.body.classList.contains("game-mode"))document.querySelector('[data-view="datasheets"]').click();const card=document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`);if(!card)return;const head=card.querySelector(".card-head"),body=head?.nextElementSibling;if(body?.hidden){body.hidden=false;head.setAttribute("aria-expanded","true");}card.scrollIntoView({behavior:"smooth",block:"start"});closeList();});
+$("unit-quick-nav").addEventListener("click",e=>{const toggle=e.target.closest("#unit-quick-nav-toggle");if(toggle){const list=$("unit-quick-nav-list"),open=list.hidden;if(open){$("quick-assistant").open=false;$("quick-stratagem-nav").open=false;}list.hidden=!open;toggle.setAttribute("aria-expanded",String(open));return;}const closeList=()=>{$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");};if(e.target.closest("[data-assistant-jump]")){document.querySelector('[data-view="assistant"]').click();closeList();requestAnimationFrame(()=>$("assistant-page").scrollIntoView({behavior:"smooth",block:"start"}));return;}const item=e.target.closest("[data-unit-jump]");if(!item)return;if(document.body.classList.contains("assistant-mode")||document.body.classList.contains("game-mode"))document.querySelector('[data-view="datasheets"]').click();const card=document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`);if(!card)return;const head=card.querySelector(".card-head"),body=head?.nextElementSibling;if(body?.hidden){body.hidden=false;head.setAttribute("aria-expanded","true");}if(body&&!body.hasChildNodes())render();document.querySelector(`[data-unit-card="${CSS.escape(item.dataset.unitJump)}"]`)?.scrollIntoView({behavior:"smooth",block:"start"});closeList();});
 $("unit-quick-nav").addEventListener("click",e=>{const button=e.target.closest("[data-quick-phase]");if(!button)return;quickAssistantPhase=button.dataset.quickPhase;$("quick-assistant-content").innerHTML=renderQuickAssistant(parseRoster($("roster").value));});
 $("stratagem-page").addEventListener("click",e=>{const keyword=e.target.closest(".keyword-chip");if(keyword){showKeywordToast(keyword.dataset.keyword);return;}const parentSummary=e.target.closest(".stratagem-reference-group>summary");if(parentSummary){const group=parentSummary.parentElement;requestAnimationFrame(()=>{const open=group.open;[...group.children].filter(child=>child.matches(".stratagem-reference-card,.stratagem-phase")).forEach(child=>child.open=open);});return;}const category=e.target.closest("[data-stratagem-category]");if(category){quickStratagemCategory=category.dataset.stratagemCategory;$("stratagem-page").innerHTML=renderStratagemPage();renderQuickStratagemNav();return;}if(e.target.closest("[data-detachment-use-roster]")){quickStratagemDetachment=factionDetachmentCatalog.find(item=>detachmentNameMatches(item.detachment,detachmentLabel()))?.detachment||detachmentLabel();detachmentPickerExpanded=false;$("stratagem-page").innerHTML=renderStratagemPage();renderQuickStratagemNav();return;}if(e.target.closest("[data-detachment-picker-toggle]")){detachmentPickerExpanded=!detachmentPickerExpanded;$("stratagem-page").innerHTML=renderStratagemPage();return;}const detachment=e.target.closest("[data-detachment-option]");if(detachment){quickStratagemDetachment=detachment.dataset.detachmentOption;setRosterDetachment(quickStratagemDetachment,detachment.dataset.detachmentPoints);detachmentPickerExpanded=false;render();renderQuickStratagemNav();return;}if(e.target.closest("[data-quick-stratagem-retry]")){loadCoreStratagems();return;}const item=e.target.closest("[data-quick-stratagem-id]");if(item)showStratagemToast(item.dataset.quickStratagemId);});
 $("stratagem-page").addEventListener("change",e=>{const select=e.target.closest("[data-stratagem-detachment]");if(!select)return;quickStratagemDetachment=select.value;$("stratagem-page").innerHTML=renderStratagemPage();renderQuickStratagemNav();});
@@ -1281,8 +1316,8 @@ $("unit-quick-nav").addEventListener("click",e=>{if(e.target.closest("[data-quic
 $("unit-quick-nav").addEventListener("click",e=>{const tab=e.target.closest("[data-stratagem-category]");if(!tab)return;quickStratagemCategory=tab.dataset.stratagemCategory;renderQuickStratagemNav();if(!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();});
 $("unit-quick-nav").addEventListener("change",e=>{const select=e.target.closest("[data-stratagem-detachment]");if(!select)return;quickStratagemDetachment=select.value;renderQuickStratagemNav();if(!$("stratagem-page").hidden)$("stratagem-page").innerHTML=renderStratagemPage();});
 $("unit-quick-nav").addEventListener("click",e=>{const item=e.target.closest("[data-quick-stratagem-id]");if(item)showStratagemToast(item.dataset.quickStratagemId);});
-$("quick-assistant").addEventListener("toggle",()=>{if($("quick-assistant").open){$("quick-stratagem-nav").open=false;$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");}});
-$("quick-stratagem-nav").addEventListener("toggle",()=>{if($("quick-stratagem-nav").open){$("quick-assistant").open=false;$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");if(!coreStratagems.length&&stratagemLoadStatus!=="불러오는 중")loadCoreStratagems();}});
+$("quick-assistant").addEventListener("toggle",()=>{if($("quick-assistant").open){$("quick-stratagem-nav").open=false;$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");$("quick-assistant-content").innerHTML=renderQuickAssistant(parseRoster($("roster").value));}});
+$("quick-stratagem-nav").addEventListener("toggle",()=>{if($("quick-stratagem-nav").open){$("quick-assistant").open=false;$("unit-quick-nav-list").hidden=true;$("unit-quick-nav-toggle").setAttribute("aria-expanded","false");renderQuickStratagemNav();if(!coreStratagems.length&&stratagemLoadStatus!=="불러오는 중")loadCoreStratagems();}});
 const savedTranslationFeed=(()=>{try{return localStorage.getItem("40k-translation-feed")||"";}catch{return "";}})();
 const savedTranslationWriteToken=(()=>{try{return localStorage.getItem("40k-translation-write-token")||"";}catch{return "";}})();
 if(!v2TranslationFeed)v2TranslationFeed=savedTranslationFeed||DEFAULT_TRANSLATION_FEED;
@@ -1297,6 +1332,7 @@ document.addEventListener("input",event=>{if(event.target.closest("#roster,#buil
 document.addEventListener("change",event=>{if(event.target.closest("#roster,#builder-unit-search,#builder-unit-category,[data-stratagem-detachment],[data-stratagem-filter]"))scheduleAppStateSave();},{capture:true});
 document.addEventListener("click",event=>{if(event.target.closest(".view-tabs,[data-phase],.card-head,[data-stratagem-category],[data-detachment-option],[data-detachment-picker-toggle],#quick-assistant,#quick-stratagem-nav"))scheduleAppStateSave();});
 document.addEventListener("toggle",event=>{if(event.target.matches("details"))scheduleAppStateSave();},true);
+$("results").addEventListener("toggle",event=>{if(event.target.matches(".translation-review")&&event.target.open&&!event.target.dataset.reviewReady&&!event.target.querySelector(".translation-review-list"))render();},true);
 for(const eventName of ["pointerdown","keydown","wheel","touchstart"])document.addEventListener(eventName,()=>{appStateRestorePending=false;},{once:true,capture:true,passive:eventName==="touchstart"||eventName==="wheel"});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")persistAppStateNow();});window.addEventListener("pagehide",persistAppStateNow);window.addEventListener("pageshow",event=>{if(event.persisted){restoredAppState=readAppState();if(!$('roster').value&&restoredAppState.rosterText){$('roster').value=restoredAppState.rosterText;resizeRoster();render();restoreAppStateView();}}});
 window.addEventListener("scroll",()=>{clearTimeout(appScrollSaveTimer);appScrollSaveTimer=setTimeout(persistAppStateNow,650);},{passive:true});

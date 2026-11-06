@@ -7,7 +7,7 @@
 #results .card-head {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-columns: minmax(0, 1fr) clamp(78px, 18vw, 108px);
   grid-template-rows: auto auto;
   gap: 3px 7px;
   align-items: stretch;
@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  min-height: 50px;
+  min-height: 70px;
   padding-left: 8px;
   border-left: 3px solid #e6783c;
 }
@@ -55,20 +55,21 @@
   grid-row: 1;
   display: inline-grid;
   place-items: center;
-  width: 39px;
-  height: 40px;
+  width: 100%;
+  height: 68px;
   justify-self: end;
   align-self: end;
-  margin-right: 9px;
-  margin-bottom: 3px;
+  margin-right: 10px;
+  margin-bottom: 0;
   padding: 0;
   overflow: hidden;
-  border: 1px solid #657787;
-  border-radius: 5px;
-  background: #20272d;
+  border: 0;
+  background: transparent;
   cursor: zoom-in;
+  -webkit-mask-image: linear-gradient(#000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(#000 0%, #000 72%, transparent 100%);
 }
-#results .card-head .datasheet-portrait img { display: block; width: 100%; height: 100%; object-fit: contain; }
+#results .card-head .datasheet-portrait img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
 #results .card-head .datasheet-portrait.remote-photo img,
 #results .card-body .model-profile-photo.remote-photo img { filter: invert(1) hue-rotate(180deg) saturate(1.15); mix-blend-mode: screen; }
 #results .card-head::after {
@@ -145,7 +146,12 @@
 #results .card-body .model-profile-head .profile-title { min-width: 0; margin: 0; }
 #results .card-body .model-profile-photo { flex: 0 0 38px; width: 38px; height: 38px; padding: 0; overflow: hidden; border: 1px solid #657787; border-radius: 5px; background: #20272d; cursor: zoom-in; }
 #results .card-body .model-profile-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+#results .roster-model-loadouts li { margin: 7px 0; }
+#results .roster-model-loadouts strong { display: block; }
+#results .roster-model-loadouts small { display: block; line-height: 1.5; }
 @media(max-width:420px) {
+  #results .card-head { grid-template-columns: minmax(0, 1fr) 82px; }
+  #results .card-head .datasheet-portrait { height: 64px; }
   #results .card-head .stat-pill b { font-size: 8px; }
   #results .card-head .stat-pill b span { font-size: 7px; }
   #results .card-head .stat-pill strong { font-size: 15px; }
