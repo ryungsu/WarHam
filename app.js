@@ -1289,9 +1289,23 @@ $("load-roster-recent").addEventListener("click",()=>{const id=$("roster-recent-
 $("load-preferred-roster").addEventListener("click",()=>{const presets=readRosterPresets(),selected=presets.saved.find(entry=>entry.id===$("roster-preset-select").value),recent=presets.recent.find(entry=>entry.id===$("roster-recent-select").value),item=selected||presets.saved[0]||recent||presets.recent[0];loadRosterEntry(item,(selected||presets.saved.length)?"기본 프리셋":"최근 편성표");});
 $("delete-roster-preset").addEventListener("click",()=>{const id=$("roster-preset-select").value,status=$("roster-preset-status"),presets=readRosterPresets(),item=presets.saved.find(entry=>entry.id===id);if(!item)return;presets.saved=presets.saved.filter(entry=>entry.id!==id);if(!writeRosterPresets(presets))return;refreshRosterPresetOptions();status.textContent=`‘${item.name}’ 프리셋 슬롯을 삭제했습니다.`;});
 refreshRosterPresetOptions();
-// Save pasted rosters into recent history immediately, even before analysis.
-$("roster").addEventListener("paste",()=>setTimeout(()=>{rememberRecentRoster();render();},0));
-$("roster").addEventListener("change",()=>render());
+// Let the paste complete and the loading dialog paint before parsing a large roster.
+let rosterPasteToken=null,rosterPasteVersion=0,rosterPastePending=false;
+$("roster").addEventListener("paste",()=>{
+  if(rosterPasteToken)finishAppLoading(rosterPasteToken);
+  const version=++rosterPasteVersion;
+  rosterPastePending=true;
+  setTimeout(()=>{
+    if(version!==rosterPasteVersion)return;
+    rosterPasteToken=beginAppLoading("편성표를 읽고 유닛과 장비를 연결하는 중입니다.");
+    requestAnimationFrame(()=>setTimeout(()=>{
+      if(version!==rosterPasteVersion)return;
+      try{rememberRecentRoster();render();}
+      finally{finishAppLoading(rosterPasteToken);rosterPasteToken=null;rosterPastePending=false;}
+    },0));
+  },0);
+});
+$("roster").addEventListener("change",()=>{if(!rosterPastePending)render();});
 $("clear-roster").addEventListener("click",()=>{$("roster").value="";resizeRoster();render();$("roster").focus();});
 $("load-example").addEventListener("click",()=>{$("roster").value=example;resizeRoster();render()});
 $("parse").addEventListener("click",()=>{rememberRecentRoster();render();});
