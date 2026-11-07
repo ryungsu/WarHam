@@ -146,9 +146,14 @@
 #results .card-body .model-profile-head .profile-title { min-width: 0; margin: 0; }
 #results .card-body .model-profile-photo { flex: 0 0 38px; width: 38px; height: 38px; padding: 0; overflow: hidden; border: 1px solid #657787; border-radius: 5px; background: #20272d; cursor: zoom-in; }
 #results .card-body .model-profile-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
-#results .roster-model-loadouts li { margin: 7px 0; }
-#results .roster-model-loadouts strong { display: block; }
-#results .roster-model-loadouts small { display: block; line-height: 1.5; }
+#results .card-body .roster-gear { margin: 12px 0 16px; padding: 10px; border: 1px solid rgba(var(--faction-accent-rgb,76,145,255),.35); border-radius: 8px; background: rgba(var(--faction-accent-rgb,76,145,255),.07); color: var(--text); }
+#results .card-body .roster-gear > b { color: var(--faction-accent,var(--accent)); }
+#results .roster-model-loadouts { display: grid; gap: 7px; margin: 8px 0 0; padding: 0; list-style: none; }
+#results .roster-model-loadouts li { min-width: 0; margin: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #172028; }
+#results .roster-model-loadouts strong { display: flex; justify-content: space-between; gap: 8px; color: var(--text); }
+#results .roster-model-loadouts strong span { flex: 0 0 auto; color: var(--muted); font-size: 11px; }
+#results .roster-model-weapons { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; line-height: 1.4; }
+#results .roster-model-weapons span { padding: 3px 6px; border: 1px solid rgba(var(--faction-accent-rgb,76,145,255),.3); border-radius: 4px; background: rgba(var(--faction-accent-rgb,76,145,255),.1); font-size: 11px; }
 @media(max-width:420px) {
   #results .card-head { grid-template-columns: minmax(0, 1fr) 82px; }
   #results .card-head .datasheet-portrait { height: 64px; }
