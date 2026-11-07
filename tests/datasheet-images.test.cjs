@@ -1,6 +1,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const photos=require('../datasheet-images.js');
+const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');
 
 test('roster unit photos resolve by BSData ID even if the display name changes',()=>{
   const ids=['1117-cda-7f74-196b','8da0-4570-c3c-819f','a10b-fbfe-b1fa-6f0c','596f-dbdc-41e7-088a','ce15-e87e-7cff-b129','b793-b77e-9e49-d397','5dc7-aa6c-7053-cede','1c00-9398-b9e7-446a','b007-fc7b-8e4a-b017'];
@@ -21,4 +22,13 @@ test('all six Warden model profiles have distinct matching photos',()=>{
   assert.equal(srcs.filter(Boolean).length,6);
   assert.equal(new Set(srcs).size,6);
   assert.equal(photos.modelPhoto(unit,{id:'unknown',name:'Ancient Gadriel'}),null);
+});
+test('weapon assignment names open the matching Warden model photo',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8');
+  const context=vm.createContext({DatasheetImages:photos,normalizeMatchName:name=>String(name).toLowerCase().trim(),escapeHtml:value=>String(value)});
+  vm.runInContext(source.slice(source.indexOf('function renderWeaponModelNames('),source.indexOf('function renderProfiles(')),context);
+  const unit={id:'b793-b77e-9e49-d397',profiles:[{id:'573d-8756-1e35-cf4a',name:'Ancient Gadriel',typeName:'Model'}]};
+  const markup=context.renderWeaponModelNames([{name:'Ancient Gadriel',count:1}],unit);
+  assert.match(markup,/data-unit-photo=.*gadriel/);
+  assert.match(markup,/Ancient Gadriel · 1개체/);
 });
