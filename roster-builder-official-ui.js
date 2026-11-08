@@ -32,6 +32,71 @@ function builderSelectedDetachmentCost() {
     total + (builderDetachmentCost(rosterBuilderDetachments[index]) || 0), 0);
 }
 
+function builderSnapshotForText(text) {
+  return {
+    schema: 1,
+    text,
+    faction: rosterBuilderFaction,
+    limit: Number($("builder-limit").value) || 1000,
+    detachments: builderSelectedDetachmentNames(),
+    manualDetachment: $("builder-detachment-manual").value.trim(),
+    units: rosterBuilderUnits.map(entry => ({
+      unitId: String(entry.unit.id || ""), unitName: entry.unit.name,
+      models: entry.models,
+      modelGroupCounts: { ...(entry.modelGroupCounts || {}) },
+      wargearSelections: JSON.parse(JSON.stringify(entry.wargearSelections || {})),
+      gearCounts: { ...(entry.gearCounts || {}) },
+      weapons: [...(entry.weapons || [])],
+      enhancementName: entry.enhancement ? localizedRuleValue(entry.enhancement.name, "en") : "",
+      attachedTo: Number.isInteger(entry.attachedTo) ? entry.attachedTo : null
+    }))
+  };
+}
+
+function builderUnitsFromSnapshot(snapshot) {
+  if(snapshot?.schema !== 1 || !Array.isArray(snapshot.units) || !snapshot.units.length) return null;
+  const entries=[];
+  for(const saved of snapshot.units){
+    if(!saved || typeof saved!=="object")return null;
+    const unit=db.units.find(candidate=>saved.unitId && String(candidate.id)===String(saved.unitId)) || builderFindRosterUnit(saved.unitName);
+    if(!unit) return null;
+    const minimum=Number(unit.modelCount?.min)||1,maximum=Math.max(minimum,Number(unit.modelCount?.max)||99);
+    const models=Math.max(minimum,Math.min(maximum,Number(saved.models)||minimum));
+    const entry={unit,models,points:builderPointsFor(unit,models),gearCounts:{},weapons:[],attachedTo:null};
+    if(unit.modelGroups?.length){
+      entry.modelGroupCounts={};
+      unit.modelGroups.forEach(group=>{
+        const key=String(group.id||group.name);
+        if(Object.hasOwn(saved.modelGroupCounts||{},key))entry.modelGroupCounts[key]=Number(saved.modelGroupCounts[key]);
+      });
+      initializeBuilderModelGroups(entry);
+      entry.points=builderPointsFor(unit,entry.models);
+    }
+    const availableGear=new Set(builderWeaponOptions(unit));
+    for(const [name,count] of Object.entries(saved.gearCounts||{})){
+      if(availableGear.has(name)&&Number.isFinite(Number(count)))entry.gearCounts[name]=Math.max(0,Math.min(entry.models,Number(count)));
+    }
+    entry.weapons=(Array.isArray(saved.weapons)?saved.weapons:[]).filter(name=>availableGear.has(name));
+    entry.wargearSelections={};
+    for(const option of unit.wargearOptions||[]){
+      const choice=saved.wargearSelections?.[String(option.id)];
+      const choices=option.replacementChoice?.length?option.replacementChoice:[option.replacement||[]];
+      if(!choice||!Number.isInteger(choice.choiceIndex)||choice.choiceIndex<0||choice.choiceIndex>=choices.length)continue;
+      const indices=[...new Set((Array.isArray(choice.modelIndices)?choice.modelIndices:[]).filter(index=>Number.isInteger(index)&&index>=0&&index<entry.models))];
+      if(indices.length)entry.wargearSelections[String(option.id)]={choiceIndex:choice.choiceIndex,modelIndices:indices.slice(0,builderWargearCountLimit(entry,option))};
+    }
+    const name=String(saved.enhancementName||"");
+    if(name)entry.enhancement=builderOptionsForEnhancement(entry).find(option=>
+      normalizeRosterEnhancementName(localizedRuleValue(option.name,"en")||"")===normalizeRosterEnhancementName(name))||null;
+    entries.push(entry);
+  }
+  entries.forEach((entry,index)=>{
+    const target=snapshot.units[index].attachedTo;
+    entry.attachedTo=Number.isInteger(target)&&target>=0&&target<entries.length&&target!==index?target:null;
+  });
+  return entries;
+}
+
 function builderDetachmentTags(item) {
   return item?.uniqueTags || item?.metadata?.uniqueTags || [];
 }
@@ -410,12 +475,16 @@ $("builder-apply").addEventListener("click", event => {
     }
   });
   $("roster").value = lines.join("\n");
+  const builderSnapshot = builderSnapshotForText($("roster").value);
+  writeRosterBuilderDraft(builderSnapshot);
   let savedEditMessage = "";
   if (rosterBuilderEditingSavedId) {
     const presets = readRosterPresets();
     const saved = presets.saved.find(item => item.id === rosterBuilderEditingSavedId);
     if (saved) {
       saved.text = $("roster").value;
+      saved.faction = rosterBuilderFaction;
+      saved.builderSnapshot = builderSnapshot;
       saved.updatedAt = Date.now();
       if (writeRosterPresets(presets)) {
         refreshRosterPresetOptions();
@@ -929,7 +998,7 @@ async function editSavedRosterInBuilder(savedId) {
   rosterBuilderEditingSavedId = saved.id;
   rosterBuilderEditingName = saved.name;
   $("builder-faction").value = faction;
-  $("builder-limit").value = Number(parsed.meta.gameSize) || Number(parsed.meta.points) || 1000;
+  $("builder-limit").value = Number(saved.builderSnapshot?.text===saved.text&&saved.builderSnapshot?.limit) || Number(parsed.meta.gameSize) || Number(parsed.meta.points) || 1000;
   $("builder-load-faction").disabled = false;
   $("builder-detachment-step").hidden = false;
   $("builder-unit-step").hidden = true;
@@ -939,6 +1008,7 @@ async function editSavedRosterInBuilder(savedId) {
   try {
     await loadRulesData({ faction, rosterUnits: parsed.units });
     rosterBuilderDetachments = await loadBuilderDetachments(faction);
+    const savedSnapshot=saved.builderSnapshot?.schema===1&&saved.builderSnapshot.text===saved.text?saved.builderSnapshot:null;
     const detachmentText = String(parsed.meta.detachment || "").replace(/^\s*DETACHMENT\s*:\s*/i, "")
       .replace(/\s*\(\s*\d+\s*(?:detachment\s*points?|DPs?|디테치먼트\s*포인트)\s*\)\s*$/i, "");
     const rosterLineKeys = saved.text.split(/\r?\n/).map(line => norm(line.replace(/^\s*[•●▪*◦○◆-]\s*/, "")));
@@ -947,21 +1017,24 @@ async function editSavedRosterInBuilder(savedId) {
       return names.some(name => rosterLineKeys.some(line => line === name ||
         (line.startsWith(name) && /\b(?:dp|points?)\b|디테치먼트\s*포인트/.test(line.slice(name.length)))));
     }).map(item => item.detachment);
-    const detachmentNames = (detachmentText ? detachmentText.split(/\s*,\s*/) : inferredDetachmentNames).filter(Boolean);
+    const snapshotDetachments=Array.isArray(savedSnapshot?.detachments)?savedSnapshot.detachments:[];
+    const detachmentNames = (snapshotDetachments.length?snapshotDetachments:detachmentText?detachmentText.split(/\s*,\s*/):inferredDetachmentNames).filter(Boolean);
     const unmatchedDetachments = [];
     detachmentNames.forEach(name => {
       const index = builderFindDetachmentIndex(name);
       if (index >= 0 && !builderSelectedDetachments.includes(index)) builderSelectedDetachments.push(index);
       else if (index < 0) unmatchedDetachments.push(name);
     });
-    if (detachmentNames.length && !builderSelectedDetachments.length) {
-      $("builder-detachment-manual").value = detachmentNames.join(", ");
+    if ((detachmentNames.length && !builderSelectedDetachments.length)||savedSnapshot?.manualDetachment) {
+      $("builder-detachment-manual").value = savedSnapshot?.manualDetachment||detachmentNames.join(", ");
       $("builder-detachment-manual-wrap").hidden = false;
     }
     rosterBuilderSelectedDetachment = builderSelectedDetachments[0] ?? null;
     renderBuilderDetachments();
     const unmatched = [];
-    parsed.units.forEach((parsedUnit, parsedIndex) => {
+    const snapshotUnits=builderUnitsFromSnapshot(savedSnapshot);
+    if(snapshotUnits)rosterBuilderUnits.push(...snapshotUnits);
+    else parsed.units.forEach((parsedUnit, parsedIndex) => {
       const unit = builderFindRosterUnit(parsedUnit.rosterName);
       if (!unit) { unmatched.push(parsedUnit.rosterName); return; }
       const entry = { unit, models: parsedUnit.count || unit.modelCount?.min || 1,
@@ -980,19 +1053,21 @@ async function editSavedRosterInBuilder(savedId) {
       entry._savedParsedIndex = parsedIndex;
       rosterBuilderUnits.push(entry);
     });
-    const savedParents=rosterAttachmentParents(parsed.units);
-    rosterBuilderUnits.forEach(entry => {
-      const parent=savedParents.get(entry._savedParsedIndex);
-      const target=rosterBuilderUnits.findIndex(candidate=>candidate._savedParsedIndex===parent);
-      entry.attachedTo=target>=0?target:null;
-    });
-    rosterBuilderUnits.forEach(entry=>{delete entry._savedAttachName;delete entry._savedParsedIndex;});
+    if(!snapshotUnits){
+      const savedParents=rosterAttachmentParents(parsed.units);
+      rosterBuilderUnits.forEach(entry => {
+        const parent=savedParents.get(entry._savedParsedIndex);
+        const target=rosterBuilderUnits.findIndex(candidate=>candidate._savedParsedIndex===parent);
+        entry.attachedTo=target>=0?target:null;
+      });
+      rosterBuilderUnits.forEach(entry=>{delete entry._savedAttachName;delete entry._savedParsedIndex;});
+    }
     rosterBuilderSelectedIndex = rosterBuilderUnits.length ? 0 : -1;
     $("builder-unit-step").hidden = false;
     $("builder-data-status").textContent = [
       unmatched.length ? "데이터 연결이 안 된 유닛: " + unmatched.join(", ") : "",
       unmatchedDetachments.length ? "디테치먼트 연결 안 됨: " + unmatchedDetachments.join(", ") : "",
-      !unmatched.length && !unmatchedDetachments.length ? "저장 로스터의 디테치먼트·유닛·무장·인헨스·합류 구성을 불러왔습니다." : ""
+      !unmatched.length && !unmatchedDetachments.length ? snapshotUnits?"저장된 모델별 장비·인헨스·합류 설정을 복원했습니다.":"저장 로스터의 디테치먼트·유닛·무장·인헨스·합류 구성을 불러왔습니다." : ""
     ].filter(Boolean).join(" · ");
     renderBuilderUnitCatalog();
     renderRosterBuilderList();

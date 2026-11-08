@@ -827,3 +827,15 @@ body{background-image:radial-gradient(ellipse at 80% 0%,rgba(var(--faction-accen
 .builder-attached-child{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:0;border-left:3px solid var(--accent);background:rgba(72,139,255,.08);color:var(--text);text-align:left;cursor:pointer;min-height:44px}.builder-attached-child small{color:var(--muted)}
 .builder-detail-section{scroll-margin-top:130px}.builder-model-group-row{flex-wrap:wrap}.builder-model-group-row>span{min-width:0;flex:1 1 180px}.builder-model-group-row small{line-height:1.5}
 @media(max-width:500px){.builder-wargear-choice-row{gap:5px}.builder-wargear-choice{padding:9px 7px}.builder-wargear-choice span{min-width:0}.builder-wargear-choice b{overflow-wrap:normal;word-break:keep-all}.builder-wargear-clear{font-size:10px;padding:6px;white-space:nowrap}.builder-model-group-card{padding:8px}.builder-editor-nav{top:76px}}
+
+/* Give an open combat menu a single, wider touch surface on phones. */
+@media(max-width:600px){
+  .unit-quick-nav:not(.is-collapsed):has(.quick-assistant[open],.quick-stratagem-nav[open],.unit-quick-nav-list:not([hidden])){
+    left:0;right:0;bottom:0;width:100%;max-height:78dvh;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-radius:16px 16px 0 0;
+  }
+  .unit-quick-nav-list,.quick-assistant-rows{max-height:55dvh;overscroll-behavior-y:contain}
+  .unit-quick-nav-item,.quick-stratagem-item{min-height:44px}
+  .quick-assistant-empty{font-size:13px;line-height:1.5}
+}

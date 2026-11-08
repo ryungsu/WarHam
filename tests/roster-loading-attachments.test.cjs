@@ -30,6 +30,30 @@ test('saved roster opening restores a missing faction header from its name and u
   assert.equal(c.parseRoster(c.savedRosterTextWithFaction(old)).meta.faction,'ultramarines');
   assert.equal(c.savedRosterFaction({name:'스페이스 마린',text:'FACTION KEYWORD: Space Marines\n5x Intercessor Squad (85 points)'}),'adeptusastartes');
 });
+test('opening a saved roster reports missing units or faction instead of claiming data loaded',()=>{
+  const loadSource=source.slice(source.indexOf('function loadRosterEntry('),source.indexOf('$("save-roster-preset")'));
+  const fields={roster:{value:'current'},'roster-preset-status':{textContent:''},'roster-import-panel':{open:false}};
+  let selectedView='',renderCount=0;
+  const context=vm.createContext({
+    $:id=>fields[id],
+    parseRoster:text=>({meta:{faction:text.includes('Unknown')?'Unknown':text.includes('Known')?'Known':''},units:text.includes('5x')?[{rosterName:'Scout Squad'}]:[]}),
+    savedRosterTextWithFaction:item=>item.text,
+    catalogueFilesForFaction:faction=>faction==='Known'?['Space Marines.json']:[],
+    resizeRoster:()=>{},render:()=>{renderCount++},
+    document:{querySelector:selector=>({click:()=>{selectedView=selector}})}
+  });
+  vm.runInContext(loadSource,context);
+  context.loadRosterEntry({name:'손상',text:'empty'},'저장 로스터');
+  assert.equal(fields.roster.value,'current');
+  assert.match(fields['roster-preset-status'].textContent,/유닛을 찾지 못했습니다/);
+  context.loadRosterEntry({name:'미확인',text:'Unknown\n5x Scout Squad'},'저장 로스터');
+  assert.equal(selectedView,'[data-view="roster"]');
+  assert.equal(fields['roster-import-panel'].open,true);
+  assert.match(fields['roster-preset-status'].textContent,/진영을 데이터에 연결하지 못했습니다/);
+  context.loadRosterEntry({name:'정상',text:'Known\n5x Scout Squad'},'저장 로스터');
+  assert.equal(selectedView,'[data-view="datasheets"]');
+  assert.ok(renderCount>=2);
+});
 test('generic Space Marines roster loads Ultramarines epic heroes from chapter catalogue',()=>{
   const context=vm.createContext({FACTION_ALIASES:[['Space Marines','Imperium - Space Marines.json']],CATALOGUE_FILES:[],norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'')});
   vm.runInContext(source.slice(source.indexOf('function rosterChapterFile('),source.indexOf('function fetchBsDataFile(')),context);
