@@ -17,6 +17,18 @@ test('Space Marine roster keeps faction with a bulleted header or a Scout-only e
   const c=parser();
   assert.equal(c.parseRoster('- FACTION KEYWORD: Imperium - Adeptus Astartes - Ultramarines\n5x Scout Squad (65 points)').meta.faction,'Imperium - Adeptus Astartes - Ultramarines');
   assert.equal(c.parseRoster('5x Scout Squad (65 points)\n• 1x Scout Sergeant: Bolt pistol, Chainsword, Boltgun').meta.faction,'Adeptus Astartes');
+  assert.equal(c.parseRoster('진영: 울트라마린\n5x Scout Squad (65 points)').meta.faction,'울트라마린');
+});
+test('saved roster opening restores a missing faction header from its name and uses a builder option',()=>{
+  const c=parser();
+  c.normalizeFactionAlias=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+  c.FACTION_ALIASES.push(['ultramarines','Space Marines.json','Ultramarines.json'],['adeptusastartes','Space Marines.json'],['spacemarines','Space Marines.json']);
+  c.KOREAN_FACTION_ALIASES.set(c.normalizeFactionAlias('울트라마린'),'Ultramarines');
+  vm.runInContext(source.slice(source.indexOf('function savedRosterFaction('),source.indexOf('function writeRosterPresets(')),c);
+  const old={name:'울트라마린 1000점',text:'5x Intercessor Squad (85 points)'};
+  assert.equal(c.savedRosterFaction(old),'ultramarines');
+  assert.equal(c.parseRoster(c.savedRosterTextWithFaction(old)).meta.faction,'ultramarines');
+  assert.equal(c.savedRosterFaction({name:'스페이스 마린',text:'FACTION KEYWORD: Space Marines\n5x Intercessor Squad (85 points)'}),'adeptusastartes');
 });
 test('generic Space Marines roster loads Ultramarines epic heroes from chapter catalogue',()=>{
   const context=vm.createContext({FACTION_ALIASES:[['Space Marines','Imperium - Space Marines.json']],CATALOGUE_FILES:[],norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'')});

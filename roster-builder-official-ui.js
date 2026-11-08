@@ -913,9 +913,8 @@ function builderRestoreLoadout(entry, parsedUnit) {
 async function editSavedRosterInBuilder(savedId) {
   const saved = readRosterPresets().saved.find(item => item.id === savedId);
   if (!saved) return;
-  const parsed = parseRoster(saved.text);
-  const factionHeader = saved.text.match(/^\s*(?:FACTION KEYWORD|FACTION|팩션)\s*:\s*(.+)$/im)?.[1] || "";
-  const faction = builderFactionAliasFromName(parsed.meta.faction) || builderFactionAliasFromName(factionHeader);
+  const parsed = parseRoster(savedRosterTextWithFaction(saved));
+  const faction = savedRosterFaction(saved);
   if (!faction) {
     $("roster-preset-status").textContent = "저장 로스터의 진영을 인식하지 못해 편집기로 열지 못했습니다.";
     return;
