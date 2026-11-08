@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>40K 데이터시트 번역 도우미</title>
-  <link rel="stylesheet" href="styles.css?v=20261108-1">
+  <link rel="stylesheet" href="styles.css?v=20261108-2">
   <link rel="stylesheet" href="app-loading.css?v=20261105-1">
   <link rel="stylesheet" href="datasheet-cards.css?v=20261107-3">
 </head>
@@ -60,6 +60,7 @@
       </details>
     </section>
     <section id="summary" class="summary" hidden></section>
+    <section id="data-detachment-overview" class="data-detachment-overview" hidden aria-label="현재 로스터의 디테치먼트 규칙"></section>
     <section id="results" class="results" aria-live="polite" hidden></section>
     <section id="assistant-page" class="assistant-page" hidden aria-live="polite"></section>
     <section id="game-page" class="game-page" hidden aria-live="polite"></section>
@@ -72,7 +73,7 @@
         <div id="quick-assistant-content" class="quick-assistant-content"></div>
       </details>
       <details id="quick-stratagem-nav" class="quick-stratagem-nav">
-        <summary>스트라타젬 <small id="quick-stratagem-count"></small></summary>
+        <summary><span class="quick-stratagem-heading">스트라타젬 <small id="quick-stratagem-faction"></small></span><small id="quick-stratagem-count"></small></summary>
         <div id="quick-stratagem-content" class="quick-stratagem-content"></div>
       </details>
       <div id="unit-quick-nav-list" class="unit-quick-nav-list" hidden></div>
@@ -108,7 +109,7 @@
   <script defer src="app-data-cache.js?v=20261104-3"></script>
   <script defer src="datasheet-images.generated.js?v=20261106-1"></script>
   <script defer src="datasheet-images.js?v=20261106-1"></script>
-  <script defer src="app.js?v=20261108-1"></script>
+  <script defer src="app.js?v=20261108-2"></script>
   <script defer src="roster-builder-ui.js?v=20261104-1"></script>
   <script defer src="roster-builder-official-ui.js?v=20261108-1"></script>
 </body>
