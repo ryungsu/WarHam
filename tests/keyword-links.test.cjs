@@ -41,6 +41,14 @@ test('numbered weapon abilities resolve to usable 11th edition descriptions', ()
   assert.match(context.keywordInfo('Melta 2').description, /피해\(D\).*2/);
 });
 
+test('conditional Devastating Wounds resolves with its target restriction', () => {
+  const english = context.keywordInfo('Devastating Wounds: non-Monster/Vehicle');
+  assert.equal(english.ko, '치명적인 상처 (몬스터/차량 제외)');
+  assert.match(english.description, /방어 굴림.*몬스터\/차량 키워드가 하나도 없을 때/);
+  assert.equal(context.keywordInfo('치명적인 상처 (몬스터/차량 제외)').key, english.key);
+  assert.match(context.renderKeywordButton('Devastating Wounds: non-Monster/Vehicle'), /data-keyword="devastating wounds: non-MONSTER\/VEHICLE"/);
+});
+
 test('translated ability prose links unbracketed Sustained Hits and Blast', () => {
   const html = context.richText('이 무기는 지속 명중 1과 폭발 2를 얻습니다.');
   assert.match(html, /data-keyword="sustained hits 1"/);
