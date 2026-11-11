@@ -294,7 +294,7 @@ function escapeHtml(s=""){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp
 function renderRuleMarkup(value=""){
   const tokens=[];let source=String(value??"").replace(/\r/g,"").replace(/<k\b[^>]*>([\s\S]*?)<\/k>/gi,(_,inner)=>{const keyword=inner.replace(/<[^>]*>/g,"").trim(),token=tokens.push(renderKeywordButton(keyword))-1;return `\uE000${token}\uE001`;});
   source=source.replace(/\[([^\[\]]+)\]/g,(match,inner)=>{if(!keywordInfo(inner))return match;const token=tokens.push(renderKeywordButton(inner,true))-1;return `\uE000${token}\uE001`;});
-  source=source.replace(/<(b|strong)\b[^>]*>([\s\S]*?)<\/\1>/gi,(match,tag,inner)=>{const keyword=inner.replace(/<[^>]*>/g,"").trim();return keywordInfo(keyword)?`<${tag}>${renderKeywordButton(keyword)}</${tag}>`:match;});
+  source=source.replace(/<(b|strong)\b[^>]*>([\s\S]*?)<\/\1>/gi,(match,tag,inner)=>{const keyword=inner.replace(/<[^>]*>/g,"").trim();if(!keywordInfo(keyword))return match;const token=tokens.push(renderKeywordButton(keyword))-1;return `<${tag}>\uE000${token}\uE001</${tag}>`;});
   source=source.replace(/<br\s*\/?\s*>/gi,"\n").replace(/<(\/?)\s*(b|strong|i|em|u|ul|ol|li|p)\b[^>]*>/gi,(_,slash,tag)=>{const token=tokens.push(`<${slash}${tag.toLowerCase()}>`)-1;return `\uE100${token}\uE101`;}).replace(/<[^>]*>/g,"");
   source=linkBareNumericKeywords(source,tokens);
   return escapeHtml(source).replace(/\uE000(\d+)\uE001/g,(_,index)=>tokens[Number(index)]||"").replace(/\uE100(\d+)\uE101/g,(_,index)=>tokens[Number(index)]||"").replace(/\n/g,"<br>");
@@ -350,6 +350,13 @@ function translateRulesText(profileName,text="",identity={}){
 }
 function keywordInfo(raw=""){
   const source=keywordText(raw),clean=source.replace(/\*\*/g,"").replace(/[\[\]]/g,"").replace(/\u00a0/g," ").trim(),key=textKey(clean),canonicalKey=textKey(clean.replace(/\s*\(([^()]*)\)\s*/g,(_,inside)=>textKey(inside)===textKey(clean.split("(")[0])?"":" "+inside).trim());
+  const englishSuffix=clean.match(/\(([^()]*[A-Za-z][^()]*)\)\s*$/);
+  if(englishSuffix){const info=keywordInfo(englishSuffix[1]);if(info)return info;}
+  // Translation variants are resolved only as whole keyword names, not prose.
+  const aliases=[[/^(?:지속적인 타격|지속 타격|지속 피해|지속 공격)(?=\s*\d)/,"지속 명중"],[/^(?:정밀도|정밀 공격|정밀 사격)$/,"Precision"],[/^파괴적인 상처/,"치명적인 상처"],[/^치명타(?=\s*[:：]|$)/,"치명타 명중"],[/^(?:신속 사격|래피드 파이어)$/,"Rapid Fire"],[/^커버 무시$/,"Ignores Cover"],[/^비히클$/,"차량"]];
+  let canonical=clean;for(const [pattern,replacement] of aliases)canonical=canonical.replace(pattern,replacement);
+  canonical=canonical.replace(/비히클/g,"차량");
+  if(canonical!==clean)return keywordInfo(canonical);
   if(["librarius","librarius psyker","librarius ability"].includes(canonicalKey)||/\blibrarius\b/i.test(clean))return {key:"librarius",ko:"리브라리우스",en:"Librarius",description:"아뎁투스 아스타르테스 PSYKER 유닛은 데이터시트에 표시된 사이커 레벨만큼 매 배틀 라운드에 사이킥 능력을 사용할 수 있습니다. 사용하는 능력들의 사이킥 레벨 합계는 해당 유닛의 사이커 레벨을 넘을 수 없습니다."};
   const devastatingCondition=clean.match(/^(?:devastating\s+wounds|치명적인\s*상처)\s*[:：]\s*non[\s\-‐‑‒–—]*([a-z]+(?:\s*\/\s*[a-z]+)*)$/i)||clean.match(/^치명적인\s*상처\s*[:：]?\s*\(?\s*((?:몬스터|차량|보병|기병|야수)(?:\s*\/\s*(?:몬스터|차량|보병|기병|야수))*)\s*제외\s*\)?$/);
   if(devastatingCondition){const englishTargets={monster:"몬스터",vehicle:"차량",infantry:"보병",mounted:"기병",beast:"야수"},koreanTargets={몬스터:"MONSTER",차량:"VEHICLE",보병:"INFANTRY",기병:"MOUNTED",야수:"BEAST"},targets=devastatingCondition[1].split("/").map(x=>x.trim()),localized=/[가-힣]/.test(targets[0]),targetKo=targets.map(x=>localized?x:(englishTargets[textKey(x)]||x)).join("/"),targetEn=targets.map(x=>localized?(koreanTargets[x]||x):x.toUpperCase()).join("/");return {key:`devastating wounds: non-${targetEn}`,ko:`치명적인 상처 (${targetKo} 제외)`,en:`Devastating Wounds: non-${targetEn}`,description:`치명 운드를 기록하면 대상은 이 공격의 피해를 방어 굴림으로 막을 수 없습니다. 대상 유닛에 ${targetKo} 키워드가 하나도 없을 때만 적용됩니다.`};}
@@ -368,7 +375,7 @@ function keywordInfo(raw=""){
   if(/^(?:psychic|사이킥)$/i.test(clean))return {key:"psychic",ko:"사이킥",en:"Psychic",description:"사이킥 공격을 식별하는 키워드입니다. 사이킥 공격에만 적용되는 방어 능력은 해당 공격을 받을 때만 적용합니다."};
   const fnp=clean.match(/^(?:feel\s+no\s+pain|고통\s*경감)\s*\(?\s*(\d+)\s*\+?\s*\)?$/i);
   if(fnp){const n=fnp[1];return {key:`feel no pain ${n}+`,ko:`고통 경감 ${n}+`,en:`Feel No Pain ${n}+`,description:`이 능력이 있는 모델이 운드를 잃을 때마다 D6을 굴립니다. ${n}+가 나오면 그 운드를 잃지 않습니다.`};}
-  const scouts=clean.match(/^scouts\s*(\d+)\s*[”’\u201d\u2019\u2033\u2032\"]?$/i);
+  const scouts=clean.match(/^(?:scouts|스카웃|정찰)\s*(\d+)\s*(?:인치|[”’\u201d\u2019\u2033\u2032\"])?$/i);
   if(scouts){const n=scouts[1];return {key:`scouts ${n}`,ko:`스카웃 ${n}인치`,en:`Scouts ${n}\"`,description:`모든 모델이 이 능력을 가진 유닛은 첫 턴 시작 전에 최대 ${n}인치 이동할 수 있습니다. 아군 수송차량에 탑승 중이면 차량이 대신 이동할 수 있습니다.`};}
   const anti=clean.match(/^anti[\s\-‐‑‒–—]*([a-z][a-z /-]*?)\s*(\d+)\s*\+?$/i);
   const antiNonVehicle=clean.match(/^anti[\s\-‐‑‒–—]*non[\s\-‐‑‒–—]*vehicle\s*(\d+)\s*\+?$/i)||clean.match(/^안티\s*비차량\s*(\d+)\s*\+?$/);
@@ -387,7 +394,7 @@ function renderKeywordButton(raw,bracketed=false){
 }
 function keywordText(raw=""){if(typeof raw==="string")return raw;if(raw&&typeof raw==="object")return String(raw.label??raw.name??raw.keyword??raw.text??fortykdcKeywordLabel(raw)??"");return String(raw??"");}
 function linkBareNumericKeywords(source,tokens){
-  return source.replace(/(^|[^\p{L}\p{N}\uE000-\uF8FF])((?:고통\s*경감|Feel\s+No\s+Pain)\s*\d+\s*\+|(?:지속\s*명중|Sustained\s+Hits|폭발|Blast|속사|Rapid\s+Fire|멜타|Melta)\s*\d+|사이킥|Psychic)(?![A-Za-z0-9])/giu,(match,before,word)=>{
+  return source.replace(/(^|[^\p{L}\p{N}\uE000-\uF8FF])((?:고통\s*경감|Feel\s+No\s+Pain)\s*\d+\s*\+|(?:지속\s*명중|Sustained\s+Hits|폭발|Blast|속사|Rapid\s+Fire|멜타|Melta)\s*\d+|(?:Scouts|스카웃|정찰)\s*\d+\s*(?:인치|["″])|치명타\s*명중|Lethal\s+Hits|치명적인\s*상처|Devastating\s+Wounds|정밀\s*타격|Precision|선제\s*공격|Fights\s+First|엄폐\s*무시|Ignores\s+Cover|쌍연결|Twin-linked|배틀쇼크\s*(?:굴림|단계)|Battle-shock\s+(?:roll|step|test)|사이킥|Psychic)(?![A-Za-z0-9])/giu,(match,before,word)=>{
     if(!keywordInfo(word))return match;
     const token=tokens.push(renderKeywordButton(word))-1;
     return `${before}\uE000${token}\uE001`;
