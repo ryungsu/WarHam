@@ -365,7 +365,8 @@ function keywordInfo(raw=""){
   if(rapidFire){const n=rapidFire[1];return {key:`rapid fire ${n}`,ko:`속사 ${n}`,en:`Rapid Fire ${n}`,description:`대상이 이 무기의 사거리 절반 이내에 있으면 공격 주사위를 ${n}개 추가합니다.`};}
   const melta=clean.match(/^(?:melta|멜타)\s*(\d+)$/i);
   if(melta){const n=melta[1];return {key:`melta ${n}`,ko:`멜타 ${n}`,en:`Melta ${n}`,description:`대상이 이 무기의 사거리 절반 이내에 있으면 이 공격을 해결하는 동안 무기의 피해(D)에 ${n}을 더합니다.`};}
-  const fnp=clean.match(/^feel\s+no\s+pain\s*\(?\s*(\d+)\s*\+?\s*\)?$/i);
+  if(/^(?:psychic|사이킥)$/i.test(clean))return {key:"psychic",ko:"사이킥",en:"Psychic",description:"사이킥 공격을 식별하는 키워드입니다. 사이킥 공격에만 적용되는 방어 능력은 해당 공격을 받을 때만 적용합니다."};
+  const fnp=clean.match(/^(?:feel\s+no\s+pain|고통\s*경감)\s*\(?\s*(\d+)\s*\+?\s*\)?$/i);
   if(fnp){const n=fnp[1];return {key:`feel no pain ${n}+`,ko:`고통 경감 ${n}+`,en:`Feel No Pain ${n}+`,description:`이 능력이 있는 모델이 운드를 잃을 때마다 D6을 굴립니다. ${n}+가 나오면 그 운드를 잃지 않습니다.`};}
   const scouts=clean.match(/^scouts\s*(\d+)\s*[”’\u201d\u2019\u2033\u2032\"]?$/i);
   if(scouts){const n=scouts[1];return {key:`scouts ${n}`,ko:`스카웃 ${n}인치`,en:`Scouts ${n}\"`,description:`모든 모델이 이 능력을 가진 유닛은 첫 턴 시작 전에 최대 ${n}인치 이동할 수 있습니다. 아군 수송차량에 탑승 중이면 차량이 대신 이동할 수 있습니다.`};}
@@ -386,7 +387,7 @@ function renderKeywordButton(raw,bracketed=false){
 }
 function keywordText(raw=""){if(typeof raw==="string")return raw;if(raw&&typeof raw==="object")return String(raw.label??raw.name??raw.keyword??raw.text??fortykdcKeywordLabel(raw)??"");return String(raw??"");}
 function linkBareNumericKeywords(source,tokens){
-  return source.replace(/(^|[^\p{L}\p{N}\uE000-\uF8FF])((?:지속\s*명중|Sustained\s+Hits|폭발|Blast|속사|Rapid\s+Fire|멜타|Melta)\s*\d+)(?![A-Za-z0-9])/giu,(match,before,word)=>{
+  return source.replace(/(^|[^\p{L}\p{N}\uE000-\uF8FF])((?:고통\s*경감|Feel\s+No\s+Pain)\s*\d+\s*\+|(?:지속\s*명중|Sustained\s+Hits|폭발|Blast|속사|Rapid\s+Fire|멜타|Melta)\s*\d+|사이킥|Psychic)(?![A-Za-z0-9])/giu,(match,before,word)=>{
     if(!keywordInfo(word))return match;
     const token=tokens.push(renderKeywordButton(word))-1;
     return `${before}\uE000${token}\uE001`;

@@ -61,3 +61,18 @@ test('weapon-granted keywords can open their rule explanation', () => {
   const html = context.renderWeaponBuffKeywords([{label:'지속 명중 1', description:'', sourceName:'타이투스', sourceRule:'공세'}]);
   assert.match(html, /class="keyword-chip weapon-buff-keyword" data-keyword="sustained hits 1"/);
 });
+
+test('Psychic Hood translation retains threshold and psychic-only condition links', () => {
+  for(const render of [context.richText,context.renderRuleMarkup]){
+    const html=render('이 유닛은 사이킥 공격을 상대로 고통 경감 4+를 가집니다.');
+    assert.match(html,/data-keyword="feel no pain 4\+"/);
+    assert.match(html,/data-keyword="psychic"/);
+    assert.match(html,/공격을 상대로/);
+    assert.equal((html.match(/data-keyword=/g)||[]).length,2);
+  }
+  assert.match(context.keywordInfo('고통 경감 4+').description,/4\+/);
+  const english=context.richText('This unit has Feel No Pain 4+ against psychic attacks.');
+  assert.equal((english.match(/data-keyword=/g)||[]).length,2);
+  const bracketed=context.richText('[고통 경감 4+]와 [Psychic]');
+  assert.equal((bracketed.match(/data-keyword=/g)||[]).length,2);
+});
