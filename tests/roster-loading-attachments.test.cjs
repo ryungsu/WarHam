@@ -78,6 +78,18 @@ test('model weapons match whole names and keep Sergeant melee choices separate',
   assert.equal(context.weaponLoadoutAssignments(hammer,roster,5,profiles)[0].name,'Assault Intercessor Sergeant');
   assert.equal(context.weaponLoadoutAssignments(chainsword,roster,5,profiles)[0].name,'Assault Intercessors');
 });
+test('Deathwatch power weapons and shield attach to the correct models',()=>{
+  const context=vm.createContext({weaponName:s=>s,translateTerms:s=>s,profileDisplayName:p=>p.name});
+  vm.runInContext(source.slice(source.indexOf('function normalizeLoadoutText('),source.indexOf('function replaceRosterWeaponChoice('))+source.slice(source.indexOf('function weaponLoadoutAssignments('),source.indexOf('function rosterUnitAttackBuffs(')),context);
+  const profiles=[{name:'Bolt pistol',typeName:'Ranged Weapons'},{name:'Power weapon',typeName:'Melee Weapons'},{name:'Storm shield',typeName:'Abilities'}];
+  const roster={modelLoadouts:[
+    {name:'Deathwatch Veteran · Bolt pistol + 역장 무기 + Astartes shield',models:1,items:[{name:'Bolt pistol',count:1},{name:'역장 무기',count:1},{name:'Astartes shield',count:1}]},
+    {name:'Kill Team Sergeant',models:1,items:[{name:'역장 무기',count:1}]}
+  ]};
+  assert.equal(context.weaponLoadoutAssignments(profiles[1],roster,2,profiles).length,2);
+  assert.equal(context.equippedWargearProfiles(roster,profiles,2)[0].assignments[0].name,roster.modelLoadouts[0].name);
+  assert.equal(context.unmatchedRosterWeapons(roster,profiles,profiles).length,0);
+});
 test('Leading and Supporting imports produce character-to-squad links',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Captain Titus (115 points)\nLeading Infernus Squad\n1x Lieutenant (50 points)\nSupporting Assault Intercessor Squad\n5x Infernus Squad (95 points)\n5x Assault Intercessor Squad (85 points)');const links=c.rosterAttachmentParents(parsed.units);assert.equal(links.get(0),2);assert.equal(links.get(1),3);});
 test('explicit target index distinguishes identical squads',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached to: Intercessor Squad\n• Attached as: Support\n• Attached to index: 3\n5x Intercessor Squad (85 points)\n5x Intercessor Squad (85 points)');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),2);});
 test('reverse Attached to character keeps squad as host',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached as: Support\n5x Intercessor Squad (85 points)\nAttached to Lieutenant');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),1);});

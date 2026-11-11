@@ -319,6 +319,11 @@
 #results .weapon-unmatched-loadout h5{margin:0 0 5px;color:#f0c478}
 #results .weapon-unmatched-loadout>div{padding:2px 0}
 #results .weapon-unmatched-loadout small{color:#bfc8d1}
+#results .weapon-group-wargear{margin-top:12px}
+#results .weapon-wargear-card{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin:5px 0;padding:9px 11px;border:1px solid #38566c;border-radius:8px;background:#1d3040;font-size:12px}
+#results .weapon-wargear-card>small{color:#a6bbce}
+#results .weapon-wargear-card .weapon-model-assignment{flex-basis:100%;margin:0;color:#8dbbff}
+#results .weapon-wargear-card>p{flex-basis:100%;margin:3px 0 0;line-height:1.45}
 #results .weapon-choice{display:flex;align-items:center;gap:7px;color:#f0f4f8;cursor:pointer}
 #results .weapon-choice input{width:15px;height:15px;margin:0;accent-color:#3479c3;flex:0 0 auto}
 #results .weapon-row.not-equipped .weapon-choice{color:#c2ccd6}
