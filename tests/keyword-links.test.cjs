@@ -94,3 +94,14 @@ test('ordinary and bold rule prose retain links without linking unit names', () 
   assert.equal((html.match(/data-keyword=/g)||[]).length,2);
   assert.doesNotMatch(html,/<button[^>]*>[^<]*<button/);
 });
+
+test('InSv source corrects the approved Force Dome translation without changing normal saves', () => {
+  const bundle=fs.readFileSync(path.join(__dirname,'..','approved-translations.js'),'utf8');
+  const rows=JSON.parse(bundle.slice(bundle.indexOf('{'),bundle.lastIndexOf('}')+1)).translations.filter(row=>row.id==='a97e-6a4c-de68-4a4d');
+  const rules=vm.createContext({textKey:value=>String(value).toLowerCase(),approvedRuleTranslation:()=>rows.at(-1).translation,v2RuleTranslations:new Map(),v2DraftRuleTranslations:new Map(),ruleFeedKey:()=>'',abilityTextTranslations:new Map(),translateTerms:value=>value});
+  vm.runInContext(section('function correctRuleStatTranslation(', 'function keywordInfo('),rules);
+  assert.equal(rows.length,4);
+  assert.match(rules.translateRulesText(rows[0].name,rows[0].source,{id:rows[0].id}),/무적 방어 4\+/);
+  assert.doesNotMatch(rules.translateRulesText(rows[0].name,rows[0].source,{id:rows[0].id}),/4\+ 방어력/);
+  assert.equal(rules.correctRuleStatTranslation('This unit has Sv 4+.','4+ 방어력을 얻습니다.'),'4+ 방어력을 얻습니다.');
+});

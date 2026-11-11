@@ -338,15 +338,21 @@ function translateTerms(s=""){
   return out;
 }
 function bilingualLabel(s=""){const ko=translateTerms(s);return ko!==s?`${ko} (${s})`:s;}
+function correctRuleStatTranslation(source,translated){
+  const invulnerable=String(source||"").match(/\b(\d+)\+\s*InSv\b/i);
+  if(!invulnerable)return translated;
+  const value=invulnerable[1],incorrect=new RegExp(`${value}\\+\\s*방어력`,"g");
+  return String(translated||"").replace(incorrect,`무적 방어 ${value}+`);
+}
 function translateRulesText(profileName,text="",identity={}){
   const key=textKey(profileName);
-  const approvedById=approvedRuleTranslation(profileName,text,identity);if(approvedById)return approvedById;
-  const approvedV2=v2RuleTranslations.get(ruleFeedKey(profileName,text));if(approvedV2)return approvedV2;
-  const savedDraft=v2DraftRuleTranslations.get(ruleFeedKey(profileName,text));if(savedDraft)return savedDraft;
+  const approvedById=approvedRuleTranslation(profileName,text,identity);if(approvedById)return correctRuleStatTranslation(text,approvedById);
+  const approvedV2=v2RuleTranslations.get(ruleFeedKey(profileName,text));if(approvedV2)return correctRuleStatTranslation(text,approvedV2);
+  const savedDraft=v2DraftRuleTranslations.get(ruleFeedKey(profileName,text));if(savedDraft)return correctRuleStatTranslation(text,savedDraft);
   if(key==="leader"&&text.includes("VICTRIX HONOUR GUARD"))return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 헬블래스터 분대, 인페르누스 분대, 인터세서 분대, 스턴가드 베테랑 분대, 뱅가드 베테랑 분대, 빅트릭스 의장대, 울트라마르의 수호자.";
   if(key==="support")return "이 모델은 다음 유닛에 합류할 수 있습니다: 강습 인터세서 분대, 강습 분대, 블레이드가드 베테랑 분대, 커맨드 분대, 컴퍼니 히어로즈, 크루세이더 분대, 데스워치 베테랑, 데키무스 킬팀, 포르티스 킬팀, 헬블래스터 분대, 인페르누스 분대, 이너 서클 컴패니언, 인터세서 분대, 스턴가드 베테랑 분대, 소드 브레스런 분대, 택티컬 분대, 뱅가드 베테랑 분대.";
   const exact=abilityTextTranslations.get(key);if(exact)return exact;
-  const clean=text.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");return translateTerms(clean);
+  const clean=text.replace(/\*\*\^\^([^\^]+)\^\^\*\*/g,"$1").replace(/\^\^([^\^]+)\^\^/g,"$1");return correctRuleStatTranslation(text,translateTerms(clean));
 }
 function keywordInfo(raw=""){
   const source=keywordText(raw),clean=source.replace(/\*\*/g,"").replace(/[\[\]]/g,"").replace(/\u00a0/g," ").trim(),key=textKey(clean),canonicalKey=textKey(clean.replace(/\s*\(([^()]*)\)\s*/g,(_,inside)=>textKey(inside)===textKey(clean.split("(")[0])?"":" "+inside).trim());
