@@ -101,7 +101,10 @@ test('InSv source corrects the approved Force Dome translation without changing 
   const rules=vm.createContext({textKey:value=>String(value).toLowerCase(),approvedRuleTranslation:()=>rows.at(-1).translation,v2RuleTranslations:new Map(),v2DraftRuleTranslations:new Map(),ruleFeedKey:()=>'',abilityTextTranslations:new Map(),translateTerms:value=>value});
   vm.runInContext(section('function correctRuleStatTranslation(', 'function keywordInfo('),rules);
   assert.equal(rows.length,4);
-  assert.match(rules.translateRulesText(rows[0].name,rows[0].source,{id:rows[0].id}),/무적 방어 4\+/);
+  assert.match(rules.translateRulesText(rows[0].name,rows[0].source,{id:rows[0].id}),/무적 방어 4\+ \(InSv 4\+\)/);
   assert.doesNotMatch(rules.translateRulesText(rows[0].name,rows[0].source,{id:rows[0].id}),/4\+ 방어력/);
+  assert.equal(rules.correctRuleStatTranslation('The bearer has a 4+ invulnerable save.','장착 모델은 무적 방어 4+를 가집니다.'),'장착 모델은 무적 방어 4+ (InSv 4+)를 가집니다.');
+  assert.equal(rules.correctRuleStatTranslation('The bearer has a 4+ invulnerable save.','장착자는 4+ 무적 방어를 가집니다.'),'장착자는 무적 방어 4+ (InSv 4+)를 가집니다.');
+  assert.equal(rules.correctRuleStatTranslation('The bearer has a 4+ invulnerable save.','장착 모델은 무적 방어 4+ (InSv 4+)를 가집니다.'),'장착 모델은 무적 방어 4+ (InSv 4+)를 가집니다.');
   assert.equal(rules.correctRuleStatTranslation('This unit has Sv 4+.','4+ 방어력을 얻습니다.'),'4+ 방어력을 얻습니다.');
 });
