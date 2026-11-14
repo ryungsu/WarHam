@@ -3,10 +3,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');const vm=require('node:vm');
 const {createCache}=require('../app-data-cache.js');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
-function parser(){const context=vm.createContext({FACTION_ALIASES:[],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase().replace(/[^\p{L}\p{N}]/gu,''),normalizeMatchName:s=>String(s).toLowerCase().trim(),normalizeLoadoutText:s=>String(s).toLowerCase(),splitEnhancementNames:s=>[s],parseRosterModelLoadoutLine:()=>null,findDataUnit:()=>null});vm.runInContext(source.slice(source.indexOf('function parseRoster(text)'),source.indexOf('const sessionUnitMatches='))+source.slice(source.indexOf('function rosterAttachmentParents('),source.indexOf('function rosterUnitRenderOrder(')),context);return context;}
+function parser(){const context=vm.createContext({FACTION_ALIASES:[],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase().replace(/[^\p{L}\p{N}]/gu,''),normalizeMatchName:s=>String(s).toLowerCase().trim(),normalizeLoadoutText:s=>String(s).toLowerCase(),splitEnhancementNames:s=>[s],parseRosterModelLoadoutLine:()=>null,findDataUnit:()=>null});vm.runInContext(source.slice(source.indexOf('function parseRoster(text)'),source.indexOf('const sessionUnitMatches='))+source.slice(source.indexOf('function rosterChapterFile('),source.indexOf('function catalogueFilesForFaction('))+source.slice(source.indexOf('function rosterAttachmentParents('),source.indexOf('function rosterUnitRenderOrder(')),context);return context;}
 test('roster import preserves Scout specialists and enhancements',()=>{
   const context=vm.createContext({FACTION_ALIASES:[['Space Marines','Imperium - Space Marines.json']],KOREAN_FACTION_ALIASES:new Map(),norm:s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,''),normalizeLoadoutText:s=>String(s).toLowerCase()});
   vm.runInContext(source.slice(source.indexOf('function splitEnhancementNames('),source.indexOf('const sessionUnitMatches=')),context);
+  vm.runInContext(source.slice(source.indexOf('function rosterChapterFile('),source.indexOf('function catalogueFilesForFaction(')),context);
   const roster='FACTION KEYWORD: Space Marines\n1x Ballistus Dreadnought (190 points)\nEnhancement: Artificer Sarcophagus (Upgrade) (+40 points)\n5x Scout Squad (65 points)\n• 1x Scout Sergeant: Bolt pistol, Chainsword, Boltgun\n• 4x Scout\n    1 with Bolt pistol, Combat Knife, Missile Launcher\n    1 with Bolt pistol, Combat Knife, Sniper Rifle\n    2 with Bolt pistol, Combat Knife, Shotgun';
   const parsed=context.parseRoster(roster);
   assert.deepEqual(Array.from(parsed.units[0].enhancements),['Artificer Sarcophagus (Upgrade) (+40 points)']);
@@ -18,6 +19,29 @@ test('Space Marine roster keeps faction with a bulleted header or a Scout-only e
   assert.equal(c.parseRoster('- FACTION KEYWORD: Imperium - Adeptus Astartes - Ultramarines\n5x Scout Squad (65 points)').meta.faction,'Imperium - Adeptus Astartes - Ultramarines');
   assert.equal(c.parseRoster('5x Scout Squad (65 points)\n• 1x Scout Sergeant: Bolt pistol, Chainsword, Boltgun').meta.faction,'Adeptus Astartes');
   assert.equal(c.parseRoster('진영: 울트라마린\n5x Scout Squad (65 points)').meta.faction,'울트라마린');
+});
+test('generic Adeptus Astartes header resolves an Ultramarines roster',()=>{
+  const c=parser();
+  assert.equal(c.parseRoster('FACTION KEYWORD: adeptusastartes\n1x Captain Titus (115 points)\n5x Infernus Squad (95 points)').meta.faction,'Ultramarines');
+  assert.equal(c.parseRoster('FACTION KEYWORD: adeptusastartes\n6x Wardens of Ultramar (115 points)').meta.faction,'Ultramarines');
+  assert.equal(c.parseRoster('FACTION KEYWORD: adeptusastartes\n5x Scout Squad (65 points)').meta.faction,'Adeptus Astartes');
+  assert.equal(c.parseRoster('FACTION KEYWORD: Blood Angels\n5x Scout Squad (65 points)').meta.faction,'Blood Angels');
+});
+test('explicit chapter line takes priority over generic Space Marines header',()=>{
+  const c=parser();
+  c.FACTION_ALIASES.push(['ultramarines','Space Marines.json','Ultramarines.json'],['bloodangels','Space Marines.json','Blood Angels.json'],['adeptusastartes','Space Marines.json'],['spacemarines','Space Marines.json']);
+  assert.equal(c.parseRoster('Space Marines\nUltramarines\n5x Scout Squad (65 points)').meta.faction,'Ultramarines');
+  assert.equal(c.parseRoster('FACTION KEYWORD: adeptusastartes\nSpace Marines\nUltramarines\n5x Scout Squad (65 points)').meta.faction,'Ultramarines');
+  assert.equal(c.parseRoster('Space Marines\nBlood Angels\n5x Scout Squad (65 points)').meta.faction,'Blood Angels');
+  assert.equal(c.parseRoster('Space Marines\nUltramarines\n1x Captain Titus (115 points)').meta.faction,'Ultramarines');
+});
+test('Space Marines theme does not use the generic Imperium gold',()=>{
+  const body={dataset:{},style:{setProperty(){}}};
+  const c=vm.createContext({document:{body},normalizeFactionAlias:value=>String(value).toLowerCase().replace(/[^a-z0-9]/g,'')});
+  vm.runInContext(source.slice(source.indexOf('function applyFactionTheme('),source.indexOf('function adaptBsData(')),c);
+  c.applyFactionTheme('Adeptus Astartes');assert.equal(body.dataset.factionTheme,'space-marines');
+  c.applyFactionTheme('Ultramarines');assert.equal(body.dataset.factionTheme,'ultramarines');
+  c.applyFactionTheme('Chaos Space Marines');assert.equal(body.dataset.factionTheme,'chaos-marines');
 });
 test('saved roster opening restores a missing faction header from its name and uses a builder option',()=>{
   const c=parser();
@@ -90,6 +114,17 @@ test('Deathwatch power weapons and shield attach to the correct models',()=>{
   assert.equal(context.equippedWargearProfiles(roster,profiles,2)[0].assignments[0].name,roster.modelLoadouts[0].name);
   assert.equal(context.unmatchedRosterWeapons(roster,profiles,profiles).length,0);
 });
+test('Deathwatch plasma incinerator links both firing profiles from its Korean roster name',()=>{
+  const context=vm.createContext({weaponName:s=>s,translateTerms:s=>s,profileDisplayName:p=>p.name});
+  vm.runInContext(source.slice(source.indexOf('function normalizeLoadoutText('),source.indexOf('function replaceRosterWeaponChoice('))+source.slice(source.indexOf('function weaponLoadoutAssignments('),source.indexOf('function rosterUnitAttackBuffs(')),context);
+  const profiles=[{name:'➤ Plasma incinerator - Standard',typeName:'Ranged Weapons'},{name:'➤ Plasma incinerator - Supercharge',typeName:'Ranged Weapons'}];
+  const roster={modelLoadouts:[{name:'Deathwatch Veteran · Bolt pistol + Knives and Fists + 플라스마 소각기',models:1,items:[{name:'플라스마 소각기',count:1}]}]};
+  for(const profile of profiles){
+    assert.equal(context.weaponRosterItemMatches(profile,'플라스마 소각기',profiles),true);
+    assert.equal(context.weaponLoadoutAssignments(profile,roster,1,profiles)[0].name,roster.modelLoadouts[0].name);
+  }
+  assert.equal(context.unmatchedRosterWeapons(roster,profiles,profiles).length,0);
+});
 test('Leading and Supporting imports produce character-to-squad links',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Captain Titus (115 points)\nLeading Infernus Squad\n1x Lieutenant (50 points)\nSupporting Assault Intercessor Squad\n5x Infernus Squad (95 points)\n5x Assault Intercessor Squad (85 points)');const links=c.rosterAttachmentParents(parsed.units);assert.equal(links.get(0),2);assert.equal(links.get(1),3);});
 test('explicit target index distinguishes identical squads',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached to: Intercessor Squad\n• Attached as: Support\n• Attached to index: 3\n5x Intercessor Squad (85 points)\n5x Intercessor Squad (85 points)');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),2);});
 test('reverse Attached to character keeps squad as host',()=>{const c=parser();const parsed=c.parseRoster('FACTION KEYWORD: Ultramarines\n1x Lieutenant (50 points)\n• Attached as: Support\n5x Intercessor Squad (85 points)\nAttached to Lieutenant');assert.equal(c.rosterAttachmentParents(parsed.units).get(0),1);});
@@ -137,7 +172,7 @@ test('English stratagem title is not repeated as its own subtitle',()=>{
 
 test('unit summary omits an empty invulnerable save but keeps a real one',()=>{
   const context=vm.createContext({statTranslations:new Map([['InSv','무적 방어']]),escapeHtml:s=>String(s)});
-  vm.runInContext(source.slice(source.indexOf('function unitStatIcon('),source.indexOf('function ruleAppliesToRoster(')),context);
+  vm.runInContext(source.slice(source.indexOf('function unitStatIcon('),source.indexOf('const chapterRuleRequirements=')),context);
   const profile={typeName:'Unit',characteristics:[{name:'M',value:'6"'},{name:'InSv',value:''}]};
   assert.doesNotMatch(context.renderUnitSummary({profiles:[profile]}),/InSv/);
   profile.characteristics[1].value='4+';
@@ -147,7 +182,7 @@ test('unit summary omits an empty invulnerable save but keeps a real one',()=>{
 test('roster builder ability preview uses reviewed rule translation',()=>{
   const nodes={'builder-unit-catalog':{innerHTML:''},'builder-unit-search':{value:''},'builder-unit-category':{value:'all'},'builder-unit-count':{textContent:''}};
   const unit={id:'u1',edition:'11',name:'Intercessor Squad',sourceFile:'Imperium - Space Marines.json',abilities:[{name:'Bolter Discipline',targetId:'1164-3aff-c9a6-718d',description:'If any of the following apply, gain +1 to hit rolls.'}]};
-  const calls=[],context=vm.createContext({$:id=>nodes[id],db:{units:[unit]},norm:s=>String(s).toLowerCase(),builderUnitRole:()=> 'battleline',tr:s=>s,escapeHtml:s=>s,externalRuleText:s=>s,translateRulesText:(name,text,identity)=>{calls.push({name,identity});return '다음 중 하나라도 해당하면 명중 굴림 +1';},Map});
+  const calls=[],context=vm.createContext({$:id=>nodes[id],db:{units:[unit]},norm:s=>String(s).toLowerCase(),builderUnitRole:()=> 'battleline',tr:s=>s,escapeHtml:s=>s,renderRuleMarkup:s=>s,externalRuleText:s=>s,translateRulesText:(name,text,identity)=>{calls.push({name,identity});return '다음 중 하나라도 해당하면 명중 굴림 +1';},Map});
   vm.runInContext(source.slice(source.indexOf('function renderBuilderUnitCatalog()'),source.indexOf('function updateRosterBuilderSummary()')),context);
   context.renderBuilderUnitCatalog();
   assert.match(nodes['builder-unit-catalog'].innerHTML,/다음 중 하나라도 해당하면/);

@@ -22,7 +22,8 @@ const context = vm.createContext({
   sourceDescriptionFor: () => '',
   escapeHtml: value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])),
   metadataText: value => String(value ?? ''),
-  tr: value => value
+  tr: value => value,
+  db:{units:[]}
 });
 vm.runInContext([
   section('const keyGlossary =', 'const phoneticWords ='),
@@ -42,6 +43,28 @@ test('numbered weapon abilities resolve to usable 11th edition descriptions', ()
   assert.match(context.keywordInfo('Melta 2').description, /피해\(D\).*2/);
 });
 
+test('Explosives and Grenades keywords explain the core stratagem', () => {
+  const explosives=context.keywordInfo('Explosives');
+  assert.equal(explosives.ko,'폭발물');
+  assert.match(explosives.description,/Explosives 스트라타젬/);
+  assert.match(explosives.description,/1 CP/);
+  assert.match(context.keywordInfo('Grenades').description,/Explosives 스트라타젬/);
+  assert.match(context.renderKeywordButton('Explosives'),/data-keyword="explosives"[^>]*>폭발물 \(Explosives\)/);
+  assert.match(context.renderRuleMarkup('이 유닛은 Explosives 키워드를 가집니다.'),/data-keyword="explosives"/);
+});
+
+test('Smoke links to Smokescreen and unit-name keywords use their datasheet', () => {
+  assert.match(context.keywordInfo('Smoke').description,/Smokescreen 스트라타젬/);
+  assert.match(context.keywordInfo('Smoke').description,/1 CP/);
+  assert.match(context.renderRuleMarkup('Smoke 키워드가 있는 유닛'),/data-keyword="smoke"/);
+  context.db.units=[{name:'Scout Squad',nameKo:'스카웃 분대'}];
+  const scout=context.keywordInfo('Scout Squad');
+  assert.equal(scout.ko,'스카웃 분대');
+  assert.match(scout.description,/데이터시트 키워드/);
+  assert.equal(context.keywordInfo('Unknown Squad'),null);
+  context.db.units=[];
+});
+
 test('conditional Devastating Wounds resolves with its target restriction', () => {
   const english = context.keywordInfo('Devastating Wounds: non-Monster/Vehicle');
   assert.equal(english.ko, '치명적인 상처 (몬스터/차량 제외)');
@@ -56,6 +79,27 @@ test('translated ability prose links unbracketed Sustained Hits and Blast', () =
   assert.match(html, /data-keyword="blast 2"/);
   assert.equal((html.match(/data-keyword=/g) || []).length, 2);
   assert.match(context.renderRuleMarkup('이 공격은 Blast 2를 얻습니다.'), /data-keyword="blast 2"/);
+});
+test('detachment prose links alternate translated keyword names with English labels', () => {
+  for(const [translated,english] of [['연타 1','Sustained Hits 1'],['살상타','Lethal Hits'],['정밀','Precision']]){
+    assert.equal(context.keywordInfo(translated)?.en,english);
+  }
+  context.detachmentLabel=()=> 'Gladius Task Force';
+  context.detachmentRules=[{name:{en:'Mission Tactics',ko:'임무 특화 전술'},rules:[{text:{ko:'퓨로르 전술: 이 유닛의 공격에 연타 1을 부여합니다. 말레우스 전술: 살상타를 부여합니다. 푸르가투스 전술: 정밀을 부여합니다.',en:'The unit gains Sustained Hits 1, Lethal Hits, and Precision.'}}]}];
+  context.localizedRuleValue=(value,lang='ko')=>value?.[lang]||'';
+  context.externalRuleText=value=>value;
+  context.detachmentRulesStatus='';
+  vm.runInContext(section('function renderDetachmentRules(', 'let dataDetachmentOverviewState='),context);
+  const html=context.renderDetachmentRules();
+  assert.match(html,/data-keyword="sustained hits 1"[^>]*>지속 명중 1 \(Sustained Hits 1\)/);
+  assert.match(html,/data-keyword="lethal hits"[^>]*>치명타 명중 \(Lethal Hits\)/);
+  assert.match(html,/data-keyword="precision"[^>]*>정밀 타격 \(Precision\)/);
+  assert.match(html,/영문 원문 보기/);
+});
+test('other rule descriptions link unbracketed weapon and deployment keywords', () => {
+  const html=context.renderRuleMarkup('이 무기는 분사와 근접 사격을 얻습니다. 이 유닛은 침투와 간접 사격을 가집니다.');
+  for(const keyword of ['torrent','close-quarters','infiltrators','indirect fire'])assert.match(html,new RegExp(`data-keyword="${keyword}"`));
+  assert.equal((html.match(/data-keyword=/g)||[]).length,4);
 });
 
 test('weapon-granted keywords can open their rule explanation', () => {

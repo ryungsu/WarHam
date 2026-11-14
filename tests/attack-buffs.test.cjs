@@ -21,6 +21,7 @@ function makeContext(titusAbility){
     profileDisplayName:value=>value.name,
     translateRulesText:(_,text)=>text,
     normalizeLoadoutText:value=>String(value).toLowerCase(),
+    ruleAppliesToRoster:()=>true,
     statTranslations:new Map(),
     tr:value=>value
   });
